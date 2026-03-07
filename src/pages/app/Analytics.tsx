@@ -153,7 +153,7 @@ export default function Analytics() {
                     <p style={{ fontSize: 12, color: "var(--text-secondary)" }}>{new Date(s.start_time).toLocaleDateString()}</p>
                     <p style={{ fontSize: 12, color: "var(--text-muted)", marginTop: 2 }}>{s.end_time ? `${Math.round((new Date(s.end_time).getTime() - new Date(s.start_time).getTime()) / 60000)} min` : "—"}</p>
                   </div>
-                  <div style={{ textAlign: "right" }}>
+                  <div style={{ textAlign: "end" }}>
                     <p style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 14, fontWeight: 700, color: "var(--accent)" }}>{s.total_steps.toLocaleString()}</p>
                     <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 2 }}>{s.total_distance_km.toFixed(2)} km</p>
                   </div>

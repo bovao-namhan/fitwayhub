@@ -105,8 +105,8 @@ export default function Pricing() {
           </button>
         </div>
         <div style={{ backgroundColor: "var(--bg-card)", border: "2px solid var(--accent)", borderRadius: 18, padding: "28px 24px", position: "relative", overflow: "hidden" }}>
-          <div style={{ position: "absolute", top: 0, right: 0, padding: "5px 14px", backgroundColor: "var(--accent)", borderBottomLeftRadius: 12, fontSize: 11, fontWeight: 700, color: "#0A0A0B", fontFamily: "'Chakra Petch', sans-serif", letterSpacing: "0.05em" }}>{t("recommended")}</div>
-          <div style={{ position: "absolute", bottom: -40, right: -40, width: 150, height: 150, borderRadius: "50%", backgroundColor: "var(--accent-dim)", filter: "blur(50px)" }} />
+          <div style={{ position: "absolute", top: 0, insetInlineEnd: 0, padding: "5px 14px", backgroundColor: "var(--accent)", borderStartStartRadius: 0, borderStartEndRadius: 0, borderEndStartRadius: 12, borderEndEndRadius: 0, fontSize: 11, fontWeight: 700, color: "#0A0A0B", fontFamily: "'Chakra Petch', sans-serif", letterSpacing: "0.05em" }}>{t("recommended")}</div>
+          <div style={{ position: "absolute", bottom: -40, insetInlineEnd: -40, width: 150, height: 150, borderRadius: "50%", backgroundColor: "var(--accent-dim)", filter: "blur(50px)" }} />
           <div style={{ position: "relative", zIndex: 1 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}><Crown size={16} color="var(--accent)" /><h3 style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 17, fontWeight: 700 }}>{t("premium")}</h3></div>
             <p style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 20 }}>{t("everything_results")}</p>

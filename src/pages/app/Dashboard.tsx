@@ -411,7 +411,7 @@ export default function Dashboard() {
         return (
           <div key={ad.id} className="fade-up-4" style={{ marginTop: 16, borderRadius: 12, overflow: "hidden", border: "1px solid rgba(59,139,255,0.25)", backgroundColor: "var(--bg-card)", position: "relative" }}>
             {/* Sponsored badge */}
-            <div style={{ position: "absolute", top: 8, left: 10, zIndex: 2, backgroundColor: "rgba(59,139,255,0.85)", borderRadius: 20, padding: "2px 9px", fontSize: 9, fontWeight: 700, color: "#fff", fontFamily: "'Chakra Petch', sans-serif", letterSpacing: "0.06em" }}>SPONSORED</div>
+            <div style={{ position: "absolute", top: 8, insetInlineStart: 10, zIndex: 2, backgroundColor: "rgba(59,139,255,0.85)", borderRadius: 20, padding: "2px 9px", fontSize: 9, fontWeight: 700, color: "#fff", fontFamily: "'Chakra Petch', sans-serif", letterSpacing: "0.06em" }}>SPONSORED</div>
             <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 14px" }}>
               {ad.image_url && (
                 <div style={{ width: 64, height: 48, borderRadius: 8, overflow: "hidden", flexShrink: 0 }}>
@@ -509,7 +509,7 @@ export default function Dashboard() {
               <p style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 20, fontWeight: 700, color: "var(--text-primary)" }}>{aiAnalysis.performance_rating}</p>
               <p style={{ fontSize: 13, color: "var(--text-secondary)", marginTop: 8 }}>{aiAnalysis.health_advice}</p>
             </div>
-            <div style={{ borderLeft: "1px solid var(--border)", paddingLeft: 16 }}>
+            <div style={{ borderInlineStart: "1px solid var(--border)", paddingInlineStart: 16 }}>
               <p style={{ fontSize: 13, fontStyle: "italic", color: "var(--text-secondary)", marginBottom: 12 }}>"{aiAnalysis.motivational_message}"</p>
               <p style={{ fontSize: 11, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.06em" }}>Tomorrow's Goal</p>
               <p style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 20, fontWeight: 700, color: "var(--accent)" }}>{aiAnalysis.tomorrow_goal?.toLocaleString()} steps</p>

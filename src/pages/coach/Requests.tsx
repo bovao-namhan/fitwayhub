@@ -363,7 +363,7 @@ export default function CoachRequests() {
       {lightboxSrc && (
         <div style={{ position: "fixed", inset: 0, zIndex: 200, backgroundColor: "rgba(0,0,0,0.9)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={() => setLightboxSrc(null)}>
           <img src={lightboxSrc} alt="Body photo" style={{ maxWidth: "100%", maxHeight: "90vh", borderRadius: 12, objectFit: "contain" }} />
-          <button style={{ position: "absolute", top: 20, right: 20, width: 40, height: 40, borderRadius: "50%", backgroundColor: "rgba(255,255,255,0.15)", border: "none", cursor: "pointer", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <button style={{ position: "absolute", top: 20, insetInlineEnd: 20, width: 40, height: 40, borderRadius: "50%", backgroundColor: "rgba(255,255,255,0.15)", border: "none", cursor: "pointer", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <X size={20} />
           </button>
         </div>

@@ -125,8 +125,8 @@ export default function CoachAthletes() {
           <div style={{ padding: "14px 16px", borderBottom: "1px solid var(--border)" }}>
             <p style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 14, fontWeight: 700, marginBottom: 10 }}>{t("my_athletes")}</p>
             <div style={{ position: "relative" }}>
-              <Search size={13} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} />
-              <input className="input-base" value={search} onChange={e => setSearch(e.target.value)} placeholder={t("search_placeholder")} style={{ paddingLeft: 30, padding: "7px 10px 7px 30px", fontSize: 12 }} />
+              <Search size={13} style={{ position: "absolute", insetInlineStart: 10, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} />
+              <input className="input-base" value={search} onChange={e => setSearch(e.target.value)} placeholder={t("search_placeholder")} style={{ paddingInlineStart: 30, padding: "7px 10px 7px 30px", fontSize: 12 }} />
             </div>
           </div>
           <div style={{ maxHeight: "calc(100dvh - 260px)", overflowY: "auto" }}>
@@ -135,7 +135,7 @@ export default function CoachAthletes() {
             ) : filtered.length === 0 ? (
               <p style={{ padding: 20, textAlign: "center", color: "var(--text-muted)", fontSize: 13 }}>{t("coach_athletes_none")}</p>
             ) : filtered.map(a => (
-              <button key={a.id} onClick={() => selectAthlete(a)} style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "12px 14px", borderBottom: "1px solid var(--border)", background: selected?.id === a.id ? "var(--accent-dim)" : "none", border: "none", cursor: "pointer", textAlign: "left", borderLeft: selected?.id === a.id ? "3px solid var(--blue)" : "3px solid transparent", transition: "all 0.15s" }}>
+              <button key={a.id} onClick={() => selectAthlete(a)} style={{ width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "12px 14px", borderBottom: "1px solid var(--border)", background: selected?.id === a.id ? "var(--accent-dim)" : "none", border: "none", cursor: "pointer", textAlign: "start", borderInlineStart: selected?.id === a.id ? "3px solid var(--blue)" : "3px solid transparent", transition: "all 0.15s" }}>
                 <img src={a.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${a.email}`} alt={a.name} style={{ width: 36, height: 36, borderRadius: "50%", objectFit: "cover" }} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <p style={{ fontSize: 13, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{a.name}</p>

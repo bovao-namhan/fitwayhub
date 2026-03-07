@@ -126,11 +126,11 @@ export default function Workouts() {
           {/* Search + Filter */}
           <div style={{ display: "flex", gap: 10, marginBottom: 16, flexWrap: "wrap" }}>
             <div style={{ position: "relative", flex: 1, minWidth: 200 }}>
-              <Search size={14} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} />
+              <Search size={14} style={{ position: "absolute", insetInlineStart: 12, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} />
               <input
                 value={search} onChange={e => setSearch(e.target.value)}
                 placeholder="Search videos..."
-                style={{ width: "100%", paddingLeft: 36, paddingRight: 12, paddingTop: 10, paddingBottom: 10, backgroundColor: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 10, fontSize: 13, color: "var(--text-primary)", fontFamily: "'Outfit', sans-serif", outline: "none" }}
+                style={{ width: "100%", paddingInlineStart: 36, paddingInlineEnd: 12, paddingTop: 10, paddingBottom: 10, backgroundColor: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 10, fontSize: 13, color: "var(--text-primary)", fontFamily: "'Outfit', sans-serif", outline: "none" }}
               />
             </div>
             <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
@@ -182,12 +182,12 @@ export default function Workouts() {
                       )}
                       <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(10,10,11,0.7) 0%, transparent 50%)" }} />
                       {Boolean(video.is_premium) && (
-                        <div style={{ position: "absolute", top: 10, right: 10, display: "flex", alignItems: "center", gap: 4, padding: "3px 10px", borderRadius: 20, backgroundColor: "rgba(255,179,64,0.2)", border: "1px solid rgba(255,179,64,0.4)", color: "var(--amber)", fontSize: 11, fontWeight: 700 }}>
+                        <div style={{ position: "absolute", top: 10, insetInlineEnd: 10, display: "flex", alignItems: "center", gap: 4, padding: "3px 10px", borderRadius: 20, backgroundColor: "rgba(255,179,64,0.2)", border: "1px solid rgba(255,179,64,0.4)", color: "var(--amber)", fontSize: 11, fontWeight: 700 }}>
                           <Crown size={11} /> PREMIUM
                         </div>
                       )}
                       {video.duration && (
-                        <div style={{ position: "absolute", bottom: 10, left: 12, display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "rgba(255,255,255,0.8)" }}>
+                        <div style={{ position: "absolute", bottom: 10, insetInlineStart: 12, display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "rgba(255,255,255,0.8)" }}>
                           <Clock size={11} /> {video.duration}
                         </div>
                       )}

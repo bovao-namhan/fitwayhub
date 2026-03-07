@@ -609,7 +609,7 @@ export default function WebsiteCMS({ token, showMsg }: Props) {
             </button>
           ))}
           <a href={`/${activePage === "home" ? "" : activePage}`} target="_blank" rel="noopener noreferrer"
-            style={{ marginLeft: "auto", padding: "9px 16px", borderRadius: 10, border: "1px solid var(--border)", backgroundColor: "var(--bg-surface)", color: "var(--text-secondary)", fontSize: 12, textDecoration: "none", display: "flex", alignItems: "center", gap: 6 }}>
+            style={{ marginInlineStart: "auto", padding: "9px 16px", borderRadius: 10, border: "1px solid var(--border)", backgroundColor: "var(--bg-surface)", color: "var(--text-secondary)", fontSize: 12, textDecoration: "none", display: "flex", alignItems: "center", gap: 6 }}>
             <ExternalLink size={13} /> {t("preview")}
           </a>
         </div>
@@ -816,7 +816,7 @@ export default function WebsiteCMS({ token, showMsg }: Props) {
                     const Ic = st.icon;
                     return (
                       <button key={st.type} onClick={() => { setAddType(st.type); setAddLabel(typeLabel(st.type)); }}
-                        style={{ padding: "12px", borderRadius: 10, border: `2px solid ${addType === st.type ? "var(--accent)" : "var(--border)"}`, backgroundColor: addType === st.type ? "var(--accent-dim)" : "var(--bg-surface)", cursor: "pointer", textAlign: "left", transition: "all 0.15s" }}>
+                        style={{ padding: "12px", borderRadius: 10, border: `2px solid ${addType === st.type ? "var(--accent)" : "var(--border)"}`, backgroundColor: addType === st.type ? "var(--accent-dim)" : "var(--bg-surface)", cursor: "pointer", textAlign: "start", transition: "all 0.15s" }}>
                         <Ic size={16} color={addType === st.type ? "var(--accent)" : "var(--text-secondary)"} />
                         <p style={{ fontSize: 12, fontWeight: 600, marginTop: 6, color: addType === st.type ? "var(--accent)" : "var(--text-primary)" }}>{typeLabel(st.type)}</p>
                       </button>
@@ -902,7 +902,7 @@ export default function WebsiteCMS({ token, showMsg }: Props) {
                             {appSettingsForm[s.setting_key] && (
                               <div style={{ position: "relative", display: "inline-block" }}>
                                 <img src={appSettingsForm[s.setting_key]} alt={s.label} style={{ maxHeight: 64, maxWidth: 200, borderRadius: 8, border: "1px solid var(--border)", objectFit: "contain", backgroundColor: "var(--bg-surface)", padding: 4 }} />
-                                <button onClick={() => setAppSettingsForm(f => ({ ...f, [s.setting_key]: "" }))} style={{ position: "absolute", top: -6, right: -6, width: 20, height: 20, borderRadius: "50%", background: "var(--red)", color: "#fff", border: "none", cursor: "pointer", fontSize: 11, display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
+                                <button onClick={() => setAppSettingsForm(f => ({ ...f, [s.setting_key]: "" }))} style={{ position: "absolute", top: -6, insetInlineEnd: -6, width: 20, height: 20, borderRadius: "50%", background: "var(--red)", color: "#fff", border: "none", cursor: "pointer", fontSize: 11, display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
                               </div>
                             )}
                             <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
@@ -960,7 +960,7 @@ export default function WebsiteCMS({ token, showMsg }: Props) {
                         ) : s.setting_type === "boolean" ? (
                           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                             <button onClick={() => setAppSettingsForm(f => ({ ...f, [s.setting_key]: f[s.setting_key] === "1" ? "0" : "1" }))} style={{ width: 44, height: 24, borderRadius: 12, backgroundColor: appSettingsForm[s.setting_key] === "1" ? "var(--accent)" : "var(--bg-surface)", border: "1px solid var(--border)", cursor: "pointer", position: "relative", transition: "background 0.2s" }}>
-                              <div style={{ position: "absolute", top: 3, left: appSettingsForm[s.setting_key] === "1" ? 22 : 3, width: 16, height: 16, borderRadius: "50%", backgroundColor: appSettingsForm[s.setting_key] === "1" ? "#0A0A0B" : "var(--text-muted)", transition: "left 0.2s" }} />
+                              <div style={{ position: "absolute", top: 3, insetInlineStart: appSettingsForm[s.setting_key] === "1" ? 22 : 3, width: 16, height: 16, borderRadius: "50%", backgroundColor: appSettingsForm[s.setting_key] === "1" ? "#0A0A0B" : "var(--text-muted)", transition: "all 0.2s" }} />
                             </button>
                             <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>{appSettingsForm[s.setting_key] === "1" ? "Enabled" : "Disabled"}</span>
                           </div>

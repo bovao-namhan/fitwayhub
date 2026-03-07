@@ -92,7 +92,7 @@ export default function Profile() {
       <div style={{ ...card, display: "flex", flexWrap: "wrap", alignItems: "center", gap: 20, marginBottom: 16 }}>
         <div style={{ position: "relative", flexShrink: 0 }}>
           <img src={user?.avatar} alt="Avatar" style={{ width: 80, height: 80, borderRadius: "50%", objectFit: "cover", border: "2px solid var(--border-light)" }} />
-          <button style={{ position: "absolute", bottom: 0, right: 0, width: 26, height: 26, borderRadius: "50%", backgroundColor: "var(--accent)", color: "#0A0A0B", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <button style={{ position: "absolute", bottom: 0, insetInlineEnd: 0, width: 26, height: 26, borderRadius: "50%", backgroundColor: "var(--accent)", color: "#0A0A0B", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <Camera size={13} />
           </button>
         </div>
@@ -111,7 +111,7 @@ export default function Profile() {
             )}
           </div>
         </div>
-        <div style={{ textAlign: "right", flexShrink: 0 }}>
+        <div style={{ textAlign: "end", flexShrink: 0 }}>
           <p style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 26, fontWeight: 700, color: "var(--accent)" }}>{user?.points?.toLocaleString() ?? 0}</p>
           <p style={{ fontSize: 11, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.06em" }}>{t("points")}</p>
           <button onClick={() => setShowPointsHistory(v => !v)} style={{ marginTop: 4, fontSize: 11, color: "var(--blue)", background: "none", border: "none", cursor: "pointer", textDecoration: "underline" }}>
@@ -279,11 +279,11 @@ export default function Profile() {
             </div>
             <button onClick={() => { const n = !notifications; setNotifications(n); localStorage.setItem("fithub_notifications", JSON.stringify(n)); }}
               style={{ width: 44, height: 24, borderRadius: 12, backgroundColor: notifications ? "var(--accent)" : "var(--bg-surface)", border: `1px solid ${notifications ? "transparent" : "var(--border)"}`, cursor: "pointer", position: "relative", transition: "background 0.2s" }}>
-              <div style={{ position: "absolute", top: 3, left: notifications ? 22 : 3, width: 16, height: 16, borderRadius: "50%", backgroundColor: notifications ? "#0A0A0B" : "var(--text-muted)", transition: "left 0.2s" }} />
+              <div style={{ position: "absolute", top: 3, insetInlineStart: notifications ? 22 : 3, width: 16, height: 16, borderRadius: "50%", backgroundColor: notifications ? "#0A0A0B" : "var(--text-muted)", transition: "left 0.2s" }} />
             </button>
           </div>
           {/* Sign out */}
-          <button onClick={() => { logout(); navigate("/auth/login"); }} style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 0", background: "none", border: "none", cursor: "pointer", color: "var(--red)", fontSize: 14, textAlign: "left" }}>
+          <button onClick={() => { logout(); navigate("/auth/login"); }} style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 0", background: "none", border: "none", cursor: "pointer", color: "var(--red)", fontSize: 14, textAlign: "start" }}>
             <LogOut size={16} /> {t("sign_out")}
           </button>
         </div>

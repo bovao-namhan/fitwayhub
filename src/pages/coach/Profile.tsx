@@ -262,7 +262,7 @@ export default function CoachProfile() {
                 <div key={w.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 12px", backgroundColor: "var(--bg-surface)", borderRadius: 8, border: "1px solid var(--border)" }}>
                   <div>
                     <span style={{ fontSize: 13, fontWeight: 600 }}>{w.amount} EGP</span>
-                    <span style={{ fontSize: 11, color: "var(--text-muted)", marginLeft: 8 }}>{new Date(w.created_at).toLocaleDateString()}</span>
+                    <span style={{ fontSize: 11, color: "var(--text-muted)", marginInlineStart: 8 }}>{new Date(w.created_at).toLocaleDateString()}</span>
                   </div>
                   <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 12, fontWeight: 600, background: w.status === 'approved' ? "rgba(200,255,0,0.1)" : w.status === 'rejected' ? "rgba(255,68,68,0.1)" : "rgba(255,179,64,0.1)", color: w.status === 'approved' ? "var(--accent)" : w.status === 'rejected' ? "var(--red)" : "var(--amber)", border: `1px solid ${w.status === 'approved' ? "rgba(200,255,0,0.25)" : w.status === 'rejected' ? "rgba(255,68,68,0.25)" : "rgba(255,179,64,0.25)"}` }}>
                     {w.status}
@@ -307,7 +307,7 @@ export default function CoachProfile() {
                 <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
                   <div style={{ display: "flex", gap: 2 }}>{[1,2,3,4,5].map(s => <Star key={s} size={13} color="var(--amber)" style={{ fill: s <= rv.rating ? "var(--amber)" : "transparent" }} />)}</div>
                   <span style={{ fontSize: 13, fontWeight: 600 }}>{rv.userName || t("role_user")}</span>
-                  <span style={{ fontSize: 11, color: "var(--text-muted)", marginLeft: "auto" }}>{new Date(rv.created_at).toLocaleDateString()}</span>
+                  <span style={{ fontSize: 11, color: "var(--text-muted)", marginInlineStart: "auto" }}>{new Date(rv.created_at).toLocaleDateString()}</span>
                 </div>
                 <p style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.6 }}>{rv.text}</p>
               </div>
@@ -351,7 +351,7 @@ export default function CoachProfile() {
                     { id: "workout", label: `💪 ${t("workout_only")}`, desc: t("workout_only_desc") },
                     { id: "nutrition", label: `🥗 ${t("nutrition_only")}`, desc: t("nutrition_only_desc") },
                   ] as const).map(plan => (
-                    <button key={plan.id} type="button" onClick={() => setEditProfile(p => ({ ...p, planTypes: plan.id }))} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", borderRadius: 10, border: `1px solid ${editProfile.planTypes === plan.id ? "var(--accent)" : "var(--border)"}`, background: editProfile.planTypes === plan.id ? "var(--accent-dim)" : "var(--bg-surface)", cursor: "pointer", textAlign: "left" }}>
+                    <button key={plan.id} type="button" onClick={() => setEditProfile(p => ({ ...p, planTypes: plan.id }))} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", borderRadius: 10, border: `1px solid ${editProfile.planTypes === plan.id ? "var(--accent)" : "var(--border)"}`, background: editProfile.planTypes === plan.id ? "var(--accent-dim)" : "var(--bg-surface)", cursor: "pointer", textAlign: "start" }}>
                       <div>
                         <p style={{ fontSize: 13, fontWeight: 600, color: editProfile.planTypes === plan.id ? "var(--accent)" : "var(--text-primary)" }}>{plan.label}</p>
                         <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 2 }}>{plan.desc}</p>

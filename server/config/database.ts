@@ -369,6 +369,31 @@ async function initTables() {
       setting_value TEXT,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
+
+    `CREATE TABLE IF NOT EXISTS user_workout_plans (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      user_id INT NOT NULL,
+      day_of_week VARCHAR(20) NOT NULL,
+      workout_type VARCHAR(100) NOT NULL,
+      video_url TEXT,
+      time_minutes INT DEFAULT 0,
+      notes TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
+
+    `CREATE TABLE IF NOT EXISTS user_nutrition_plans (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      user_id INT NOT NULL,
+      day_of_week VARCHAR(20) NOT NULL,
+      meal_time VARCHAR(50) NOT NULL,
+      meal_type VARCHAR(100),
+      meal_name VARCHAR(255) NOT NULL,
+      contents TEXT,
+      calories INT DEFAULT 0,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
   ];
 
   for (const stmt of stmts) {

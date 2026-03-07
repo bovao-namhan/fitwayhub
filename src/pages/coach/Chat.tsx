@@ -121,12 +121,12 @@ export default function CoachChat() {
 
   return (
     <div style={{ display: "flex", gap: 0, height: "calc(100dvh - 120px)", backgroundColor: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: isMobile ? 0 : 16, overflow: "hidden" }}>
-      <div style={{ width: showList ? (isMobile ? "100%" : 280) : 0, borderRight: isMobile ? "none" : "1px solid var(--border)", display: showList ? "flex" : "none", flexDirection: "column", flexShrink: 0 }}>
+      <div style={{ width: showList ? (isMobile ? "100%" : 280) : 0, borderInlineEnd: isMobile ? "none" : "1px solid var(--border)", display: showList ? "flex" : "none", flexDirection: "column", flexShrink: 0 }}>
         <div style={{ padding: "16px", borderBottom: "1px solid var(--border)" }}>
           <p style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 14, fontWeight: 700, marginBottom: 10 }}>{t("messages")}</p>
           <div style={{ position: "relative" }}>
-            <Search size={13} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} />
-            <input className="input-base" value={search} onChange={e => setSearch(e.target.value)} placeholder={t("search_placeholder")} style={{ paddingLeft: 30, padding: "7px 10px 7px 30px", fontSize: 12 }} />
+            <Search size={13} style={{ position: "absolute", insetInlineStart: 10, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} />
+            <input className="input-base" value={search} onChange={e => setSearch(e.target.value)} placeholder={t("search_placeholder")} style={{ paddingInlineStart: 30, padding: "7px 10px 7px 30px", fontSize: 12 }} />
           </div>
         </div>
         <div style={{ overflowY: "auto", flex: 1 }}>
@@ -135,7 +135,7 @@ export default function CoachChat() {
           ) : filtered.length === 0 ? (
             <p style={{ padding: 20, textAlign: "center", color: "var(--text-muted)", fontSize: 13 }}>{t("coach_chat_no_users")}</p>
           ) : filtered.map(u => (
-            <button key={u.id} onClick={() => setActiveUser(u)} style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, padding: "13px 16px", borderBottom: "1px solid var(--border)", background: activeUser?.id === u.id ? "var(--accent-dim)" : "none", border: "none", cursor: "pointer", textAlign: "left", borderLeft: activeUser?.id === u.id ? "3px solid var(--blue)" : "3px solid transparent", transition: "all 0.15s" }}>
+            <button key={u.id} onClick={() => setActiveUser(u)} style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, padding: "13px 16px", borderBottom: "1px solid var(--border)", background: activeUser?.id === u.id ? "var(--accent-dim)" : "none", border: "none", cursor: "pointer", textAlign: "start", borderInlineStart: activeUser?.id === u.id ? "3px solid var(--blue)" : "3px solid transparent", transition: "all 0.15s" }}>
               <img src={u.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${u.email}`} alt={u.name} style={{ width: 40, height: 40, borderRadius: "50%", backgroundColor: "var(--bg-surface)" }} />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <p style={{ fontSize: 13, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{u.name}</p>
@@ -151,7 +151,7 @@ export default function CoachChat() {
       {showConvo && !!activeUser && (
         <div style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
           <div style={{ padding: "14px 20px", borderBottom: "1px solid var(--border)", display: "flex", alignItems: "center", gap: 12 }}>
-            {isMobile && <button onClick={() => setActiveUser(null)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-secondary)", padding: 4, marginRight: 4 }}>←</button>}
+            {isMobile && <button onClick={() => setActiveUser(null)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-secondary)", padding: 4, marginInlineEnd: 4 }}>←</button>}
             <img src={activeUser.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${activeUser.email}`} alt={activeUser.name} style={{ width: 38, height: 38, borderRadius: "50%", backgroundColor: "var(--bg-surface)" }} />
             <div>
               <p style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 14, fontWeight: 700 }}>{activeUser.name}</p>
@@ -168,7 +168,7 @@ export default function CoachChat() {
                 <div key={msg.id} style={{ display: "flex", justifyContent: isMe ? "flex-end" : "flex-start" }}>
                   <div style={{ maxWidth: "70%", padding: "10px 14px", borderRadius: isMe ? "14px 14px 4px 14px" : "14px 14px 14px 4px", backgroundColor: isMe ? "var(--blue)" : "var(--bg-surface)", border: isMe ? "none" : "1px solid var(--border)", color: isMe ? "#fff" : "var(--text-primary)" }}>
                     <p style={{ fontSize: 13, lineHeight: 1.5 }}>{msg.content}</p>
-                    <p style={{ fontSize: 10, opacity: 0.7, marginTop: 4, textAlign: isMe ? "right" : "left" }}>{formatTime(msg.created_at)}</p>
+                    <p style={{ fontSize: 10, opacity: 0.7, marginTop: 4, textAlign: isMe ? "end" : "start" }}>{formatTime(msg.created_at)}</p>
                   </div>
                 </div>
               );

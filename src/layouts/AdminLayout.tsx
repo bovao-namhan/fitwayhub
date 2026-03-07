@@ -98,9 +98,8 @@ export function AdminLayout() {
         flex: 1,
         minWidth: 0,
         overflowX: "hidden",
-        marginLeft: isMobile ? 0 : (isRtl ? 0 : sidebarW),
-        marginRight: isMobile ? 0 : (isRtl ? sidebarW : 0),
-        transition: "margin-left 0.25s cubic-bezier(0.4,0,0.2,1)",
+        marginInlineStart: isMobile ? 0 : sidebarW,
+        transition: "margin 0.25s cubic-bezier(0.4,0,0.2,1)",
         paddingTop: isMobile ? 60 : 0,
         paddingBottom: isMobile ? "calc(68px + env(safe-area-inset-bottom))" : 0,
       }}>

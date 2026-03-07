@@ -83,7 +83,7 @@ export function SharedSidebar({
           display: "flex",
           alignItems: "center",
           gap: showLabel ? 10 : 0,
-          justifyContent: showLabel ? (isRtl ? "flex-end" : "flex-start") : "center",
+          justifyContent: showLabel ? "flex-start" : "center",
           padding: showLabel ? "9px 10px" : "10px 0",
           borderRadius: 10,
           marginBottom: 2,
@@ -92,8 +92,7 @@ export function SharedSidebar({
           textDecoration: "none",
           backgroundColor: active ? accentBg : "transparent",
           color: active ? accentColor : "var(--text-secondary)",
-          borderLeft: showLabel ? `2px solid ${!isRtl && active ? accentColor : "transparent"}` : "none",
-          borderRight: showLabel ? `2px solid ${isRtl && active ? accentColor : "transparent"}` : "none",
+          borderInlineStart: showLabel ? `2px solid ${active ? accentColor : "transparent"}` : "none",
           transition: "all 0.15s",
           whiteSpace: "nowrap",
           overflow: "hidden",
@@ -105,8 +104,7 @@ export function SharedSidebar({
         {item.badge ? (
           <span
             style={{
-              marginLeft: showLabel && !isRtl ? "auto" : undefined,
-              marginRight: showLabel && isRtl ? "auto" : undefined,
+              marginInlineStart: showLabel ? "auto" : undefined,
               minWidth: 18,
               height: 18,
               borderRadius: 9,
@@ -236,14 +234,12 @@ export function SharedSidebar({
       style={{
         position: "fixed",
         top: 0,
-        left: isRtl ? undefined : 0,
-        right: isRtl ? 0 : undefined,
+        insetInlineStart: 0,
         bottom: 0,
         width: sidebarW,
         zIndex: 40,
         backgroundColor: "var(--bg-surface)",
-        borderRight: isRtl ? "none" : "1px solid var(--border)",
-        borderLeft: isRtl ? "1px solid var(--border)" : "none",
+        borderInlineEnd: "1px solid var(--border)",
         display: "flex",
         flexDirection: "column",
         transition: "width 0.25s cubic-bezier(0.4,0,0.2,1)",
@@ -343,14 +339,12 @@ export function SharedSidebar({
         style={{
           position: "fixed",
           top: 0,
-          left: isRtl ? undefined : 0,
-          right: isRtl ? 0 : undefined,
+          insetInlineStart: 0,
           bottom: 0,
           width: 270,
           zIndex: 60,
           backgroundColor: "var(--bg-surface)",
-          borderRight: isRtl ? "none" : "1px solid var(--border)",
-          borderLeft: isRtl ? "1px solid var(--border)" : "none",
+          borderInlineEnd: "1px solid var(--border)",
           display: "flex",
           flexDirection: "column",
           transform: drawerOpen ? "translateX(0)" : (isRtl ? "translateX(100%)" : "translateX(-100%)"),
@@ -439,12 +433,11 @@ export function SharedSidebar({
         display: "flex",
         alignItems: "center",
         justifyContent: "space-between",
-        flexDirection: isRtl ? "row-reverse" : "row",
         padding: "0 16px",
         backdropFilter: "blur(12px)",
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", gap: 10, flexDirection: isRtl ? "row-reverse" : "row" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
         {/* Hamburger always visible */}
         <button
           onClick={() => setDrawerOpen((o) => !o)}
@@ -466,7 +459,7 @@ export function SharedSidebar({
         </button>
         <img src={logoUrl || "/logo.svg"} alt={logoLabel} style={{ height: 28, borderRadius: 6, objectFit: 'contain' }} />
       </div>
-      <div style={{ display: "flex", alignItems: "center", gap: 8, flexDirection: isRtl ? "row-reverse" : "row" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
         <button
           onClick={toggleTheme}
           style={{
@@ -577,7 +570,7 @@ export function SharedSidebar({
                     {item.label}
                     <ChevronRight
                       size={14}
-                      style={{ marginLeft: "auto", color: "var(--text-muted)", transform: isRtl ? "rotate(180deg)" : "none" }}
+                      style={{ marginInlineStart: "auto", color: "var(--text-muted)", transform: isRtl ? "rotate(180deg)" : "none" }}
                     />
                   </Link>
                 );
@@ -643,7 +636,7 @@ export function SharedSidebar({
                     style={{
                       position: "absolute",
                       top: -2,
-                      right: 2,
+                      insetInlineEnd: 2,
                       minWidth: 16,
                       height: 16,
                       borderRadius: 8,

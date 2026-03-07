@@ -405,7 +405,7 @@ export default function CoachAds() {
                   <label style={{ fontSize: 11, color: "var(--text-muted)", display: "block", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.07em" }}>{t("ad_placement")}</label>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
                     {([ ["community", t("community_post"), t("coach_ads_place_community_desc")] , ["home_banner", t("home_banner"), t("coach_ads_place_banner_desc")]] as const).map(([val, label, desc]) => (
-                      <button key={val} onClick={() => setAdType(val)} style={{ padding: "12px 14px", borderRadius: 12, border: `2px solid ${adType === val ? "var(--blue)" : "var(--border)"}`, background: adType === val ? "rgba(59,139,255,0.1)" : "var(--bg-surface)", cursor: "pointer", textAlign: "left" }}>
+                      <button key={val} onClick={() => setAdType(val)} style={{ padding: "12px 14px", borderRadius: 12, border: `2px solid ${adType === val ? "var(--blue)" : "var(--border)"}`, background: adType === val ? "rgba(59,139,255,0.1)" : "var(--bg-surface)", cursor: "pointer", textAlign: "start" }}>
                         <p style={{ fontSize: 13, fontWeight: 700, color: adType === val ? "var(--blue)" : "var(--text-primary)", marginBottom: 4 }}>{label}</p>
                         <p style={{ fontSize: 11, color: "var(--text-muted)", lineHeight: 1.4 }}>{desc}</p>
                       </button>
@@ -418,7 +418,7 @@ export default function CoachAds() {
                   <label style={{ fontSize: 11, color: "var(--text-muted)", display: "block", marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.07em" }}>{t("ad_objective")}</label>
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
                     {([ ["coaching", t("coach_ads_objective_coaching"), t("coach_ads_objective_coaching_desc")] , ["awareness", t("coach_ads_objective_awareness"), t("coach_ads_objective_awareness_desc")]] as const).map(([val, label, desc]) => (
-                      <button key={val} onClick={() => setObjective(val)} style={{ padding: "12px 14px", borderRadius: 12, border: `2px solid ${objective === val ? "var(--accent)" : "var(--border)"}`, background: objective === val ? "rgba(200,255,0,0.07)" : "var(--bg-surface)", cursor: "pointer", textAlign: "left" }}>
+                      <button key={val} onClick={() => setObjective(val)} style={{ padding: "12px 14px", borderRadius: 12, border: `2px solid ${objective === val ? "var(--accent)" : "var(--border)"}`, background: objective === val ? "rgba(200,255,0,0.07)" : "var(--bg-surface)", cursor: "pointer", textAlign: "start" }}>
                         <p style={{ fontSize: 13, fontWeight: 700, color: objective === val ? "var(--accent)" : "var(--text-primary)", marginBottom: 4 }}>{label}</p>
                         <p style={{ fontSize: 11, color: "var(--text-muted)", lineHeight: 1.4 }}>{desc}</p>
                       </button>
@@ -454,7 +454,7 @@ export default function CoachAds() {
                         {mediaType === "video"
                           ? <video src={mediaPreview} controls style={{ width: "100%", maxHeight: 200, display: "block" }} />
                           : <img src={mediaPreview} alt="Preview" style={{ width: "100%", maxHeight: 200, objectFit: "cover", display: "block" }} />}
-                        <div style={{ position: "absolute", top: 8, right: 8, backgroundColor: "rgba(0,0,0,0.6)", borderRadius: 6, padding: "3px 8px", fontSize: 11, color: "#fff" }}>{t("coach_ads_change")}</div>
+                        <div style={{ position: "absolute", top: 8, insetInlineEnd: 8, backgroundColor: "rgba(0,0,0,0.6)", borderRadius: 6, padding: "3px 8px", fontSize: 11, color: "#fff" }}>{t("coach_ads_change")}</div>
                       </>
                     ) : (
                       <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>

@@ -412,12 +412,12 @@ const MapTracker = React.forwardRef<
     <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
       <div style={{ position: 'relative', borderRadius: 16, overflow: 'hidden', border: '1px solid var(--border)' }}>
         <div ref={mapRef} style={{ width: '100%', height: 'clamp(240px, 38vw, 380px)', display: 'block', backgroundColor: 'var(--bg-surface)' }} />
-        <div style={{ position: 'absolute', top: 12, right: 12, zIndex: 1000, backgroundColor: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(8px)', borderRadius: 20, padding: '5px 12px', display: 'flex', alignItems: 'center', gap: 6, border: `1px solid ${gpsStatusColor}` }}>
+        <div style={{ position: 'absolute', top: 12, insetInlineEnd: 12, zIndex: 1000, backgroundColor: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(8px)', borderRadius: 20, padding: '5px 12px', display: 'flex', alignItems: 'center', gap: 6, border: `1px solid ${gpsStatusColor}` }}>
           <span style={{ width: 7, height: 7, borderRadius: '50%', backgroundColor: gpsStatusColor, display: 'inline-block' }} />
           <span style={{ fontSize: 11, fontWeight: 600, color: gpsStatusColor, fontFamily: "'Chakra Petch', sans-serif" }}>{gpsStatus === 'active' ? 'GPS Active' : gpsStatus === 'acquiring' ? 'Acquiring...' : gpsStatus === 'error' ? 'GPS Error' : 'GPS Ready'}</span>
         </div>
         {running && (
-          <div style={{ position: 'absolute', top: 12, left: 12, zIndex: 1000, backgroundColor: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(8px)', borderRadius: 20, padding: '5px 12px', border: '1px solid var(--border)' }}>
+          <div style={{ position: 'absolute', top: 12, insetInlineStart: 12, zIndex: 1000, backgroundColor: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(8px)', borderRadius: 20, padding: '5px 12px', border: '1px solid var(--border)' }}>
             <span style={{ fontSize: 12, color: 'var(--accent)', fontFamily: "'Chakra Petch', sans-serif", fontWeight: 700 }}>⏱ {formatTime(elapsed)}</span>
           </div>
         )}
@@ -446,7 +446,7 @@ const MapTracker = React.forwardRef<
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 14px', backgroundColor: 'var(--bg-surface)', borderRadius: 10, border: '1px solid var(--border)', fontSize: 12 }}>
           <Timer size={13} color="var(--text-muted)" />
           <span style={{ color: 'var(--text-secondary)' }}>Speed: <strong style={{ color: 'var(--cyan)' }}>{speedKmh.toFixed(1)} km/h</strong></span>
-          <span style={{ color: 'var(--text-muted)', marginLeft: 'auto' }}>{positions.length} GPS pts</span>
+          <span style={{ color: 'var(--text-muted)', marginInlineStart: 'auto' }}>{positions.length} GPS pts</span>
         </div>
       )}
 

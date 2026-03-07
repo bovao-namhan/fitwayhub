@@ -77,7 +77,7 @@ function StatsSection({ c, lang }: { c: any; lang: RenderLang }) {
     <section style={{ borderTop: "1px solid var(--border)", borderBottom: "1px solid var(--border)", backgroundColor: "var(--bg-surface)" }}>
       <div style={{ maxWidth: 1100, margin: "0 auto", padding: "32px 24px", display: "grid", gridTemplateColumns: `repeat(auto-fit, minmax(140px, 1fr))`, gap: 0 }}>
         {items.map((s, i) => (
-          <div key={i} style={{ textAlign: "center", padding: "16px", borderRight: i < items.length - 1 ? "1px solid var(--border)" : "none" }}>
+          <div key={i} style={{ textAlign: "center", padding: "16px", borderInlineEnd: i < items.length - 1 ? "1px solid var(--border)" : "none" }}>
             <p style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 30, fontWeight: 700, color: "var(--accent)", lineHeight: 1 }}>{s.value}</p>
             <p style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 4, textTransform: "uppercase", letterSpacing: "0.06em" }}>{lang === "ar" ? (s as any).label_ar || s.label : s.label || (s as any).label_ar}</p>
           </div>
@@ -319,7 +319,7 @@ function ContactInfoSection({ c, lang }: { c: any; lang: RenderLang }) {
               </div>
               {faqs.map((faq, i) => (
                 <div key={i} style={{ borderBottom: i < faqs.length - 1 ? "1px solid var(--border)" : "none" }}>
-                  <button onClick={() => setOpenFaq(openFaq === i ? null : i)} style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 0", background: "none", border: "none", cursor: "pointer", textAlign: "left", color: "var(--text-primary)", fontSize: 13, fontWeight: 500 }}>
+                  <button onClick={() => setOpenFaq(openFaq === i ? null : i)} style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 0", background: "none", border: "none", cursor: "pointer", textAlign: "start", color: "var(--text-primary)", fontSize: 13, fontWeight: 500 }}>
                     {lang === "ar" ? (faq as any).q_ar || faq.q : faq.q || (faq as any).q_ar}
                     {openFaq === i ? <ChevronUp size={15} color="var(--accent)" /> : <ChevronDown size={15} color="var(--text-muted)" />}
                   </button>

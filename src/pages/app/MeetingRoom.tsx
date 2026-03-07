@@ -1,5 +1,5 @@
 import React from "react";
-import { getApiBase } from "@/lib/api";
+import { getApiBase, getSocketBase } from "@/lib/api";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
@@ -108,7 +108,7 @@ export default function MeetingRoom() {
   useEffect(() => {
     if (!meeting || !user || !roomId) return;
 
-    const socket = io(getApiBase(), { transports: ['websocket', 'polling'] });
+    const socket = io(getSocketBase(), { transports: ['websocket', 'polling'], auth: { token } });
     socketRef.current = socket;
 
     socket.on('connect', () => {
@@ -481,7 +481,7 @@ export default function MeetingRoom() {
           </button>
           <button onClick={() => { setSidePanel(sidePanel === "chat" ? null : "chat"); if (sidePanel !== "chat") setUnreadCount(0); }} style={{ position: "relative", padding: "7px 10px", borderRadius: 8, background: sidePanel === "chat" ? "var(--accent-dim)" : "var(--bg-surface)", border: `1px solid ${sidePanel === "chat" ? "rgba(200,255,0,0.3)" : "var(--border)"}`, color: sidePanel === "chat" ? "var(--accent)" : "var(--text-muted)", cursor: "pointer", display: "flex", alignItems: "center", gap: 5, fontSize: 11, fontWeight: 600 }}>
             <MessageSquare size={13} /> <span className="hide-mobile">Chat</span>
-            {unreadCount > 0 && <span style={{ position: "absolute", top: -5, right: -5, width: 18, height: 18, borderRadius: "50%", background: "var(--red)", color: "#fff", fontSize: 9, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center" }}>{unreadCount > 9 ? "9+" : unreadCount}</span>}
+            {unreadCount > 0 && <span style={{ position: "absolute", top: -5, insetInlineEnd: -5, width: 18, height: 18, borderRadius: "50%", background: "var(--red)", color: "#fff", fontSize: 9, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center" }}>{unreadCount > 9 ? "9+" : unreadCount}</span>}
           </button>
           <button onClick={() => setSidePanel(sidePanel === "files" ? null : "files")} style={{ padding: "7px 10px", borderRadius: 8, background: sidePanel === "files" ? "var(--accent-dim)" : "var(--bg-surface)", border: `1px solid ${sidePanel === "files" ? "rgba(200,255,0,0.3)" : "var(--border)"}`, color: sidePanel === "files" ? "var(--accent)" : "var(--text-muted)", cursor: "pointer", display: "flex", alignItems: "center", gap: 5, fontSize: 11, fontWeight: 600 }}>
             <Paperclip size={13} /> <span className="hide-mobile">Files{files.length > 0 ? ` (${files.length})` : ""}</span>
@@ -539,8 +539,8 @@ export default function MeetingRoom() {
                     <img src={user?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.email}`} alt="" style={{ width: 48, height: 48, borderRadius: "50%" }} />
                   </div>
                 )}
-                {screenSharing && <div style={{ position: "absolute", top: 4, left: 4, padding: "2px 6px", borderRadius: 4, backgroundColor: "rgba(96,165,250,0.9)", fontSize: 9, fontWeight: 700, color: "#fff" }}>Screen</div>}
-                {!audioEnabled && <span style={{ position: "absolute", bottom: 4, right: 4, width: 18, height: 18, borderRadius: "50%", backgroundColor: "var(--red)", display: "flex", alignItems: "center", justifyContent: "center" }}><MicOff size={10} color="#fff" /></span>}
+                {screenSharing && <div style={{ position: "absolute", top: 4, insetInlineStart: 4, padding: "2px 6px", borderRadius: 4, backgroundColor: "rgba(96,165,250,0.9)", fontSize: 9, fontWeight: 700, color: "#fff" }}>Screen</div>}
+                {!audioEnabled && <span style={{ position: "absolute", bottom: 4, insetInlineEnd: 4, width: 18, height: 18, borderRadius: "50%", backgroundColor: "var(--red)", display: "flex", alignItems: "center", justifyContent: "center" }}><MicOff size={10} color="#fff" /></span>}
               </div>
             </div>
           ) : (
@@ -548,7 +548,7 @@ export default function MeetingRoom() {
             <div style={{ textAlign: "center", maxWidth: 440, padding: 20 }}>
               <div style={{ display: "flex", justifyContent: "center", marginBottom: 28 }}>
                 <img src={user?.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.email}`} alt="" style={{ width: 80, height: 80, borderRadius: "50%", border: "3px solid var(--accent)", zIndex: 1 }} />
-                <img src={partnerAvatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${partnerName}`} alt="" style={{ width: 80, height: 80, borderRadius: "50%", border: "3px solid #60A5FA", marginLeft: -18 }} />
+                <img src={partnerAvatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${partnerName}`} alt="" style={{ width: 80, height: 80, borderRadius: "50%", border: "3px solid #60A5FA", marginInlineStart: -18 }} />
               </div>
               <h2 style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 24, fontWeight: 700, marginBottom: 8 }}>{meeting.title}</h2>
               <p style={{ fontSize: 14, color: "var(--text-secondary)", marginBottom: 6 }}>Session with <strong>{partnerName}</strong></p>
@@ -583,7 +583,7 @@ export default function MeetingRoom() {
 
         {/* ── Side panel ─────────────────────────────────────────────── */}
         {sidePanel && (
-          <div style={{ width: 360, maxWidth: "85vw", borderLeft: "1px solid var(--border)", display: "flex", flexDirection: "column", backgroundColor: "var(--bg-card)", flexShrink: 0 }}>
+          <div style={{ width: 360, maxWidth: "85vw", borderInlineStart: "1px solid var(--border)", display: "flex", flexDirection: "column", backgroundColor: "var(--bg-card)", flexShrink: 0 }}>
             {/* Chat */}
             {sidePanel === "chat" && (<>
               <div style={{ padding: "12px 14px", borderBottom: "1px solid var(--border)", fontFamily: "'Chakra Petch', sans-serif", fontSize: 13, fontWeight: 700, display: "flex", alignItems: "center", gap: 8 }}>
@@ -609,7 +609,7 @@ export default function MeetingRoom() {
                     </React.Fragment>
                   );
                 })}
-                {peerTyping && <div style={{ fontSize: 11, color: "var(--text-muted)", fontStyle: "italic", paddingLeft: 4 }}>{peerTyping} is typing...</div>}
+                {peerTyping && <div style={{ fontSize: 11, color: "var(--text-muted)", fontStyle: "italic", paddingInlineStart: 4 }}>{peerTyping} is typing...</div>}
                 <div ref={chatEndRef} />
               </div>
               <div style={{ padding: "10px 12px", borderTop: "1px solid var(--border)", display: "flex", gap: 8 }}>

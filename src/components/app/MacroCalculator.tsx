@@ -298,7 +298,7 @@ export function MacroCalculator() {
 
       {/* Search Bar */}
       <div style={{ position: "relative" }}>
-        <Search size={15} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} />
+        <Search size={15} style={{ position: "absolute", insetInlineStart: 12, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} />
         <input
           value={search}
           onChange={e => { setSearch(e.target.value); setShowList(true); setSelected(null); }}
@@ -311,7 +311,7 @@ export function MacroCalculator() {
           }}
         />
         {search && (
-          <button onClick={() => { setSearch(""); setShowList(true); }} style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)", padding: 2 }}>
+          <button onClick={() => { setSearch(""); setShowList(true); }} style={{ position: "absolute", insetInlineEnd: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)", padding: 2 }}>
             <X size={14} />
           </button>
         )}
@@ -322,7 +322,7 @@ export function MacroCalculator() {
         <button onClick={() => { setActiveCategory("all"); setShowList(true); setSelected(null); }} style={pill(activeCategory === "all")}>All</button>
         {CATEGORIES.map(c => (
           <button key={c.key} onClick={() => { setActiveCategory(c.key); setShowList(true); setSelected(null); }} style={pill(activeCategory === c.key, c.color)}>
-            <c.icon size={11} style={{ marginRight: 4, verticalAlign: "middle" }} />
+            <c.icon size={11} style={{ marginInlineEnd: 4, verticalAlign: "middle" }} />
             {c.label}
           </button>
         ))}
@@ -342,7 +342,7 @@ export function MacroCalculator() {
                 onClick={() => selectItem(item)}
                 style={{
                   display: "flex", alignItems: "center", gap: 10, padding: "10px 14px",
-                  width: "100%", textAlign: "left", background: "none", border: "none",
+                  width: "100%", textAlign: "start", background: "none", border: "none",
                   borderBottom: "1px solid var(--border)", cursor: "pointer",
                   transition: "background-color 0.15s", color: "var(--text-primary)", fontSize: 13,
                 }}
@@ -472,7 +472,7 @@ export function MacroCalculator() {
                     style={{
                       display: "flex", alignItems: "center", gap: 10, padding: "8px 12px",
                       borderRadius: 10, background: "var(--bg-surface)", border: "1px solid var(--border)",
-                      cursor: "pointer", textAlign: "left", width: "100%",
+                      cursor: "pointer", textAlign: "start", width: "100%",
                       transition: "border-color 0.15s", color: "var(--text-primary)", fontSize: 12,
                     }}
                     onMouseOver={e => (e.currentTarget.style.borderColor = "var(--accent)")}
@@ -538,7 +538,7 @@ export function MacroCalculator() {
               <span style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 28, fontWeight: 800, color: "var(--accent)" }}>
                 {Math.round(plateTotals.calories)}
               </span>
-              <span style={{ fontSize: 12, color: "var(--text-muted)", marginLeft: 4 }}>kcal total</span>
+              <span style={{ fontSize: 12, color: "var(--text-muted)", marginInlineStart: 4 }}>kcal total</span>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, textAlign: "center" }}>
               {[

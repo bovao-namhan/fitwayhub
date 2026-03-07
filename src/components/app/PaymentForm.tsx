@@ -322,7 +322,7 @@ export default function PaymentForm({ amount, plan, type, token, onSuccess, onEr
             {proofPreview ? (
               <div style={{ position: "relative" }}>
                 <img src={proofPreview} alt="Proof" style={{ width: "100%", maxHeight: 200, objectFit: "contain", borderRadius: 10, border: "1px solid var(--border)", backgroundColor: "var(--bg-surface)" }} />
-                <button type="button" onClick={() => { setProofFile(null); setProofPreview(null); }} style={{ position: "absolute", top: 8, right: 8, width: 28, height: 28, borderRadius: "50%", backgroundColor: "rgba(0,0,0,0.6)", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <button type="button" onClick={() => { setProofFile(null); setProofPreview(null); }} style={{ position: "absolute", top: 8, insetInlineEnd: 8, width: 28, height: 28, borderRadius: "50%", backgroundColor: "rgba(0,0,0,0.6)", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
                   <X size={14} color="#fff" />
                 </button>
               </div>

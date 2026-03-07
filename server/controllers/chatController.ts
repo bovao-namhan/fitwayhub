@@ -98,10 +98,6 @@ export const getChallengeMessages = async (req: Request, res: Response) => {
   try {
     const userId = (req as any).user.id;
     markOnline(userId);
-    const userRole = (req as any).user.role;
-    if (userRole !== 'admin') {
-      return res.status(403).json({ message: 'Challenge chat is disabled. Use direct chat with your subscribed coach.' });
-    }
     const challengeId = req.params.challengeId;
     const participantCheck = await get('SELECT id FROM challenge_participants WHERE challenge_id = ? AND user_id = ?', [challengeId, userId]);
     if (!participantCheck) {
@@ -131,11 +127,6 @@ export const sendMessage = async (req: Request, res: Response) => {
     if (receiverId) {
       const allowed = await canDirectChat(senderId, senderRole, Number(receiverId));
       if (!allowed.ok) return res.status((allowed as any).status).json({ message: (allowed as any).message });
-    }
-
-    // Disable challenge chat for non-admin
-    if (challengeId && senderRole !== 'admin') {
-      return res.status(403).json({ message: 'Challenge chat is disabled. Use direct chat with your subscribed coach.' });
     }
 
     let insertId: number;

@@ -225,16 +225,16 @@ export default function Coaching() {
       </div>
 
       <div style={{ position: "relative", marginBottom: 14 }}>
-        <Search size={16} style={{ position: "absolute", left: 16, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} />
+        <Search size={16} style={{ position: "absolute", insetInlineStart: 16, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} />
         <input
           type="text"
           value={query}
           onChange={e => setQuery(e.target.value)}
           className="input-base"
           placeholder={searchField === "name" ? "Search by coach name..." : searchField === "plan" ? "Search by plan type (complete/workout/nutrition)..." : "Search exact monthly cost (EGP)..."}
-          style={{ paddingLeft: 46, paddingRight: isMobile ? 100 : 140, fontSize: 14 }}
+          style={{ paddingInlineStart: 46, paddingInlineEnd: isMobile ? 100 : 140, fontSize: 14 }}
         />
-        <button onClick={() => setShowFilters(!showFilters)} style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", display: "flex", alignItems: "center", gap: isMobile ? 4 : 6, padding: isMobile ? "7px 10px" : "7px 14px", borderRadius: 8, background: showFilters ? "var(--accent-dim)" : "var(--bg-surface)", border: `1px solid ${showFilters ? "var(--accent)" : "var(--border)"}`, color: showFilters ? "var(--accent)" : "var(--text-secondary)", cursor: "pointer", fontSize: 12, fontWeight: 600 }}>
+        <button onClick={() => setShowFilters(!showFilters)} style={{ position: "absolute", insetInlineEnd: 8, top: "50%", transform: "translateY(-50%)", display: "flex", alignItems: "center", gap: isMobile ? 4 : 6, padding: isMobile ? "7px 10px" : "7px 14px", borderRadius: 8, background: showFilters ? "var(--accent-dim)" : "var(--bg-surface)", border: `1px solid ${showFilters ? "var(--accent)" : "var(--border)"}`, color: showFilters ? "var(--accent)" : "var(--text-secondary)", cursor: "pointer", fontSize: 12, fontWeight: 600 }}>
           <SlidersHorizontal size={13} /> Filters {activeFilters > 0 && <span style={{ width: 17, height: 17, borderRadius: "50%", background: "var(--accent)", color: "#0A0A0B", fontSize: 10, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center" }}>{activeFilters}</span>}
         </button>
       </div>
@@ -421,7 +421,7 @@ export default function Coaching() {
                 <label style={{ fontSize: 11, fontWeight: 600, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 8 }}>Plan</label>
                 <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
                   {([{ id: "complete", label: "🏆 Complete Plan", desc: "Workout + Nutrition" }, { id: "workout", label: "💪 Workout Only", desc: "Strength & conditioning" }, { id: "nutrition", label: "🥗 Nutrition Only", desc: "Personalized meals" }] as const).map(plan => (
-                    <button key={plan.id} onClick={() => setBookingPlan(plan.id)} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", borderRadius: 10, border: `1px solid ${bookingPlan === plan.id ? "var(--accent)" : "var(--border)"}`, background: bookingPlan === plan.id ? "var(--accent-dim)" : "var(--bg-card)", cursor: "pointer", textAlign: "left" }}>
+                    <button key={plan.id} onClick={() => setBookingPlan(plan.id)} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", borderRadius: 10, border: `1px solid ${bookingPlan === plan.id ? "var(--accent)" : "var(--border)"}`, background: bookingPlan === plan.id ? "var(--accent-dim)" : "var(--bg-card)", cursor: "pointer", textAlign: "start" }}>
                       <div>
                         <p style={{ fontSize: 13, fontWeight: 600, color: bookingPlan === plan.id ? "var(--accent)" : "var(--text-primary)" }}>{plan.label}</p>
                         <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 2 }}>{plan.desc}</p>
@@ -532,7 +532,7 @@ export default function Coaching() {
                   {(subscribeCoach.yearly_price || 0) > 0 && (
                     <button onClick={() => setSubCycle("yearly")} style={{ flex: 1, padding: "14px 12px", borderRadius: 12, fontSize: 13, fontWeight: 600, border: `2px solid ${subCycle === "yearly" ? "var(--accent)" : "var(--border)"}`, background: subCycle === "yearly" ? "var(--accent-dim)" : "var(--bg-card)", color: subCycle === "yearly" ? "var(--accent)" : "var(--text-secondary)", cursor: "pointer", textAlign: "center", position: "relative" }}>
                       {(subscribeCoach.monthly_price || 0) > 0 && (subscribeCoach.yearly_price || 0) < (subscribeCoach.monthly_price || 0) * 12 && (
-                        <span style={{ position: "absolute", top: -8, right: 8, fontSize: 10, padding: "1px 6px", borderRadius: 6, background: "var(--accent)", color: "#0A0A0B", fontWeight: 700 }}>
+                        <span style={{ position: "absolute", top: -8, insetInlineEnd: 8, fontSize: 10, padding: "1px 6px", borderRadius: 6, background: "var(--accent)", color: "#0A0A0B", fontWeight: 700 }}>
                           Save {Math.round(100 - ((subscribeCoach.yearly_price || 0) / ((subscribeCoach.monthly_price || 0) * 12)) * 100)}%
                         </span>
                       )}

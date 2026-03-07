@@ -21,6 +21,8 @@
           if (!cached) return;
           var branding = JSON.parse(cached) || {};
           var lang = String(localStorage.getItem('fithub_lang') || 'en').toLowerCase() === 'ar' ? 'ar' : 'en';
+          html.setAttribute('lang', lang);
+          html.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
 
           var setVar = function (name, value) {
             var v = String(value || '').trim();

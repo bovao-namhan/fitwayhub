@@ -59,7 +59,7 @@ function CoachPaywall({ onPay }: { onPay: () => void }) {
         <p style={{ fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.6, marginBottom: 8 }}>
           Activate your coach membership to access your dashboard and start working with athletes.
         </p>
-        <div style={{ background: "rgba(59,139,255,0.08)", border: "1px solid rgba(59,139,255,0.2)", borderRadius: 12, padding: "16px 20px", marginBottom: 24, textAlign: "left" }}>
+        <div style={{ background: "rgba(59,139,255,0.08)", border: "1px solid rgba(59,139,255,0.2)", borderRadius: 12, padding: "16px 20px", marginBottom: 24, textAlign: "start" }}>
           <p style={{ fontSize: 13, fontWeight: 700, color: "var(--blue)", marginBottom: 8, fontFamily: "'Chakra Petch', sans-serif" }}>COACH MEMBERSHIP</p>
           <div style={{ display: "flex", gap: 12 }}>
             <div style={{ flex: 1, background: "var(--bg-surface)", borderRadius: 10, padding: "12px 14px", border: "1px solid var(--border)" }}>
@@ -217,9 +217,8 @@ export function CoachLayout() {
         flex: 1,
         minWidth: 0,
         overflowX: "hidden",
-        marginLeft: isMobile ? 0 : (isRtl ? 0 : sidebarW),
-        marginRight: isMobile ? 0 : (isRtl ? sidebarW : 0),
-        transition: "margin-left 0.25s cubic-bezier(0.4,0,0.2,1)",
+        marginInlineStart: isMobile ? 0 : sidebarW,
+        transition: "margin 0.25s cubic-bezier(0.4,0,0.2,1)",
         paddingTop: isMobile ? 60 : 0,
         paddingBottom: isMobile ? "calc(68px + env(safe-area-inset-bottom))" : 0,
       }}>

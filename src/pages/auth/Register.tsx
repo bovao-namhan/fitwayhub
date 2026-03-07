@@ -45,8 +45,8 @@ export default function Register() {
 
   return (
     <div style={{ minHeight: "100vh", backgroundColor: "var(--bg-primary)", display: "flex" }}>
-      <div className="hidden lg:flex" style={{ width: "45%", backgroundColor: "var(--bg-surface)", borderRight: "1px solid var(--border)", flexDirection: "column", justifyContent: "space-between", padding: "48px", position: "relative", overflow: "hidden" }}>
-        <div style={{ position: "absolute", top: "30%", right: "-10%", width: 300, height: 300, borderRadius: "50%", backgroundColor: "var(--accent)", opacity: 0.07, filter: "blur(80px)", pointerEvents: "none" }} />
+      <div className="hidden lg:flex" style={{ width: "45%", backgroundColor: "var(--bg-surface)", borderInlineEnd: "1px solid var(--border)", flexDirection: "column", justifyContent: "space-between", padding: "48px", position: "relative", overflow: "hidden" }}>
+        <div style={{ position: "absolute", top: "30%", insetInlineEnd: "-10%", width: 300, height: 300, borderRadius: "50%", backgroundColor: "var(--accent)", opacity: 0.07, filter: "blur(80px)", pointerEvents: "none" }} />
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <div style={{ backgroundColor: "var(--accent)", width: 32, height: 32, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center" }}>
             <Activity size={18} color="#0A0A0B" />
@@ -137,23 +137,23 @@ export default function Register() {
             <div>
               <label style={{ fontSize: 12, fontWeight: 600, color: "var(--text-secondary)", letterSpacing: "0.05em", textTransform: "uppercase", display: "block", marginBottom: 6 }}>Full Name</label>
               <div style={{ position: "relative" }}>
-                <User size={15} style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} />
-                <input type="text" value={name} onChange={(e) => setName(e.target.value)} className="input-base" style={{ paddingLeft: 40 }} placeholder="John Doe" required />
+                <User size={15} style={{ position: "absolute", insetInlineStart: 14, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} />
+                <input type="text" value={name} onChange={(e) => setName(e.target.value)} className="input-base" style={{ paddingInlineStart: 40 }} placeholder="John Doe" required />
               </div>
             </div>
             <div>
               <label style={{ fontSize: 12, fontWeight: 600, color: "var(--text-secondary)", letterSpacing: "0.05em", textTransform: "uppercase", display: "block", marginBottom: 6 }}>Email</label>
               <div style={{ position: "relative" }}>
-                <Mail size={15} style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} />
-                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="input-base" style={{ paddingLeft: 40 }} placeholder="you@example.com" required />
+                <Mail size={15} style={{ position: "absolute", insetInlineStart: 14, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} />
+                <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="input-base" style={{ paddingInlineStart: 40 }} placeholder="you@example.com" required />
               </div>
             </div>
             <div>
               <label style={{ fontSize: 12, fontWeight: 600, color: "var(--text-secondary)", letterSpacing: "0.05em", textTransform: "uppercase", display: "block", marginBottom: 6 }}>Password</label>
               <div style={{ position: "relative" }}>
-                <Lock size={15} style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} />
-                <input type={showPassword ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} className="input-base" style={{ paddingLeft: 40, paddingRight: 44, borderColor: password && password.length < 8 ? "var(--red)" : undefined }} placeholder="Min. 8 characters" required />
-                <button type="button" onClick={() => setShowPassword(!showPassword)} style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)", padding: 4 }}>
+                <Lock size={15} style={{ position: "absolute", insetInlineStart: 14, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} />
+                <input type={showPassword ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} className="input-base" style={{ paddingInlineStart: 40, paddingInlineEnd: 44, borderColor: password && password.length < 8 ? "var(--red)" : undefined }} placeholder="Min. 8 characters" required />
+                <button type="button" onClick={() => setShowPassword(!showPassword)} style={{ position: "absolute", insetInlineEnd: 12, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)", padding: 4 }}>
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>

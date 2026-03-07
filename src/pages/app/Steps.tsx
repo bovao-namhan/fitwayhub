@@ -452,7 +452,7 @@ export default function Steps() {
           <div style={{ display: "flex", gap: 4, backgroundColor: "var(--bg-surface)", padding: 3, borderRadius: 10, marginBottom: 16 }}>
             {(["manual", "live"] as const).map((mode) => (
               <button key={mode} onClick={() => setTrackingMode(mode)} style={{ flex: 1, padding: "8px 0", borderRadius: 8, fontSize: 12, fontWeight: 600, border: "none", cursor: "pointer", backgroundColor: trackingMode === mode ? "var(--accent)" : "transparent", color: trackingMode === mode ? "#0A0A0B" : "var(--text-secondary)", fontFamily: trackingMode === mode ? "'Chakra Petch', sans-serif" : "inherit", transition: "all 0.15s", textTransform: "capitalize" }}>
-                {mode === "manual" ? <><Keyboard size={12} style={{ display: "inline", marginRight: 5 }} />Manual</> : <><MapPin size={12} style={{ display: "inline", marginRight: 5 }} />Live</>}
+                {mode === "manual" ? <><Keyboard size={12} style={{ display: "inline", marginInlineEnd: 5 }} />Manual</> : <><MapPin size={12} style={{ display: "inline", marginInlineEnd: 5 }} />Live</>}
               </button>
             ))}
           </div>

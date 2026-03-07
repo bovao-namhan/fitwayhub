@@ -13,7 +13,7 @@ router.get('/history/:userId', authenticateToken, getChatHistory);              
 router.get('/challenge/:challengeId/messages', authenticateToken, getChallengeMessages); // GET /api/chat/challenge/:id/messages
 router.get('/challenge/:challengeId', authenticateToken, getChallengeMessages);    // alias
 router.post('/send', authenticateToken, sendMessage);                              // POST /api/chat/send
-router.post('/send-media', authenticateToken, upload.single('media'), sendMessage); // POST /api/chat/send-media
+router.post('/send-media', authenticateToken, upload.single('file'), sendMessage); // POST /api/chat/send-media
 router.post('/presence/ping', authenticateToken, pingPresence);                    // POST /api/chat/presence/ping
 router.get('/presence', authenticateToken, getPresence);                           // GET /api/chat/presence
 

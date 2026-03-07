@@ -21,6 +21,8 @@
           if (!cached) return;
           var branding = JSON.parse(cached) || {};
           var lang = String(localStorage.getItem('fithub_lang') || 'en').toLowerCase() === 'ar' ? 'ar' : 'en';
+          html.setAttribute('lang', lang);
+          html.setAttribute('dir', lang === 'ar' ? 'rtl' : 'ltr');
 
           var setVar = function (name, value) {
             var v = String(value || '').trim();
@@ -99,10 +101,10 @@
     </script>
     <title>FitWay Hub</title>
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <script type="module" crossorigin src="./assets/index-GDzP64mD.js"></script>
+    <script type="module" crossorigin src="./assets/index-D3IqsD7J.js"></script>
     <link rel="modulepreload" crossorigin href="./assets/vendor-forms-iF4UCg5-.js">
     <link rel="modulepreload" crossorigin href="./assets/vendor-charts-C_GBcPDL.js">
-    <link rel="stylesheet" crossorigin href="./assets/index-CRZK9heD.css">
+    <link rel="stylesheet" crossorigin href="./assets/index-DjMLoa24.css">
   </head>
   <body>
     <div id="root">

@@ -83,7 +83,7 @@ export default function Login() {
         style={{
           width: "45%",
           backgroundColor: "var(--bg-surface)",
-          borderRight: "1px solid var(--border)",
+          borderInlineEnd: "1px solid var(--border)",
           flexDirection: "column",
           justifyContent: "space-between",
           padding: "48px",
@@ -95,7 +95,7 @@ export default function Login() {
         <div style={{
           position: "absolute",
           bottom: "15%",
-          left: "10%",
+          insetInlineStart: "10%",
           width: 320,
           height: 320,
           borderRadius: "50%",
@@ -174,13 +174,13 @@ export default function Login() {
             <div>
               <label style={{ fontSize: 12, fontWeight: 600, color: "var(--text-secondary)", letterSpacing: "0.05em", textTransform: "uppercase", display: "block", marginBottom: 6 }}>Email</label>
               <div style={{ position: "relative" }}>
-                <Mail size={15} style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} />
+                <Mail size={15} style={{ position: "absolute", insetInlineStart: 14, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} />
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="input-base"
-                  style={{ paddingLeft: 40 }}
+                  style={{ paddingInlineStart: 40 }}
                   placeholder="you@example.com"
                   required
                 />
@@ -191,20 +191,20 @@ export default function Login() {
             <div>
               <label style={{ fontSize: 12, fontWeight: 600, color: "var(--text-secondary)", letterSpacing: "0.05em", textTransform: "uppercase", display: "block", marginBottom: 6 }}>Password</label>
               <div style={{ position: "relative" }}>
-                <Lock size={15} style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} />
+                <Lock size={15} style={{ position: "absolute", insetInlineStart: 14, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} />
                 <input
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="input-base"
-                  style={{ paddingLeft: 40, paddingRight: 44 }}
+                  style={{ paddingInlineStart: 40, paddingInlineEnd: 44 }}
                   placeholder="••••••••"
                   required
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)", padding: 4 }}
+                  style={{ position: "absolute", insetInlineEnd: 12, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)", padding: 4 }}
                 >
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>

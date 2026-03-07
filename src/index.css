@@ -242,8 +242,7 @@ h1, h2, h3, h4, h5, h6, .font-display {
 
   /* Page content padding on mobile */
   .page-content {
-    padding-left: 14px !important;
-    padding-right: 14px !important;
+    padding-inline: 14px !important;
   }
 
   /* Profile/coach stats that may stack */
@@ -354,8 +353,7 @@ main > div {
 
   /* Reduce page-level padding */
   main > div > div[style*="padding"] {
-    padding-left: 12px !important;
-    padding-right: 12px !important;
+    padding-inline: 12px !important;
   }
 
   /* Reduce header font sizes */

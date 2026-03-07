@@ -65,7 +65,7 @@ if (typeof document !== "undefined" && !document.getElementById(STYLE_ID)) {
 export default function Chat() {
   const { user, token } = useAuth();
   const { t } = useI18n();
-  const canUseChallengeChat = user?.role === "admin";
+  const canUseChallengeChat = true;
 
   /* state */
   const [contacts, setContacts] = useState<UserContact[]>([]);
@@ -159,6 +159,7 @@ export default function Chat() {
 
   /* poll messages */
   useEffect(() => {
+    setSubscriptionError("");
     if (selectedContact) {
       setSelectedChallenge(null);
       fetchMessages(selectedContact.id);
@@ -324,7 +325,7 @@ export default function Chat() {
           <div style={{ padding: "6px 14px 12px" }}>
             <div style={{ position: "relative" }}>
               <Search size={14} style={{
-                position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: cv.textMuted,
+                position: "absolute", insetInlineStart: 12, top: "50%", transform: "translateY(-50%)", color: cv.textMuted,
               }} />
               <input
                 value={searchQuery}
@@ -352,7 +353,7 @@ export default function Chat() {
                 return (
                   <button key={ct.id} onClick={() => { setSelectedContact(ct); inputRef.current?.focus(); }} style={{
                     display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "10px 10px",
-                    borderRadius: 14, border: "none", cursor: "pointer", marginBottom: 2, textAlign: "left",
+                    borderRadius: 14, border: "none", cursor: "pointer", marginBottom: 2, textAlign: "start",
                     transition: "all 0.15s",
                     backgroundColor: sel ? cv.accentDim : "transparent",
                   }}>
@@ -373,7 +374,7 @@ export default function Chat() {
                       )}
                       {ct.online && (
                         <div style={{
-                          position: "absolute", bottom: 1, right: 1, width: 10, height: 10,
+                          position: "absolute", bottom: 1, insetInlineEnd: 1, width: 10, height: 10,
                           borderRadius: "50%", backgroundColor: "#34D399", border: "2px solid var(--bg-card)",
                         }} />
                       )}
@@ -398,7 +399,7 @@ export default function Chat() {
                       }}>
                         <span style={{
                           display: "inline-block", width: 6, height: 6, borderRadius: "50%",
-                          backgroundColor: STATUS_COLORS[ct.role] || "#999", marginRight: 5, verticalAlign: "middle",
+                          backgroundColor: STATUS_COLORS[ct.role] || "#999", marginInlineEnd: 5, verticalAlign: "middle",
                         }} />
                         {ct.role}
                       </p>
@@ -425,7 +426,7 @@ export default function Chat() {
                 return (
                   <button key={ch.id} onClick={() => setSelectedChallenge(ch)} style={{
                     display: "flex", alignItems: "center", gap: 12, width: "100%", padding: "10px 10px",
-                    borderRadius: 14, border: "none", cursor: "pointer", marginBottom: 2, textAlign: "left",
+                    borderRadius: 14, border: "none", cursor: "pointer", marginBottom: 2, textAlign: "start",
                     transition: "all 0.15s",
                     backgroundColor: sel ? cv.accentDim : "transparent",
                   }}>
@@ -459,7 +460,7 @@ export default function Chat() {
         <div style={{
           flex: 1, display: "flex", flexDirection: "column", backgroundColor: cv.bg,
           borderRadius: isMobile ? 0 : 18, border: `1px solid ${cv.border}`,
-          overflow: "hidden", marginLeft: isMobile ? 0 : 12,
+          overflow: "hidden", marginInlineStart: isMobile ? 0 : 12,
         }}>
           {/* ---- Header ---- */}
           <div style={{
@@ -470,7 +471,7 @@ export default function Chat() {
             {isMobile && (
               <button onClick={() => { setSelectedContact(null); setSelectedChallenge(null); }} style={{
                 background: "none", border: "none", cursor: "pointer", color: cv.textSecondary,
-                padding: 4, marginRight: 2, display: "flex", alignItems: "center",
+                padding: 4, marginInlineEnd: 2, display: "flex", alignItems: "center",
               }}>
                 <ArrowLeft size={20} />
               </button>
@@ -483,7 +484,7 @@ export default function Chat() {
                 }} />
                 {selectedContact.online && (
                   <div style={{
-                    position: "absolute", bottom: 0, right: 0, width: 10, height: 10,
+                    position: "absolute", bottom: 0, insetInlineEnd: 0, width: 10, height: 10,
                     borderRadius: "50%", backgroundColor: "#34D399", border: "2px solid var(--bg-card)",
                   }} />
                 )}
@@ -601,7 +602,7 @@ export default function Chat() {
                         {/* Sender name for group chats */}
                         {!isMe && !m.grouped && selectedChallenge && (
                           <span style={{
-                            fontSize: 10, fontWeight: 700, marginBottom: 3, paddingLeft: 4,
+                            fontSize: 10, fontWeight: 700, marginBottom: 3, paddingInlineStart: 4,
                             color: STATUS_COLORS[contacts.find(cx => cx.id === m.sender_id)?.role ?? "user"] || cv.accent,
                           }}>{m.sender_name}</span>
                         )}
@@ -717,7 +718,7 @@ export default function Chat() {
                 }}
               />
               <button style={{
-                position: "absolute", right: 6, top: "50%", transform: "translateY(-50%)",
+                position: "absolute", insetInlineEnd: 6, top: "50%", transform: "translateY(-50%)",
                 background: "none", border: "none", cursor: "pointer", color: cv.textMuted, padding: 4,
               }}>
                 <SmilePlus size={18} />
@@ -741,7 +742,7 @@ export default function Chat() {
       {!isMobile && !(selectedContact || selectedChallenge) && (
         <div style={{
           flex: 1, display: "flex", alignItems: "center", justifyContent: "center",
-          flexDirection: "column", gap: 14, marginLeft: 12,
+          flexDirection: "column", gap: 14, marginInlineStart: 12,
           background: `radial-gradient(ellipse at 50% 40%, rgba(200,255,0,0.04), transparent 70%)`,
           borderRadius: 18, border: `1px solid ${cv.border}`,
         }}>

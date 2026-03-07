@@ -288,7 +288,7 @@ export default function Community() {
             background: "linear-gradient(135deg, rgba(200,255,0,0.06), rgba(59,139,255,0.06))",
             border: "1px solid rgba(200,255,0,0.15)",
           }}>
-            <span style={{ fontSize: 10, fontWeight: 700, color: "var(--accent)", textTransform: "uppercase", letterSpacing: "0.08em", display: "flex", alignItems: "center", gap: 4, marginRight: 8 }}>
+            <span style={{ fontSize: 10, fontWeight: 700, color: "var(--accent)", textTransform: "uppercase", letterSpacing: "0.08em", display: "flex", alignItems: "center", gap: 4, marginInlineEnd: 8 }}>
               <Eye size={11} /> Admin
             </span>
             {[
@@ -312,7 +312,7 @@ export default function Community() {
           <TrendingUp size={13} color="var(--accent)" style={{ flexShrink: 0 }} />
           {activeTag && (
             <button onClick={() => { setActiveTag(null); }} style={{ ...pillBtn(true), padding: "5px 10px", fontSize: 11 }}>
-              All <X size={10} style={{ marginLeft: 2 }} />
+              All <X size={10} style={{ marginInlineStart: 2 }} />
             </button>
           )}
           {trendingTags.slice(0, 8).map(t => (
@@ -363,7 +363,7 @@ export default function Community() {
                 {filePreview && (
                   <div style={{ position: "relative", marginBottom: 10, borderRadius: 14, overflow: "hidden", border: "1px solid var(--border)" }}>
                     <img src={filePreview} alt="Preview" style={{ width: "100%", maxHeight: 200, objectFit: "cover", display: "block" }} />
-                    <button onClick={() => { setSelectedFile(null); setFilePreview(null); }} style={{ position: "absolute", top: 8, right: 8, width: 28, height: 28, borderRadius: "50%", backgroundColor: "rgba(0,0,0,0.6)", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff" }}>
+                    <button onClick={() => { setSelectedFile(null); setFilePreview(null); }} style={{ position: "absolute", top: 8, insetInlineEnd: 8, width: 28, height: 28, borderRadius: "50%", backgroundColor: "rgba(0,0,0,0.6)", border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "#fff" }}>
                       <X size={14} />
                     </button>
                   </div>
@@ -471,7 +471,7 @@ export default function Community() {
             return (
               <div key={ch.id} className={`fade-up-${Math.min(idx + 1, 4)}`} style={{ ...cardStyle, position: "relative" }}>
                 <div style={{
-                  position: "absolute", top: 12, right: 12, zIndex: 2, padding: "3px 10px", borderRadius: 20,
+                  position: "absolute", top: 12, insetInlineEnd: 12, zIndex: 2, padding: "3px 10px", borderRadius: 20,
                   fontSize: 10, fontWeight: 700, letterSpacing: "0.06em",
                   fontFamily: "'Chakra Petch', sans-serif",
                   backgroundColor: isActive ? "rgba(200,255,0,0.9)" : isUpcoming ? "rgba(59,139,255,0.9)" : "rgba(255,100,100,0.8)",
@@ -654,7 +654,7 @@ function SponsoredAdCard({ ad, token }: { ad: SponsoredAd; token: string | null 
       overflow: "hidden", position: "relative",
     }}>
       <div style={{
-        position: "absolute", top: 10, right: 10, zIndex: 2, backgroundColor: "rgba(59,139,255,0.85)",
+        position: "absolute", top: 10, insetInlineEnd: 10, zIndex: 2, backgroundColor: "rgba(59,139,255,0.85)",
         borderRadius: 20, padding: "3px 10px", fontSize: 10, fontWeight: 700, color: "#fff",
         fontFamily: "'Chakra Petch', sans-serif", letterSpacing: "0.06em",
       }}>
@@ -714,7 +714,7 @@ function PostCard({
   const renderHashtags = (tags: string) => {
     const parts = tags.match(/#[\w\u0600-\u06FF]+/g) || [];
     return parts.map((t, i) => (
-      <button key={i} onClick={() => onTagClick(t)} style={{ background: "none", border: "none", padding: 0, cursor: "pointer", fontSize: 12, color: "var(--accent)", fontWeight: 600, marginRight: 6 }}>
+      <button key={i} onClick={() => onTagClick(t)} style={{ background: "none", border: "none", padding: 0, cursor: "pointer", fontSize: 12, color: "var(--accent)", fontWeight: 600, marginInlineEnd: 6 }}>
         {t}
       </button>
     ));

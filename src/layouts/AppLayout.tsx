@@ -1,7 +1,7 @@
 import { Outlet } from "react-router-dom";
 import {
   Home, Dumbbell, Users, MessageSquare, User,
-  Wrench, TrendingUp, UserCheck, Activity, Video, FileText,
+  Wrench, TrendingUp, UserCheck, Activity, Video, FileText, ClipboardList,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useBranding, getBrandLogoForLang } from "@/context/BrandingContext";
@@ -37,6 +37,7 @@ const moreDrawerItems: NavItem[] = [
   { path: "/app/meetings",   icon: Video,         label: "Meetings" },
   { path: "/app/blogs",      icon: FileText,      label: "No Pain No Shawerma" },
   { path: "/app/chat",       icon: MessageSquare, label: "Chat" },
+  { path: "/app/plans",      icon: ClipboardList, label: "My Plans" },
   { path: "/app/tools",      icon: Wrench,        label: "Tools" },
 ];
 
@@ -92,9 +93,8 @@ export function AppLayout() {
         flex: 1,
         minWidth: 0,
         overflowX: "hidden",
-        marginLeft: isMobile ? 0 : (isRtl ? 0 : sidebarW),
-        marginRight: isMobile ? 0 : (isRtl ? sidebarW : 0),
-        transition: "margin-left 0.25s cubic-bezier(0.4,0,0.2,1)",
+        marginInlineStart: isMobile ? 0 : sidebarW,
+        transition: "margin 0.25s cubic-bezier(0.4,0,0.2,1)",
         minHeight: "100vh",
         paddingTop: isMobile ? 56 : 0,
         paddingBottom: isMobile ? "calc(64px + env(safe-area-inset-bottom))" : 0,

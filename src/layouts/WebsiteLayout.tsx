@@ -87,7 +87,7 @@ export function WebsiteLayout() {
               onClick={toggleTheme}
               title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
               style={{
-                marginLeft: 4, width: 36, height: 36, borderRadius: 9,
+                marginInlineStart: 4, width: 36, height: 36, borderRadius: 9,
                 display: "flex", alignItems: "center", justifyContent: "center",
                 background: "var(--bg-card)", border: "1px solid var(--border)",
                 cursor: "pointer", color: "var(--text-secondary)",
@@ -96,7 +96,7 @@ export function WebsiteLayout() {
             >
               {isDark ? <Sun size={16} /> : <Moon size={16} />}
             </button>
-            <div style={{ display: "flex", alignItems: "center", gap: 4, marginLeft: 4, padding: 3, borderRadius: 9, border: "1px solid var(--border)", background: "var(--bg-card)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 4, marginInlineStart: 4, padding: 3, borderRadius: 9, border: "1px solid var(--border)", background: "var(--bg-card)" }}>
               <button
                 onClick={() => setLang("en")}
                 title="English"
@@ -133,7 +133,7 @@ export function WebsiteLayout() {
               </button>
             </div>
             {user ? (
-              <div ref={accountRef} style={{ position: "relative", marginLeft: 6 }}>
+              <div ref={accountRef} style={{ position: "relative", marginInlineStart: 6 }}>
                 <button
                   onClick={() => setAccountOpen(v => !v)}
                   style={{
@@ -162,7 +162,7 @@ export function WebsiteLayout() {
                 {accountOpen && (
                   <div style={{
                     position: "absolute",
-                    right: 0,
+                    insetInlineEnd: 0,
                     top: "calc(100% + 8px)",
                     minWidth: 180,
                     background: "var(--bg-card)",
@@ -174,13 +174,13 @@ export function WebsiteLayout() {
                   }}>
                     <button
                       onClick={() => { setAccountOpen(false); navigate(appRoute); }}
-                      style={{ width: "100%", textAlign: "left", padding: "10px 12px", background: "transparent", border: "none", color: "var(--text-primary)", cursor: "pointer", fontSize: 13 }}
+                      style={{ width: "100%", textAlign: "start", padding: "10px 12px", background: "transparent", border: "none", color: "var(--text-primary)", cursor: "pointer", fontSize: 13 }}
                     >
                       {t("go_to_app")}
                     </button>
                     <button
                       onClick={() => { setAccountOpen(false); logout(); navigate("/"); }}
-                      style={{ width: "100%", textAlign: "left", padding: "10px 12px", background: "transparent", border: "none", color: "var(--red)", cursor: "pointer", fontSize: 13 }}
+                      style={{ width: "100%", textAlign: "start", padding: "10px 12px", background: "transparent", border: "none", color: "var(--red)", cursor: "pointer", fontSize: 13 }}
                     >
                       {t("sign_out")}
                     </button>
@@ -189,7 +189,7 @@ export function WebsiteLayout() {
               </div>
             ) : (
               <Link to="/auth/login" style={{
-                marginLeft: 6, padding: "8px 20px", borderRadius: 9, fontSize: 14, fontWeight: 700,
+                marginInlineStart: 6, padding: "8px 20px", borderRadius: 9, fontSize: 14, fontWeight: 700,
                 textDecoration: "none", backgroundColor: "var(--accent)", color: "#0A0A0B",
                 fontFamily: "'Chakra Petch', sans-serif", letterSpacing: "0.02em",
                 transition: "opacity 0.15s",

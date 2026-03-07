@@ -37,16 +37,24 @@ function getCoachSubscriptionDurationMonths(planCycle: string): number {
   return planCycle === 'yearly' ? 12 : 1;
 }
 
-function computeCoachCut(amount: number): number {
-  return Math.round(amount * 0.9 * 100) / 100;
+async function computeCoachCut(amount: number): Promise<number> {
+  const pctStr = await getSetting('coach_cut_percentage');
+  const pct = pctStr ? Math.min(100, Math.max(0, Number(pctStr))) : 90;
+  return Math.round(amount * (pct / 100) * 100) / 100;
+}
+
+async function getPayPalHostname(): Promise<string> {
+  const mode = await getSetting('paypal_mode');
+  return mode === 'live' ? 'api-m.paypal.com' : 'api-m.sandbox.paypal.com';
 }
 
 async function getPayPalToken(clientId: string, secret: string): Promise<string> {
+  const hostname = await getPayPalHostname();
   return new Promise((resolve, reject) => {
     const auth = Buffer.from(`${clientId}:${secret}`).toString('base64');
     const body = 'grant_type=client_credentials';
     const opts = {
-      hostname: 'api-m.sandbox.paypal.com',
+      hostname,
       path: '/v1/oauth2/token',
       method: 'POST',
       headers: { 'Authorization': `Basic ${auth}`, 'Content-Type': 'application/x-www-form-urlencoded', 'Content-Length': body.length }
@@ -63,11 +71,12 @@ async function getPayPalToken(clientId: string, secret: string): Promise<string>
 }
 
 async function paypalRequest(clientId: string, secret: string, method: string, path: string, body?: object): Promise<any> {
+  const hostname = await getPayPalHostname();
   const token = await getPayPalToken(clientId, secret);
   return new Promise((resolve, reject) => {
     const bodyStr = body ? JSON.stringify(body) : '';
     const opts: any = {
-      hostname: 'api-m.sandbox.paypal.com',
+      hostname,
       path,
       method,
       headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(bodyStr || ' ') }
@@ -228,37 +237,8 @@ function getPremiumAmount(plan: string): number {
   return plan === 'annual' ? 450 : 50;
 }
 
-// ── Credit/Debit Card ─────────────────────────────────────────────────────────
-router.post('/subscribe', authenticateToken, async (req: any, res: Response) => {
-  const { plan, cardLast4, cardName } = req.body;
-  if (!plan || !cardLast4 || !cardName) return res.status(400).json({ message: 'Plan, card details are required' });
-  const amount = getPremiumAmount(plan);
-  try {
-    if (req.user?.role !== 'user') return res.status(400).json({ message: 'Premium subscriptions are only for users' });
-    await run('INSERT INTO payments (user_id, type, plan, amount, card_last4, card_name, payment_method, status) VALUES (?,?,?,?,?,?,?,?)',
-      [req.user.id, 'premium', plan, amount, cardLast4, cardName, 'card', 'completed']);
-    await run('UPDATE users SET is_premium = 1 WHERE id = ?', [req.user.id]);
-    res.json({ message: 'Premium subscription activated', amount });
-  } catch {
-    res.status(500).json({ message: 'Failed to process payment' });
-  }
-});
-
-// Card payment for coach membership → IMMEDIATE activation
-router.post('/coach-membership', authenticateToken, async (req: any, res: Response) => {
-  const { plan, cardLast4, cardName } = req.body;
-  if (!plan || !cardLast4 || !cardName) return res.status(400).json({ message: 'Plan and card details are required' });
-  if (req.user?.role !== 'coach' && req.user?.role !== 'admin') return res.status(403).json({ message: 'Coach access required' });
-  const amount = getPremiumAmount(plan);
-  try {
-    await run('INSERT INTO payments (user_id, type, plan, amount, card_last4, card_name, payment_method, status) VALUES (?,?,?,?,?,?,?,?)',
-      [req.user.id, 'coach_membership', plan, amount, cardLast4, cardName, 'card', 'completed']);
-    await run('UPDATE users SET coach_membership_active = 1 WHERE id = ?', [req.user.id]);
-    res.json({ message: 'Coach membership activated', amount, activated: true });
-  } catch {
-    res.status(500).json({ message: 'Failed to process payment' });
-  }
-});
+// ── Credit/Debit Card endpoints REMOVED ───────────────────────────────────────
+// Card payments are not supported — use E-Wallet or PayPal.
 
 // ── E-Wallet: Coach or User ───────────────────────────────────────────────────
 // Coach e-wallet → PENDING (requires admin approval)
@@ -617,7 +597,7 @@ router.patch('/coach-subscriptions/:id/coach-accept', authenticateToken, async (
       return res.status(400).json({ message: 'This subscription is not waiting for coach decision' });
     }
 
-    const coachCut = computeCoachCut(Number(sub.amount || 0));
+    const coachCut = await computeCoachCut(Number(sub.amount || 0));
 
     await run(
       `UPDATE coach_subscriptions

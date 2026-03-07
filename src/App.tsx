@@ -27,6 +27,7 @@ const Community = lazy(() => import("@/pages/app/Community"));
 const Chat = lazy(() => import("@/pages/app/Chat"));
 const Profile = lazy(() => import("@/pages/app/Profile"));
 const Tools = lazy(() => import("@/pages/app/Tools"));
+const Plans = lazy(() => import("@/pages/app/Plans"));
 const Pricing = lazy(() => import("@/pages/app/Pricing"));
 const Analytics = lazy(() => import("@/pages/app/Analytics"));
 const Coaching = lazy(() => import("@/pages/app/Coaching"));
@@ -107,6 +108,7 @@ export default function App() {
                 <Route path="/app/chat" element={<Chat />} />
                 <Route path="/app/profile" element={<Profile />} />
                 <Route path="/app/tools" element={<Tools />} />
+                <Route path="/app/plans" element={<Plans />} />
                 <Route path="/app/pricing" element={<Pricing />} />
                 <Route path="/app/analytics" element={<Analytics />} />
                 <Route path="/app/coaching" element={<Coaching />} />

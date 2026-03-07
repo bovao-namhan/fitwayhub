@@ -100,6 +100,8 @@ export default function AdminDashboard() {
     ewallet_phone_vodafone: "",
     ewallet_phone_orange: "",
     ewallet_phone_we: "",
+    paypal_mode: "sandbox" as "sandbox" | "live",
+    coach_cut_percentage: "90",
   });
   const [paymentSettingsSaving, setPaymentSettingsSaving] = useState(false);
   const [paymentSettingsMsg, setPaymentSettingsMsg] = useState("");
@@ -561,8 +563,8 @@ export default function AdminDashboard() {
         <div style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 16, overflow: "hidden" }}>
           <div style={{ padding: "16px 20px", borderBottom: "1px solid var(--border)", display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
             <div style={{ position: "relative", flex: 1, minWidth: 200 }}>
-              <Search size={14} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} />
-              <input className="input-base" value={search} onChange={e => setSearch(e.target.value)} placeholder="Search users..." style={{ paddingLeft: 34, padding: "8px 12px 8px 34px" }} />
+              <Search size={14} style={{ position: "absolute", insetInlineStart: 12, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} />
+              <input className="input-base" value={search} onChange={e => setSearch(e.target.value)} placeholder="Search users..." style={{ paddingInlineStart: 34, padding: "8px 12px 8px 34px" }} />
             </div>
             <span style={{ fontSize: 12, color: "var(--text-muted)" }}>
               {users.filter(u => u.role === "user").length} users · {users.filter(u => u.role === "admin").length} admins
@@ -573,7 +575,7 @@ export default function AdminDashboard() {
               <thead>
                 <tr style={{ backgroundColor: "var(--bg-surface)" }}>
                   {["User", "Role", "Premium", "Coach Mbr", "Points", "Steps", "Actions"].map(h => (
-                    <th key={h} style={{ padding: "10px 16px", textAlign: "left", fontSize: 11, fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.07em", borderBottom: "1px solid var(--border)" }}>{h}</th>
+                    <th key={h} style={{ padding: "10px 16px", textAlign: "start", fontSize: 11, fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.07em", borderBottom: "1px solid var(--border)" }}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -766,7 +768,7 @@ export default function AdminDashboard() {
                   <thead>
                     <tr style={{ backgroundColor: "var(--bg-surface)" }}>
                       {[t("table_user"), t("table_type"), t("table_method"), t("table_amount"), t("table_status"), t("table_date")].map(h => (
-                        <th key={h} style={{ padding: "10px 16px", textAlign: "left", fontSize: 11, fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.07em", borderBottom: "1px solid var(--border)" }}>{h}</th>
+                        <th key={h} style={{ padding: "10px 16px", textAlign: "start", fontSize: 11, fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.07em", borderBottom: "1px solid var(--border)" }}>{h}</th>
                       ))}
                     </tr>
                   </thead>
@@ -819,17 +821,17 @@ export default function AdminDashboard() {
               <div key={v.id} style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 16, overflow: "hidden" }}>
                 <div style={{ height: 140, backgroundColor: "var(--bg-surface)", position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
                   <div style={{ width: 50, height: 50, borderRadius: "50%", backgroundColor: "rgba(255,68,68,0.15)", border: "1px solid var(--red)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <Play size={20} color="var(--red)" style={{ marginLeft: 3 }} />
+                    <Play size={20} color="var(--red)" style={{ marginInlineStart: 3 }} />
                   </div>
-                  {v.is_premium && <div style={{ position: "absolute", top: 10, right: 10, padding: "3px 8px", borderRadius: 6, background: "var(--accent)", color: "#0A0A0B", fontSize: 10, fontWeight: 700, fontFamily: "'Chakra Petch', sans-serif" }}>PREMIUM</div>}
-                  <div style={{ position: "absolute", bottom: 8, left: 10, fontSize: 11, color: "var(--text-muted)", display: "flex", alignItems: "center", gap: 4 }}>
+                  {v.is_premium && <div style={{ position: "absolute", top: 10, insetInlineEnd: 10, padding: "3px 8px", borderRadius: 6, background: "var(--accent)", color: "#0A0A0B", fontSize: 10, fontWeight: 700, fontFamily: "'Chakra Petch', sans-serif" }}>PREMIUM</div>}
+                  <div style={{ position: "absolute", bottom: 8, insetInlineStart: 10, fontSize: 11, color: "var(--text-muted)", display: "flex", alignItems: "center", gap: 4 }}>
                     <Clock size={11} /> {v.duration}
                   </div>
                 </div>
                 <div style={{ padding: "14px 16px" }}>
                   <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 6 }}>
                     <h3 style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 14, fontWeight: 700, lineHeight: 1.3 }}>{v.title}</h3>
-                    <span style={{ fontSize: 10, padding: "2px 7px", borderRadius: 5, background: "var(--bg-surface)", color: "var(--text-muted)", border: "1px solid var(--border)", whiteSpace: "nowrap", marginLeft: 8 }}>{v.category}</span>
+                    <span style={{ fontSize: 10, padding: "2px 7px", borderRadius: 5, background: "var(--bg-surface)", color: "var(--text-muted)", border: "1px solid var(--border)", whiteSpace: "nowrap", marginInlineStart: 8 }}>{v.category}</span>
                   </div>
                   <p style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.5, marginBottom: 12 }}>{v.description}</p>
                   <div style={{ display: "flex", gap: 8 }}>
@@ -1170,7 +1172,7 @@ export default function AdminDashboard() {
                     <p style={{ fontSize: 13, fontWeight: 600 }}>{post.user_name}</p>
                     <span style={{ fontSize: 10, padding: "2px 7px", borderRadius: 20, background: post.user_role === "coach" ? "rgba(6,182,212,0.1)" : post.user_role === "admin" ? "rgba(255,68,68,0.1)" : "var(--bg-surface)", color: post.user_role === "coach" ? "var(--cyan)" : post.user_role === "admin" ? "var(--red)" : "var(--text-muted)", border: "1px solid var(--border)" }}>{post.user_role}</span>
                     {post.is_hidden && <span style={{ fontSize: 10, padding: "2px 7px", borderRadius: 20, background: "rgba(255,68,68,0.1)", color: "var(--red)", border: "1px solid rgba(255,68,68,0.3)" }}>🚫 Hidden{post.moderation_reason ? ` — ${post.moderation_reason}` : ""}</span>}
-                    <span style={{ fontSize: 11, color: "var(--text-muted)", marginLeft: "auto" }}>{new Date(post.created_at).toLocaleDateString()}</span>
+                    <span style={{ fontSize: 11, color: "var(--text-muted)", marginInlineStart: "auto" }}>{new Date(post.created_at).toLocaleDateString()}</span>
                   </div>
                   <p style={{ fontSize: 11, color: "var(--text-muted)" }}>{post.user_email}</p>
                 </div>
@@ -1542,6 +1544,48 @@ export default function AdminDashboard() {
                     <label style={{ fontSize: 11, color: "#7B2D8E", display: "block", marginBottom: 4, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em" }}>🟣 WE Pay</label>
                     <input className="input-base" type="tel" value={paymentSettings.ewallet_phone_we} onChange={e => setPaymentSettings(s => ({ ...s, ewallet_phone_we: e.target.value }))} placeholder="+20 15 XXXX XXXX" />
                   </div>
+                </div>
+              </div>
+
+              {/* PayPal Mode */}
+              <div style={{ padding: "16px", backgroundColor: "rgba(255,68,68,0.06)", border: "1px solid rgba(255,68,68,0.2)", borderRadius: 12 }}>
+                <p style={{ fontSize: 13, fontWeight: 700, color: "var(--red)", marginBottom: 8 }}>⚙️ PayPal Mode</p>
+                <p style={{ fontSize: 11, color: "var(--text-muted)", marginBottom: 12, lineHeight: 1.5 }}>
+                  Switch between <strong>Sandbox</strong> (testing) and <strong>Live</strong> (real payments). Make sure PayPal credentials match the selected mode.
+                </p>
+                <div style={{ display: "flex", gap: 8 }}>
+                  {(["sandbox", "live"] as const).map(mode => (
+                    <button key={mode} type="button" onClick={() => setPaymentSettings(s => ({ ...s, paypal_mode: mode }))}
+                      style={{
+                        flex: 1, padding: "12px", borderRadius: 10,
+                        border: `2px solid ${paymentSettings.paypal_mode === mode ? (mode === "live" ? "var(--accent)" : "var(--amber)") : "var(--border)"}`,
+                        backgroundColor: paymentSettings.paypal_mode === mode ? (mode === "live" ? "rgba(0,220,130,0.1)" : "rgba(255,170,0,0.1)") : "var(--bg-surface)",
+                        cursor: "pointer", fontFamily: "'Chakra Petch', sans-serif", fontWeight: 700, fontSize: 13,
+                        color: paymentSettings.paypal_mode === mode ? (mode === "live" ? "var(--accent)" : "var(--amber)") : "var(--text-muted)",
+                      }}>
+                      {mode === "sandbox" ? "🧪 Sandbox (Testing)" : "🔴 Live (Real Payments)"}
+                    </button>
+                  ))}
+                </div>
+                {paymentSettings.paypal_mode === "live" && (
+                  <p style={{ fontSize: 11, color: "var(--red)", marginTop: 8, fontWeight: 600 }}>
+                    ⚠️ Live mode — real money will be charged. Ensure your PayPal credentials are for a production app.
+                  </p>
+                )}
+              </div>
+
+              {/* Coach Revenue Cut */}
+              <div style={{ padding: "16px", backgroundColor: "rgba(0,220,130,0.06)", border: "1px solid rgba(0,220,130,0.2)", borderRadius: 12 }}>
+                <p style={{ fontSize: 13, fontWeight: 700, color: "var(--accent)", marginBottom: 8 }}>💰 Coach Revenue Share</p>
+                <p style={{ fontSize: 11, color: "var(--text-muted)", marginBottom: 12, lineHeight: 1.5 }}>
+                  Percentage of subscription payments credited to the coach. The remaining goes to the platform.
+                </p>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                  <input className="input-base" type="number" min="0" max="100" value={paymentSettings.coach_cut_percentage} onChange={e => setPaymentSettings(s => ({ ...s, coach_cut_percentage: e.target.value }))} style={{ width: 100, textAlign: "center" }} />
+                  <span style={{ fontSize: 14, fontWeight: 700, color: "var(--text-secondary)" }}>%</span>
+                  <span style={{ fontSize: 12, color: "var(--text-muted)" }}>
+                    (Platform keeps {100 - Number(paymentSettings.coach_cut_percentage || 90)}%)
+                  </span>
                 </div>
               </div>
 

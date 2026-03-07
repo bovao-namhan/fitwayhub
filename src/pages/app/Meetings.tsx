@@ -182,8 +182,8 @@ export default function Meetings() {
         </div>
         {/* Search */}
         <div style={{ flex: 1, minWidth: 160, position: "relative" }}>
-          <Search size={14} style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} />
-          <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Search meetings..." className="input-base" style={{ paddingLeft: 30, fontSize: 12, height: 36 }} />
+          <Search size={14} style={{ position: "absolute", insetInlineStart: 10, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} />
+          <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Search meetings..." className="input-base" style={{ paddingInlineStart: 30, fontSize: 12, height: 36 }} />
         </div>
       </div>
 
@@ -211,7 +211,7 @@ export default function Meetings() {
                 <div onClick={() => navigate(`${base}/meeting/${m.room_id}`)} style={{ display: "flex", alignItems: "center", gap: 14, flex: 1, cursor: "pointer", minWidth: 0 }}>
                   <div style={{ position: "relative", flexShrink: 0 }}>
                     <img src={partner.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${partner.name}`} alt="" style={{ width: 48, height: 48, borderRadius: "50%", backgroundColor: "var(--bg-surface)" }} />
-                    {m.status === 'active' && <div style={{ position: "absolute", bottom: 0, right: 0, width: 14, height: 14, borderRadius: "50%", backgroundColor: "var(--accent)", border: "2px solid var(--bg-card)" }} />}
+                    {m.status === 'active' && <div style={{ position: "absolute", bottom: 0, insetInlineEnd: 0, width: 14, height: 14, borderRadius: "50%", backgroundColor: "var(--accent)", border: "2px solid var(--bg-card)" }} />}
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4, flexWrap: "wrap" }}>
@@ -242,17 +242,17 @@ export default function Meetings() {
 
                 {/* Context menu */}
                 {contextMenu?.meetingId === m.room_id && (
-                  <div style={{ position: "absolute", top: 52, right: 16, zIndex: 50, backgroundColor: "var(--bg-surface)", border: "1px solid var(--border)", borderRadius: 10, padding: 4, boxShadow: "0 8px 30px rgba(0,0,0,0.3)", minWidth: 160 }}>
-                    <button onClick={() => { navigate(`${base}/meeting/${m.room_id}`); setContextMenu(null); }} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 6, border: "none", background: "none", color: "var(--text-primary)", cursor: "pointer", width: "100%", fontSize: 12, textAlign: "left" }}>
+                  <div style={{ position: "absolute", top: 52, insetInlineEnd: 16, zIndex: 50, backgroundColor: "var(--bg-surface)", border: "1px solid var(--border)", borderRadius: 10, padding: 4, boxShadow: "0 8px 30px rgba(0,0,0,0.3)", minWidth: 160 }}>
+                    <button onClick={() => { navigate(`${base}/meeting/${m.room_id}`); setContextMenu(null); }} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 6, border: "none", background: "none", color: "var(--text-primary)", cursor: "pointer", width: "100%", fontSize: 12, textAlign: "start" }}>
                       <Video size={13} /> Open Meeting
                     </button>
                     {m.status === 'scheduled' && (
-                      <button onClick={() => { setRescheduleRoom(m.room_id); setRescheduleDate(m.scheduled_at ? new Date(m.scheduled_at).toISOString().slice(0, 16) : ""); setRescheduleMsg(""); setContextMenu(null); }} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 6, border: "none", background: "none", color: "var(--text-primary)", cursor: "pointer", width: "100%", fontSize: 12, textAlign: "left" }}>
+                      <button onClick={() => { setRescheduleRoom(m.room_id); setRescheduleDate(m.scheduled_at ? new Date(m.scheduled_at).toISOString().slice(0, 16) : ""); setRescheduleMsg(""); setContextMenu(null); }} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 6, border: "none", background: "none", color: "var(--text-primary)", cursor: "pointer", width: "100%", fontSize: 12, textAlign: "start" }}>
                         <CalendarClock size={13} /> Reschedule
                       </button>
                     )}
                     {m.status !== 'active' && (
-                      <button onClick={() => { setDeleteRoom(m.room_id); setDeleteMsg(""); setContextMenu(null); }} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 6, border: "none", background: "none", color: "var(--red)", cursor: "pointer", width: "100%", fontSize: 12, textAlign: "left" }}>
+                      <button onClick={() => { setDeleteRoom(m.room_id); setDeleteMsg(""); setContextMenu(null); }} style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 6, border: "none", background: "none", color: "var(--red)", cursor: "pointer", width: "100%", fontSize: 12, textAlign: "start" }}>
                         <Trash2 size={13} /> Delete
                       </button>
                     )}
@@ -288,13 +288,13 @@ export default function Meetings() {
                 ) : (
                   <div style={{ display: "flex", flexDirection: "column", gap: 6, maxHeight: 200, overflowY: "auto" }}>
                     {participants.map((p: any) => (
-                      <button key={p.id} onClick={() => setSelectedParticipant(p.id)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", borderRadius: 10, border: `2px solid ${selectedParticipant === p.id ? "var(--accent)" : "var(--border)"}`, background: selectedParticipant === p.id ? "var(--accent-dim)" : "var(--bg-card)", cursor: "pointer", textAlign: "left" }}>
+                      <button key={p.id} onClick={() => setSelectedParticipant(p.id)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", borderRadius: 10, border: `2px solid ${selectedParticipant === p.id ? "var(--accent)" : "var(--border)"}`, background: selectedParticipant === p.id ? "var(--accent-dim)" : "var(--bg-card)", cursor: "pointer", textAlign: "start" }}>
                         <img src={p.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${p.email}`} alt="" style={{ width: 36, height: 36, borderRadius: "50%", backgroundColor: "var(--bg-surface)" }} />
                         <div>
                           <p style={{ fontSize: 13, fontWeight: 600, color: selectedParticipant === p.id ? "var(--accent)" : "var(--text-primary)" }}>{p.name}</p>
                           <p style={{ fontSize: 11, color: "var(--text-muted)" }}>{p.email}</p>
                         </div>
-                        {selectedParticipant === p.id && <span style={{ marginLeft: "auto", color: "var(--accent)" }}>✓</span>}
+                        {selectedParticipant === p.id && <span style={{ marginInlineStart: "auto", color: "var(--accent)" }}>✓</span>}
                       </button>
                     ))}
                   </div>

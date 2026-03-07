@@ -30,6 +30,7 @@ import adminRoutes from './server/routes/adminRoutes.js';
 import coachRoutes from './server/routes/coachRoutes2.js';
 import userRoutes from './server/routes/userRoutes.js';
 import workoutsRoutes from './server/routes/workoutsRoutes.js';
+import plansRoutes from './server/routes/plansRoutes.js';
 import paymentRoutes from './server/routes/paymentRoutes.js';
 import cmsRoutes from './server/routes/cmsRoutes.js';
 import meetingRoutes from './server/routes/meetingRoutes.js';
@@ -95,6 +96,7 @@ async function startServer() {
   app.use('/api/payments', paymentRoutes);
   app.use('/api/user', userRoutes);
   app.use('/api/workouts', workoutsRoutes);
+  app.use('/api/plans', plansRoutes);
   app.use('/api/cms', cmsRoutes);
   app.use('/api/meetings', meetingRoutes);
   app.use('/api/blogs', blogRoutes);

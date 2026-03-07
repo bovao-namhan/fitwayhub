@@ -421,6 +421,7 @@ router.put('/payment-settings', authenticateToken, adminOnly, async (req: any, r
     'ewallet_phone', 'ewallet_phone_vodafone', 'ewallet_phone_orange', 'ewallet_phone_we',
     'paypal_user_client_id', 'paypal_coach_client_id',
     'paypal_user_secret', 'paypal_coach_secret',
+    'paypal_mode', 'coach_cut_percentage',
   ];
   try {
     const body = req.body as Record<string, string>;

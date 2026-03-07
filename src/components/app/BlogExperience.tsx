@@ -387,7 +387,7 @@ export default function BlogExperience({ mode, heading, subheading, allowWriting
                   key={post.id}
                   onClick={() => setSelectedId(post.id)}
                   style={{
-                    textAlign: "left",
+                    textAlign: "start",
                     border: "1px solid",
                     borderColor: active ? "var(--accent)" : "var(--border)",
                     background: active ? "var(--accent-dim)" : "var(--bg-card)",
