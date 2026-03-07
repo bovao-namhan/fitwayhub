@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+    <meta name="theme-color" content="#0A0A0B" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="format-detection" content="telephone=no" />
+    <meta http-equiv="Content-Security-Policy" content="default-src * 'self' 'unsafe-inline' 'unsafe-eval' data: blob: gap:; img-src * 'self' data: blob:; connect-src * 'self' ws: wss: http: https:;" />
+    <script>
+      (function () {
+        try {
+          var html = document.documentElement;
+          var themeRaw = localStorage.getItem('fitway_theme');
+          var isDark = themeRaw === null ? true : JSON.parse(themeRaw);
+          if (isDark) html.classList.remove('light');
+          else html.classList.add('light');
+
+          var cached = localStorage.getItem('fitway_branding_cache');
+          if (!cached) return;
+          var branding = JSON.parse(cached) || {};
+          var lang = String(localStorage.getItem('fithub_lang') || 'en').toLowerCase() === 'ar' ? 'ar' : 'en';
+
+          var setVar = function (name, value) {
+            var v = String(value || '').trim();
+            if (!v) return;
+            html.style.setProperty(name, v);
+          };
+
+          var hexToRgba = function (hex, alpha) {
+            var raw = String(hex || '').trim().replace(/^#/, '');
+            var normalized = raw.length === 3
+              ? raw.split('').map(function (c) { return c + c; }).join('')
+              : raw;
+            if (!/^[0-9a-fA-F]{6}$/.test(normalized)) return '';
+            var r = parseInt(normalized.slice(0, 2), 16);
+            var g = parseInt(normalized.slice(2, 4), 16);
+            var b = parseInt(normalized.slice(4, 6), 16);
+            return 'rgba(' + r + ', ' + g + ', ' + b + ', ' + alpha + ')';
+          };
+
+          setVar('--accent', branding.primary_color);
+          setVar('--blue', branding.secondary_color);
+          if (isDark) {
+            setVar('--bg-primary', branding.bg_primary);
+            setVar('--bg-card', branding.bg_card);
+          }
+
+          var accentDim = hexToRgba(branding.primary_color, 0.12);
+          var accentGlow = hexToRgba(branding.primary_color, 0.25);
+          if (accentDim) setVar('--accent-dim', accentDim);
+          if (accentGlow) setVar('--accent-glow', accentGlow);
+
+          if (branding.font_en) setVar('--font-en', "'" + branding.font_en + "', sans-serif");
+          if (branding.font_ar) setVar('--font-ar', "'" + branding.font_ar + "', sans-serif");
+          if (branding.font_heading) setVar('--font-heading', "'" + branding.font_heading + "', sans-serif");
+
+          if (branding.app_name) document.title = String(branding.app_name);
+
+          var resolveAsset = function (rawUrl) {
+            var raw = String(rawUrl || '').trim();
+            if (!raw) return '';
+            if (/^https?:\/\//i.test(raw) || raw.indexOf('data:') === 0) return raw;
+            var base = String(localStorage.getItem('fitway_server_url') || '').replace(/\/+$/, '');
+            if (!base) return raw;
+            return base + (raw.charAt(0) === '/' ? '' : '/') + raw;
+          };
+
+          var langLogoRaw = lang === 'ar'
+            ? (branding.logo_url_ar || branding.logo_url_en)
+            : (branding.logo_url_en || branding.logo_url_ar);
+          var splashLogo = document.getElementById('splash-logo');
+          var logoSrc = resolveAsset(langLogoRaw);
+          if (splashLogo && logoSrc) {
+            splashLogo.setAttribute('src', logoSrc);
+            splashLogo.style.display = 'block';
+          }
+
+          var rawFavicon = String(branding.favicon_url || '').trim();
+          if (rawFavicon) {
+            var base = String(localStorage.getItem('fitway_server_url') || '').replace(/\/+$/, '');
+            var favicon = rawFavicon;
+            if (!/^https?:\/\//i.test(rawFavicon) && rawFavicon.indexOf('data:') !== 0 && base) {
+              favicon = base + (rawFavicon.charAt(0) === '/' ? '' : '/') + rawFavicon;
+            }
+            var icon = document.querySelector("link[rel~='icon']");
+            if (!icon) {
+              icon = document.createElement('link');
+              icon.setAttribute('rel', 'icon');
+              document.head.appendChild(icon);
+            }
+            icon.setAttribute('href', favicon);
+          }
+        } catch (e) {
+          // Ignore prehydrate errors and continue boot.
+        }
+      })();
+    </script>
+    <title>FitWay Hub</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  </head>
+  <body>
+    <div id="root">
+      <!-- Splash loader shown while JS bundles load -->
+      <div id="splash-loader" style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:var(--bg-primary,#0A0A0B);z-index:99999;">
+        <img id="splash-logo" src="" alt="logo" style="display:none;max-width:min(62vw,320px);max-height:120px;object-fit:contain;" />
+      </div>
+    </div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+

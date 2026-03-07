@@ -1,0 +1,365 @@
+@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&family=Chakra+Petch:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700&display=swap');
+@import "tailwindcss";
+
+/* ── DARK MODE (default) ── */
+:root {
+  --bg-primary: #0A0A0B;
+  --bg-surface: #111115;
+  --bg-card: #16161A;
+  --bg-card-hover: #1C1C22;
+  --border: #252529;
+  --border-light: #2E2E34;
+  --accent: #C8FF00;
+  --accent-dim: rgba(200, 255, 0, 0.12);
+  --accent-glow: rgba(200, 255, 0, 0.25);
+  --text-primary: #F4F4F5;
+  --text-secondary: #71717A;
+  --text-muted: #3F3F46;
+  --red: #FF4444;
+  --blue: #3B8BFF;
+  --amber: #FFB340;
+  --cyan: #00D4FF;
+  --shadow: rgba(0,0,0,0.4);
+  --font-en: 'Cairo', 'Outfit', sans-serif;
+  --font-ar: 'Cairo', sans-serif;
+  --font-heading: 'Chakra Petch', sans-serif;
+}
+
+/* ── LIGHT MODE ── */
+html.light {
+  --bg-primary: #F8F8FA;
+  --bg-surface: #FFFFFF;
+  --bg-card: #FFFFFF;
+  --bg-card-hover: #F3F3F7;
+  --border: #E4E4E9;
+  --border-light: #D1D1DA;
+  --accent: #7EC800;
+  --accent-dim: rgba(126, 200, 0, 0.1);
+  --accent-glow: rgba(126, 200, 0, 0.2);
+  --text-primary: #0A0A0B;
+  --text-secondary: #52525B;
+  --text-muted: #A1A1AA;
+  --red: #E53E3E;
+  --blue: #2B6CB0;
+  --amber: #D97706;
+  --cyan: #0095B3;
+  --shadow: rgba(0,0,0,0.08);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-en);
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.2s, color 0.2s;
+  overflow-x: hidden;
+}
+
+img, video, canvas {
+  max-width: 100%;
+}
+
+/* RTL support */
+html[dir="rtl"] body {
+  font-family: var(--font-ar);
+  direction: rtl;
+  text-align: right;
+}
+
+html[dir="rtl"] h1, html[dir="rtl"] h2, html[dir="rtl"] h3,
+html[dir="rtl"] h4, html[dir="rtl"] h5, html[dir="rtl"] h6,
+html[dir="rtl"] .font-display {
+  font-family: var(--font-ar);
+}
+
+html[dir="rtl"] input,
+html[dir="rtl"] textarea,
+html[dir="rtl"] select,
+html[dir="rtl"] .input-base {
+  direction: rtl;
+  text-align: right;
+}
+
+html[dir="rtl"] .btn-accent {
+  direction: rtl;
+}
+
+h1, h2, h3, h4, h5, h6, .font-display {
+  font-family: var(--font-heading);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
+
+/* Utilities */
+.bg-primary { background-color: var(--bg-primary); }
+.bg-surface { background-color: var(--bg-surface); }
+.bg-card { background-color: var(--bg-card); }
+.border-base { border-color: var(--border); }
+.text-accent { color: var(--accent); }
+.bg-accent { background-color: var(--accent); }
+.bg-accent-dim { background-color: var(--accent-dim); }
+
+/* Card base */
+.card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  transition: border-color 0.2s, transform 0.2s;
+}
+.card:hover {
+  border-color: var(--border-light);
+}
+
+/* Accent glow effect */
+.accent-glow {
+  box-shadow: 0 0 20px var(--accent-glow);
+}
+
+/* Input base */
+.input-base {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  border-radius: 10px;
+  padding: 12px 16px;
+  width: 100%;
+  font-family: var(--font-en);
+  font-size: 14px;
+  transition: border-color 0.2s;
+  outline: none;
+}
+.input-base::placeholder { color: var(--text-muted); }
+.input-base:focus { border-color: var(--accent); }
+
+/* Button accent */
+.btn-accent {
+  background-color: var(--accent);
+  color: #0A0A0B;
+  font-family: var(--font-heading);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  border-radius: 10px;
+  padding: 12px 24px;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.15s;
+}
+.btn-accent:hover { opacity: 0.9; transform: translateY(-1px); }
+.btn-accent:active { transform: translateY(0); }
+.btn-accent:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+/* Fade-in animation */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.fade-up { animation: fadeUp 0.4s ease forwards; }
+.fade-up-1 { animation: fadeUp 0.4s 0.05s ease both; }
+.fade-up-2 { animation: fadeUp 0.4s 0.1s ease both; }
+.fade-up-3 { animation: fadeUp 0.4s 0.15s ease both; }
+.fade-up-4 { animation: fadeUp 0.4s 0.2s ease both; }
+
+/* Pulse dot */
+@keyframes pulseDot {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+.pulse-dot { animation: pulseDot 2s infinite; }
+
+/* Gift badge shimmer */
+@keyframes shimmer {
+  0% { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+.gift-shimmer {
+  background: linear-gradient(90deg, var(--accent) 0%, #fff 50%, var(--accent) 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer 2.5s linear infinite;
+}
+
+/* Theme toggle switch */
+.theme-toggle {
+  width: 44px; height: 24px;
+  background-color: var(--border-light);
+  border-radius: 12px;
+  position: relative;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  border: none;
+  outline: none;
+  flex-shrink: 0;
+}
+.theme-toggle.active { background-color: var(--accent); }
+.theme-toggle::after {
+  content: '';
+  position: absolute;
+  top: 3px; left: 3px;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  background: white;
+  transition: transform 0.2s;
+}
+.theme-toggle.active::after { transform: translateX(20px); }
+
+/* Card box shadow */
+.card { box-shadow: 0 2px 8px var(--shadow); }
+
+/* Responsive helpers */
+@media (max-width: 768px) {
+  .footer-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+  .hero-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Modals should be full-screen on mobile */
+  .modal-overlay {
+    align-items: flex-end !important;
+  }
+  .modal-sheet {
+    border-radius: 20px 20px 0 0 !important;
+    max-height: 90dvh !important;
+    overflow-y: auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* Page content padding on mobile */
+  .page-content {
+    padding-left: 14px !important;
+    padding-right: 14px !important;
+  }
+
+  /* Profile/coach stats that may stack */
+  .stats-row {
+    flex-wrap: wrap !important;
+  }
+
+  /* Make 2-col grids single col on small screens */
+  .grid-2col {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .footer-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Stack inline form rows */
+  .form-row {
+    flex-direction: column !important;
+  }
+}
+
+/* Safe area for fixed bottom elements */
+.safe-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Prevent horizontal overflow app-wide */
+#root {
+  overflow-x: hidden;
+}
+
+/* Touch-friendly tap targets */
+@media (max-width: 768px) {
+  button, a {
+    min-height: 40px;
+  }
+}
+
+/* ──────────────────────────────────────────────────────────── */
+/* ── COMPREHENSIVE MOBILE RESPONSIVE OVERRIDES ────────────── */
+/* ──────────────────────────────────────────────────────────── */
+
+/* Main content area: prevent horizontal overflow */
+main {
+  overflow-x: hidden !important;
+  min-width: 0 !important;
+  max-width: 100vw;
+}
+
+/* All direct page containers inside main */
+main > div {
+  max-width: 100% !important;
+  overflow-x: hidden;
+}
+
+@media (max-width: 768px) {
+  /* Cap page-level containers so they never exceed viewport */
+  main > div > div {
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Force repeat grids to use safe minimum sizing */
+  [style*="repeat(auto-fit"],
+  [style*="repeat(auto-fill"] {
+    grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)) !important;
+  }
+
+  /* All flex containers: allow wrapping and prevent overflow */
+  [style*="display: flex"] {
+    min-width: 0 !important;
+  }
+
+  /* Prevent fixed-width SVGs from overflowing */
+  svg {
+    max-width: 100%;
+    height: auto;
+  }
+
+  /* Modal / overlay full-width on mobile */
+  [style*="position: fixed"] > div {
+    max-width: 100% !important;
+  }
+
+  /* Cards and containers with padding > 20px should reduce */
+  [style*="padding: 28px"],
+  [style*="padding: 24px"],
+  [style*="padding: 20px 24px"] {
+    padding: 16px 14px !important;
+  }
+}
+
+/* Extra small screens */
+@media (max-width: 480px) {
+  /* Force ALL repeat grids to truly single column */
+  [style*="repeat(auto-fit"],
+  [style*="repeat(auto-fill"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Force 2-col fixed grids to single col */
+  [style*="grid-template-columns: 1fr 1fr"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Reduce page-level padding */
+  main > div > div[style*="padding"] {
+    padding-left: 12px !important;
+    padding-right: 12px !important;
+  }
+
+  /* Reduce header font sizes */
+  h1 {
+    font-size: clamp(18px, 5vw, 28px) !important;
+  }
+}
