@@ -1,11 +1,12 @@
 import { Outlet } from "react-router-dom";
 import {
   Home, Dumbbell, Users, MessageSquare, User,
-  Wrench, TrendingUp, UserCheck, Activity, Video,
+  Wrench, TrendingUp, UserCheck, Activity, Video, FileText,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useBranding, getBrandLogoForLang } from "@/context/BrandingContext";
 import { useI18n } from "@/context/I18nContext";
+import { useTheme } from "@/context/ThemeContext";
 import { SharedSidebar, NavItem } from "@/components/layout/SharedSidebar";
 
 const allNavItems: NavItem[] = [
@@ -15,6 +16,7 @@ const allNavItems: NavItem[] = [
   { path: "/app/analytics",  icon: TrendingUp,    label: "Analytics" },
   { path: "/app/coaching",   icon: UserCheck,     label: "Coaching" },
   { path: "/app/meetings",   icon: Video,         label: "Meetings" },
+  { path: "/app/blogs",      icon: FileText,      label: "No Pain No Shawerma" },
   { path: "/app/community",  icon: Users,         label: "Community" },
   { path: "/app/chat",       icon: MessageSquare, label: "Chat" },
   { path: "/app/tools",      icon: Wrench,        label: "Tools" },
@@ -33,6 +35,7 @@ const moreDrawerItems: NavItem[] = [
   { path: "/app/analytics",  icon: TrendingUp,    label: "Analytics" },
   { path: "/app/coaching",   icon: UserCheck,     label: "Coaching" },
   { path: "/app/meetings",   icon: Video,         label: "Meetings" },
+  { path: "/app/blogs",      icon: FileText,      label: "No Pain No Shawerma" },
   { path: "/app/chat",       icon: MessageSquare, label: "Chat" },
   { path: "/app/tools",      icon: Wrench,        label: "Tools" },
 ];
@@ -41,8 +44,9 @@ export function AppLayout() {
   const { user } = useAuth();
   const { branding } = useBranding();
   const { lang } = useI18n();
+  const { isDark } = useTheme();
   const isRtl = lang === "ar";
-  const brandLogo = getBrandLogoForLang(branding, lang);
+  const brandLogo = getBrandLogoForLang(branding, lang, isDark);
 
   const pointsFooter = (
     <div style={{

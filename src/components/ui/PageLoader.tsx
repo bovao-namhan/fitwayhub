@@ -1,12 +1,14 @@
 import { Activity } from "lucide-react";
 import { useBranding, getBrandLogoForLang } from "@/context/BrandingContext";
 import { useI18n } from "@/context/I18nContext";
+import { useTheme } from "@/context/ThemeContext";
 
 /** Full-screen loading spinner matching FitWay brand */
 export default function PageLoader() {
   const { branding } = useBranding();
   const { lang } = useI18n();
-  const logo = getBrandLogoForLang(branding, lang);
+  const { isDark } = useTheme();
+  const logo = getBrandLogoForLang(branding, lang, isDark);
 
   return (
     <div

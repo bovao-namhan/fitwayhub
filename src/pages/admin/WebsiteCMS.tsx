@@ -67,11 +67,17 @@ export default function WebsiteCMS({ token, showMsg }: Props) {
   const [brandingLoading, setBrandingLoading] = useState(false);
   const [brandingSaving, setBrandingSaving] = useState(false);
   const [brandingForm, setBrandingForm] = useState<Record<string, string>>({});
+  const [appSettings, setAppSettings] = useState<any[]>([]);
+  const [appSettingsForm, setAppSettingsForm] = useState<Record<string, string>>({});
+  const [settingsSaving, setSettingsSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadingFor, setUploadingFor] = useState<string | null>(null);
 
-  const api = (path: string, opts?: RequestInit) =>
-    fetch(getApiBase() + path, { ...opts, headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}`, ...(opts?.headers || {}) } });
+  const api = (path: string, opts?: RequestInit & { rawBody?: boolean }) => {
+    const hdrs: Record<string, string> = { Authorization: `Bearer ${token}` };
+    if (!opts?.rawBody) hdrs["Content-Type"] = "application/json";
+    return fetch(getApiBase() + path, { ...opts, headers: { ...hdrs, ...(opts?.headers || {}) } });
+  };
 
   const apiForm = (path: string, body: FormData) =>
     fetch(getApiBase() + path, { method: "POST", headers: { Authorization: `Bearer ${token}` }, body });
@@ -97,13 +103,13 @@ export default function WebsiteCMS({ token, showMsg }: Props) {
     setBrandingSaving(true);
     try {
       const keys = [
-        "app_name", "app_tagline", "logo_url_en", "logo_url_ar", "favicon_url", "footer_text", "copyright_text",
+        "app_name", "app_tagline", "logo_url_en_light", "logo_url_en_dark", "logo_url_ar_light", "logo_url_ar_dark", "favicon_url", "footer_text", "copyright_text",
         "primary_color", "secondary_color", "bg_primary", "bg_card",
         "font_en", "font_ar", "font_heading",
         "social_instagram", "social_facebook", "social_twitter", "social_youtube",
       ];
 
-      for (const key of ["logo_url_en", "logo_url_ar"]) {
+      for (const key of ["logo_url_en_light", "logo_url_en_dark", "logo_url_ar_light", "logo_url_ar_dark"]) {
         if (!(key in brandingForm)) {
           try {
             await api("/api/admin/app-settings/add", {
@@ -167,6 +173,18 @@ export default function WebsiteCMS({ token, showMsg }: Props) {
     } catch {
       showMsg(t("cms_failed_upload_branding_image"));
     }
+  };
+
+  const fetchAppSettings = async () => {
+    try {
+      const r = await api("/api/admin/app-settings");
+      const d = await r.json();
+      const all = d.settings || [];
+      setAppSettings(all);
+      const form: Record<string, string> = {};
+      all.forEach((s: any) => form[s.setting_key] = s.setting_value);
+      setAppSettingsForm(form);
+    } catch {}
   };
 
   const load = async () => {
@@ -627,26 +645,27 @@ export default function WebsiteCMS({ token, showMsg }: Props) {
 
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               <p style={{ fontSize: 12, fontWeight: 700, color: "var(--accent)", textTransform: "uppercase", letterSpacing: "0.08em" }}>{t("cms_logo_favicon")}</p>
-              <div>
-                <label style={labelS}>{t("cms_logo_en")}</label>
-                <div style={{ display: "flex", gap: 8 }}>
-                  <input style={{ ...iS, flex: 1 }} value={brandingForm.logo_url_en || ""} onChange={e => setBrandingForm(v => ({ ...v, logo_url_en: e.target.value }))} placeholder="/uploads/logo-en.png" />
-                  <label style={{ padding: "8px 12px", borderRadius: 8, border: "1px solid var(--border)", backgroundColor: "var(--bg-surface)", cursor: "pointer", fontSize: 12 }}>{t("upload")}
-                    <input type="file" hidden accept="image/*" onChange={e => { const f = e.target.files?.[0]; if (f) uploadBrandingImage("logo_url_en", f); }} />
-                  </label>
-                </div>
-                {brandingForm.logo_url_en ? <img src={brandingForm.logo_url_en} alt="logo en" style={{ marginTop: 8, maxHeight: 50, borderRadius: 8, border: "1px solid var(--border)", backgroundColor: "var(--bg-surface)", padding: 4 }} /> : null}
-              </div>
-
-              <div>
-                <label style={labelS}>{t("cms_logo_ar")}</label>
-                <div style={{ display: "flex", gap: 8 }}>
-                  <input style={{ ...iS, flex: 1 }} value={brandingForm.logo_url_ar || ""} onChange={e => setBrandingForm(v => ({ ...v, logo_url_ar: e.target.value }))} placeholder="/uploads/logo-ar.png" />
-                  <label style={{ padding: "8px 12px", borderRadius: 8, border: "1px solid var(--border)", backgroundColor: "var(--bg-surface)", cursor: "pointer", fontSize: 12 }}>{t("upload")}
-                    <input type="file" hidden accept="image/*" onChange={e => { const f = e.target.files?.[0]; if (f) uploadBrandingImage("logo_url_ar", f); }} />
-                  </label>
-                </div>
-                {brandingForm.logo_url_ar ? <img src={brandingForm.logo_url_ar} alt="logo ar" style={{ marginTop: 8, maxHeight: 50, borderRadius: 8, border: "1px solid var(--border)", backgroundColor: "var(--bg-surface)", padding: 4 }} /> : null}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
+                {[
+                  { key: "logo_url_en_light", label: "🇬🇧 English — Light Mode" },
+                  { key: "logo_url_en_dark",  label: "🇬🇧 English — Dark Mode" },
+                  { key: "logo_url_ar_light", label: "🇪🇬 Arabic — Light Mode" },
+                  { key: "logo_url_ar_dark",  label: "🇪🇬 Arabic — Dark Mode" },
+                ].map(({ key, label }) => (
+                  <div key={key} style={{ backgroundColor: key.includes("dark") ? "#1a1a1a" : "#f5f5f5", border: "1px solid var(--border)", borderRadius: 10, padding: "12px 14px" }}>
+                    <label style={{ ...labelS, color: key.includes("dark") ? "#ccc" : "#555" }}>{label}</label>
+                    <div style={{ display: "flex", gap: 6, marginTop: 6 }}>
+                      <label style={{ padding: "6px 12px", borderRadius: 8, border: "1px solid var(--border)", backgroundColor: key.includes("dark") ? "#2a2a2a" : "var(--bg-surface)", cursor: "pointer", fontSize: 12, color: key.includes("dark") ? "#eee" : "var(--text-secondary)", whiteSpace: "nowrap" }}>
+                        📁 {t("upload")}
+                        <input type="file" hidden accept="image/*" onChange={e => { const f = e.target.files?.[0]; if (f) uploadBrandingImage(key, f); }} />
+                      </label>
+                      <input style={{ ...iS, flex: 1, fontSize: 11 }} value={brandingForm[key] || ""} onChange={e => setBrandingForm(v => ({ ...v, [key]: e.target.value }))} placeholder="URL or upload" />
+                    </div>
+                    <div style={{ marginTop: 8, minHeight: 44, display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: key.includes("dark") ? "#111" : "#fff", borderRadius: 8, border: "1px solid var(--border)", padding: 6 }}>
+                      {brandingForm[key] ? <img src={brandingForm[key]} alt={label} style={{ maxHeight: 40, maxWidth: "100%", objectFit: "contain" }} /> : <span style={{ fontSize: 11, color: "#999" }}>No logo</span>}
+                    </div>
+                  </div>
+                ))}
               </div>
 
               <div>
@@ -823,6 +842,140 @@ export default function WebsiteCMS({ token, showMsg }: Props) {
           </div>
         </div>
       )}
+
+      {/* APP CONFIGURATION */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 16, marginTop: 24 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
+          <div>
+            <p style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 16, fontWeight: 700 }}>⚙ App Configuration</p>
+            <p style={{ fontSize: 13, color: "var(--text-muted)" }}>Manage branding, theme, access rules, and pricing stored in database</p>
+          </div>
+          <div style={{ display: "flex", gap: 8 }}>
+            <button onClick={() => {
+              const key = prompt("Setting key (e.g. my_setting):");
+              if (!key) return;
+              const label = prompt("Label:") || key;
+              const type = prompt("Type (text/color/number/boolean/image/font):") || "text";
+              const category = prompt("Category (branding/access/pricing/points):") || "branding";
+              const value = prompt("Default value:") || "";
+              api("/api/admin/app-settings/add", { method: "POST", body: JSON.stringify({ key, value, type, category, label }) })
+                .then(r => { if (r.ok) { showMsg("✅ Setting added!"); fetchAppSettings(); } else { showMsg("❌ Failed — key may already exist"); } })
+                .catch(() => showMsg("❌ Network error"));
+            }} style={{ padding: "8px 16px", borderRadius: 9, background: "var(--bg-surface)", color: "var(--text-primary)", border: "1px solid var(--border)", cursor: "pointer", fontFamily: "'Chakra Petch', sans-serif", fontWeight: 700, fontSize: 12 }}>
+              + Add Setting
+            </button>
+            <button onClick={() => { setSettingsSaving(true); api("/api/admin/app-settings", { method: "PUT", body: JSON.stringify(appSettingsForm) }).then(() => { showMsg("✅ Settings saved!"); setSettingsSaving(false); fetchAppSettings(); }).catch(() => setSettingsSaving(false)); }} disabled={settingsSaving} style={{ padding: "8px 20px", borderRadius: 9, background: settingsSaving ? "var(--bg-surface)" : "var(--accent)", color: settingsSaving ? "var(--text-muted)" : "#0A0A0B", border: "none", cursor: "pointer", fontFamily: "'Chakra Petch', sans-serif", fontWeight: 700, fontSize: 13 }}>
+              {settingsSaving ? "Saving…" : "💾 Save All"}
+            </button>
+          </div>
+        </div>
+        {appSettings.length === 0 ? (
+          <div style={{ padding: 40, textAlign: "center", color: "var(--text-muted)" }}>
+            <button onClick={fetchAppSettings} style={{ padding: "10px 24px", borderRadius: 10, background: "var(--accent)", color: "#0A0A0B", border: "none", cursor: "pointer", fontWeight: 700 }}>Load Settings</button>
+          </div>
+        ) : (
+          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fill, minmax(340px, 1fr))", gap: 14 }}>
+            {["branding", "access", "pricing", "points"].map(cat => {
+              const catSettings = appSettings.filter((s: any) => s.category === cat && !s.setting_key.startsWith("logo_url"));
+              if (catSettings.length === 0) return null;
+              const catLabels: Record<string, string> = { branding: "🏷 Branding (Colors & Fonts)", access: "🔒 Access Control", pricing: "💰 Pricing", points: "🎯 Points System" };
+              const GOOGLE_EN_FONTS = ["Outfit", "Roboto", "Inter", "Poppins", "Montserrat", "Open Sans", "Lato", "Raleway", "Nunito", "Manrope", "DM Sans", "Space Grotesk"];
+              const GOOGLE_AR_FONTS = ["Cairo", "Tajawal", "Noto Sans Arabic", "Almarai", "El Messiri", "Amiri", "Changa", "Readex Pro", "IBM Plex Sans Arabic", "Noto Kufi Arabic"];
+              const HEADING_FONTS = ["Chakra Petch", "Orbitron", "Audiowide", "Cairo", "Tajawal", "Poppins", "Montserrat"];
+              return (
+                <div key={cat} style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 14, padding: "18px 20px" }}>
+                  <p style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 13, fontWeight: 700, marginBottom: 14, color: "var(--accent)" }}>{catLabels[cat] || cat}</p>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                    {catSettings.map((s: any) => (
+                      <div key={s.setting_key}>
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 4 }}>
+                          <label style={{ fontSize: 11, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.07em" }}>{s.label}</label>
+                          <button onClick={() => {
+                            if (!confirm(`Delete setting "${s.label}"?`)) return;
+                            api(`/api/admin/app-settings/${s.setting_key}`, { method: "DELETE" })
+                              .then(r => { if (r.ok) { showMsg("🗑️ Setting removed"); fetchAppSettings(); } })
+                              .catch(() => showMsg("❌ Failed to delete"));
+                          }} title="Remove setting" style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)", fontSize: 13, padding: "0 2px", opacity: 0.5 }}>✕</button>
+                        </div>
+                        {s.setting_type === "image" ? (
+                          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                            {appSettingsForm[s.setting_key] && (
+                              <div style={{ position: "relative", display: "inline-block" }}>
+                                <img src={appSettingsForm[s.setting_key]} alt={s.label} style={{ maxHeight: 64, maxWidth: 200, borderRadius: 8, border: "1px solid var(--border)", objectFit: "contain", backgroundColor: "var(--bg-surface)", padding: 4 }} />
+                                <button onClick={() => setAppSettingsForm(f => ({ ...f, [s.setting_key]: "" }))} style={{ position: "absolute", top: -6, right: -6, width: 20, height: 20, borderRadius: "50%", background: "var(--red)", color: "#fff", border: "none", cursor: "pointer", fontSize: 11, display: "flex", alignItems: "center", justifyContent: "center" }}>✕</button>
+                              </div>
+                            )}
+                            <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                              <label style={{ padding: "6px 14px", borderRadius: 8, background: "var(--bg-surface)", border: "1px solid var(--border)", cursor: "pointer", fontSize: 12, fontWeight: 600, color: "var(--text-secondary)" }}>
+                                📁 Upload
+                                <input type="file" accept="image/*" hidden onChange={async e => {
+                                  const file = e.target.files?.[0];
+                                  if (!file) return;
+                                  const fd = new FormData();
+                                  fd.append("image", file);
+                                  try {
+                                    const resp = await api("/api/admin/upload-branding-image", { method: "POST", body: fd, rawBody: true });
+                                    const r = await resp.json();
+                                    if (r?.url) { setAppSettingsForm(f => ({ ...f, [s.setting_key]: r.url })); showMsg("✅ Image uploaded!"); }
+                                  } catch { showMsg("❌ Upload failed"); }
+                                }} />
+                              </label>
+                              <input type="text" value={appSettingsForm[s.setting_key] || ""} onChange={e => setAppSettingsForm(f => ({ ...f, [s.setting_key]: e.target.value }))} className="input-base" style={{ flex: 1, fontSize: 12 }} placeholder="Or paste image URL…" />
+                            </div>
+                          </div>
+                        ) : s.setting_type === "font" ? (
+                          <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                            <select value={appSettingsForm[s.setting_key] || ""} onChange={e => setAppSettingsForm(f => ({ ...f, [s.setting_key]: e.target.value }))} className="input-base" style={{ cursor: "pointer" }}>
+                              {(s.setting_key === "font_ar" ? GOOGLE_AR_FONTS : s.setting_key === "font_heading" ? HEADING_FONTS : GOOGLE_EN_FONTS).map(f => (
+                                <option key={f} value={f}>{f}</option>
+                              ))}
+                              <option value="__custom__">⬆ Upload custom font…</option>
+                            </select>
+                            <p style={{ fontSize: 12, color: "var(--text-secondary)", fontFamily: `'${appSettingsForm[s.setting_key] || "Outfit"}', sans-serif` }}>
+                              Preview: {s.setting_key === "font_ar" ? "مرحبًا بك في فيت واي" : "The quick brown fox jumps"}
+                            </p>
+                            {appSettingsForm[s.setting_key] === "__custom__" && (
+                              <div>
+                                <input type="file" accept=".woff,.woff2,.ttf,.otf" onChange={async e => {
+                                  const file = e.target.files?.[0];
+                                  if (!file) return;
+                                  const fd = new FormData();
+                                  fd.append("font", file);
+                                  fd.append("font_name", file.name.replace(/\.[^.]+$/, ""));
+                                  try {
+                                    const resp = await api("/api/admin/upload-font", { method: "POST", body: fd, rawBody: true });
+                                    const r = await resp.json();
+                                    if (r?.name) { setAppSettingsForm(f => ({ ...f, [s.setting_key]: r.name })); showMsg(`✅ Font "${r.name}" uploaded!`); }
+                                  } catch { showMsg("❌ Font upload failed"); }
+                                }} style={{ fontSize: 12 }} />
+                                <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 4 }}>Upload .woff2, .woff, .ttf or .otf file</p>
+                              </div>
+                            )}
+                          </div>
+                        ) : s.setting_type === "color" ? (
+                          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                            <input type="color" value={appSettingsForm[s.setting_key] || "#000000"} onChange={e => setAppSettingsForm(f => ({ ...f, [s.setting_key]: e.target.value }))} style={{ width: 40, height: 36, borderRadius: 8, border: "1px solid var(--border)", cursor: "pointer", padding: 2, backgroundColor: "var(--bg-surface)" }} />
+                            <input type="text" value={appSettingsForm[s.setting_key] || ""} onChange={e => setAppSettingsForm(f => ({ ...f, [s.setting_key]: e.target.value }))} className="input-base" style={{ flex: 1 }} placeholder="#RRGGBB" />
+                          </div>
+                        ) : s.setting_type === "boolean" ? (
+                          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                            <button onClick={() => setAppSettingsForm(f => ({ ...f, [s.setting_key]: f[s.setting_key] === "1" ? "0" : "1" }))} style={{ width: 44, height: 24, borderRadius: 12, backgroundColor: appSettingsForm[s.setting_key] === "1" ? "var(--accent)" : "var(--bg-surface)", border: "1px solid var(--border)", cursor: "pointer", position: "relative", transition: "background 0.2s" }}>
+                              <div style={{ position: "absolute", top: 3, left: appSettingsForm[s.setting_key] === "1" ? 22 : 3, width: 16, height: 16, borderRadius: "50%", backgroundColor: appSettingsForm[s.setting_key] === "1" ? "#0A0A0B" : "var(--text-muted)", transition: "left 0.2s" }} />
+                            </button>
+                            <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>{appSettingsForm[s.setting_key] === "1" ? "Enabled" : "Disabled"}</span>
+                          </div>
+                        ) : (
+                          <input type={s.setting_type === "number" ? "number" : "text"} value={appSettingsForm[s.setting_key] || ""} onChange={e => setAppSettingsForm(f => ({ ...f, [s.setting_key]: e.target.value }))} className="input-base" />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

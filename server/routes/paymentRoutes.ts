@@ -89,7 +89,7 @@ router.get('/public-settings', async (_req: Request, res: Response) => {
     const rows = await query('SELECT setting_key, setting_value FROM payment_settings') as any[];
     const settings: Record<string, string> = {};
     for (const row of rows) {
-      if (['paypal_user_link', 'paypal_coach_link', 'ewallet_phone', 'paypal_user_client_id', 'paypal_coach_client_id'].includes(row.setting_key)) {
+      if (['paypal_user_link', 'paypal_coach_link', 'ewallet_phone', 'ewallet_phone_vodafone', 'ewallet_phone_orange', 'ewallet_phone_we', 'paypal_user_client_id', 'paypal_coach_client_id'].includes(row.setting_key)) {
         settings[row.setting_key] = row.setting_value;
       }
     }
@@ -99,7 +99,7 @@ router.get('/public-settings', async (_req: Request, res: Response) => {
 
 // ── PayPal: Create Order ──────────────────────────────────────────────────────
 router.post('/paypal/create-order', authenticateToken, async (req: any, res: Response) => {
-  const { amount, plan, type } = req.body;
+  const { amount, plan, type, coachId, coachName } = req.body;
   try {
     const clientIdKey = type === 'coach' ? 'paypal_coach_client_id' : 'paypal_user_client_id';
     const secretKey = type === 'coach' ? 'paypal_coach_secret' : 'paypal_user_secret';
@@ -108,12 +108,15 @@ router.post('/paypal/create-order', authenticateToken, async (req: any, res: Res
     if (!clientId || !secret) {
       return res.status(503).json({ message: 'PayPal not configured by admin yet' });
     }
+    const description = coachId
+      ? `FitWay Coach Subscription - ${coachName || 'Coach'} (${plan})`
+      : `FitWay ${type === 'coach' ? 'Coach Membership' : 'Premium'} - ${plan}`;
     const origin = req.headers.origin || 'https://peter-adel.taila6a2b4.ts.net';
     const order = await paypalRequest(clientId, secret, 'POST', '/v2/checkout/orders', {
       intent: 'CAPTURE',
       purchase_units: [{
         amount: { currency_code: 'USD', value: String(parseFloat(amount).toFixed(2)) },
-        description: `FitWay ${type === 'coach' ? 'Coach Membership' : 'Premium'} - ${plan}`
+        description
       }],
       application_context: {
         return_url: `${origin}/payment/success?plan=${plan}&type=${type}&amount=${amount}`,
@@ -134,7 +137,7 @@ router.post('/paypal/create-order', authenticateToken, async (req: any, res: Res
 
 // ── PayPal: Capture Order ─────────────────────────────────────────────────────
 router.post('/paypal/capture-order', authenticateToken, async (req: any, res: Response) => {
-  const { orderId, plan, type, amount } = req.body;
+  const { orderId, plan, type, amount, coachId } = req.body;
   try {
     const clientIdKey = type === 'coach' ? 'paypal_coach_client_id' : 'paypal_user_client_id';
     const secretKey = type === 'coach' ? 'paypal_coach_secret' : 'paypal_user_secret';
@@ -144,6 +147,60 @@ router.post('/paypal/capture-order', authenticateToken, async (req: any, res: Re
 
     const capture = await paypalRequest(clientId, secret, 'POST', `/v2/checkout/orders/${orderId}/capture`, {});
     if (capture.status === 'COMPLETED') {
+      // ── Coach subscription via PayPal (user subscribes to a coach) ──
+      if (coachId) {
+        const coach = await get('SELECT cp.monthly_price, cp.yearly_price, cp.plan_types FROM coach_profiles cp WHERE cp.user_id = ?', [coachId]) as any;
+        if (!coach) return res.status(404).json({ message: 'Coach not found' });
+
+        const planCycle = plan === 'annual' ? 'yearly' : 'monthly';
+        const subAmount = planCycle === 'yearly' ? Number(coach.yearly_price || 0) : Number(coach.monthly_price || 0);
+
+        // Check for existing pending subscription
+        const existingPending = await get(
+          `SELECT id FROM coach_subscriptions
+           WHERE user_id = ? AND coach_id = ? AND status IN ('pending_admin', 'pending_coach', 'pending')
+           ORDER BY created_at DESC LIMIT 1`,
+          [req.user.id, coachId]
+        ) as any;
+        if (existingPending) {
+          return res.status(400).json({ message: 'You already have a pending subscription request for this coach.' });
+        }
+
+        const expiresAt = new Date();
+        expiresAt.setMonth(expiresAt.getMonth() + getCoachSubscriptionDurationMonths(planCycle));
+
+        // PayPal payment is already verified — skip admin, go straight to pending_coach
+        await run(
+          `INSERT INTO coach_subscriptions
+           (user_id, coach_id, plan_cycle, plan_type, amount, status, payment_method, admin_approval_status, admin_approved_at, expires_at)
+           VALUES (?,?,?,?,?,?,?,?,NOW(),?)`,
+          [
+            req.user.id,
+            coachId,
+            planCycle,
+            coach.plan_types || 'complete',
+            subAmount,
+            'pending_coach',
+            'paypal',
+            'approved',
+            expiresAt.toISOString().slice(0, 19).replace('T', ' '),
+          ]
+        );
+
+        // Notify coach about the new subscription request
+        await run(
+          'INSERT INTO notifications (user_id, type, title, body) VALUES (?,?,?,?)',
+          [coachId, 'subscription', 'New Subscription Request', 'A user paid via PayPal and requested to subscribe to you. Please accept or decline from Requests.']
+        );
+
+        await run('INSERT INTO payments (user_id, type, plan, amount, payment_method, transaction_id, status) VALUES (?,?,?,?,?,?,?)',
+          [req.user.id, 'coach_subscription', plan, subAmount, 'paypal', orderId, 'completed']);
+
+        res.json({ message: 'Payment completed. Waiting for coach to accept your subscription.', status: 'COMPLETED' });
+        return;
+      }
+
+      // ── Regular premium / coach membership PayPal payment ──
       await run('INSERT INTO payments (user_id, type, plan, amount, payment_method, transaction_id, status) VALUES (?,?,?,?,?,?,?)',
         [req.user.id, type === 'coach' ? 'coach_membership' : 'premium', plan, amount, 'paypal', orderId, 'completed']);
       if (type === 'coach') {

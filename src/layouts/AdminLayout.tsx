@@ -1,10 +1,11 @@
 import { Outlet } from "react-router-dom";
 import {
   LayoutDashboard, Users, Settings, Activity,
-  Gift, DollarSign, Video, Megaphone, UserCheck, Globe, MessageCircle,
+  Gift, DollarSign, Video, Megaphone, UserCheck, Globe, MessageCircle, FileText,
 } from "lucide-react";
 import { useBranding, getBrandLogoForLang } from "@/context/BrandingContext";
 import { useI18n } from "@/context/I18nContext";
+import { useTheme } from "@/context/ThemeContext";
 import { SharedSidebar, NavItem } from "@/components/layout/SharedSidebar";
 
 const navItems: NavItem[] = [
@@ -16,6 +17,7 @@ const navItems: NavItem[] = [
   { path: "/admin/ads",       icon: Megaphone,       label: "Coach Ads" },
   { path: "/admin/chat",      icon: MessageCircle,   label: "Chat" },
   { path: "/admin/gifts",     icon: Gift,            label: "Gifts" },
+  { path: "/admin/blogs",     icon: FileText,        label: "No Pain No Shawerma" },
   { path: "/admin/website",   icon: Globe,           label: "Website" },
   { path: "/admin/settings",  icon: Settings,        label: "Settings" },
 ];
@@ -39,8 +41,9 @@ const moreItems: NavItem[] = [
 export function AdminLayout() {
   const { branding } = useBranding();
   const { lang, t } = useI18n();
+  const { isDark } = useTheme();
   const isRtl = lang === "ar";
-  const brandLogo = getBrandLogoForLang(branding, lang);
+  const brandLogo = getBrandLogoForLang(branding, lang, isDark);
   const translatedNavItems: NavItem[] = [
     { path: "/admin/dashboard", icon: LayoutDashboard, label: t("dashboard") },
     { path: "/admin/users",     icon: Users,           label: t("users") },
@@ -50,6 +53,7 @@ export function AdminLayout() {
     { path: "/admin/ads",       icon: Megaphone,       label: t("coach_ads") },
     { path: "/admin/chat",      icon: MessageCircle,   label: t("chat") },
     { path: "/admin/gifts",     icon: Gift,            label: t("gifts") },
+    { path: "/admin/blogs",     icon: FileText,        label: "No Pain No Shawerma" },
     { path: "/admin/website",   icon: Globe,           label: t("website") },
     { path: "/admin/settings",  icon: Settings,        label: t("settings") },
   ];
@@ -67,6 +71,7 @@ export function AdminLayout() {
     { path: "/admin/ads",     icon: Megaphone,      label: t("coach_ads") },
     { path: "/admin/chat",    icon: MessageCircle,  label: t("chat") },
     { path: "/admin/gifts",   icon: Gift,           label: t("gifts") },
+    { path: "/admin/blogs",   icon: FileText,       label: "No Pain No Shawerma" },
     { path: "/admin/website", icon: Globe,          label: t("website") },
   ];
   const { isMobile, sidebarW, DesktopSidebar, OverlayDrawer, MobileTopBar, MobileBottomBar } = SharedSidebar({

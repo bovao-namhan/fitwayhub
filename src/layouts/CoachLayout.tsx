@@ -2,11 +2,12 @@ import { useState } from "react";
 import { Outlet } from "react-router-dom";
 import {
   LayoutDashboard, Users, Activity, MessageSquare,
-  Megaphone, Globe, ClipboardList, CreditCard, Lock, X, Video,
+  Megaphone, Globe, ClipboardList, CreditCard, Lock, X, Video, FileText,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useBranding, getBrandLogoForLang } from "@/context/BrandingContext";
 import { useI18n } from "@/context/I18nContext";
+import { useTheme } from "@/context/ThemeContext";
 import { SharedSidebar, NavItem } from "@/components/layout/SharedSidebar";
 import PaymentForm from "@/components/app/PaymentForm";
 
@@ -17,6 +18,7 @@ const navItems: NavItem[] = [
   { path: "/coach/meetings",  icon: Video,           label: "Meetings" },
   { path: "/coach/chat",      icon: MessageSquare,   label: "Messages" },
   { path: "/coach/ads",       icon: Megaphone,       label: "My Ads" },
+  { path: "/coach/blogs",     icon: FileText,        label: "No Pain No Shawerma" },
   { path: "/coach/community", icon: Globe,           label: "Community" },
   { path: "/coach/profile",   icon: Activity,        label: "Profile" },
 ];
@@ -136,8 +138,9 @@ export function CoachLayout() {
   const { user, refreshUser } = useAuth();
   const { branding } = useBranding();
   const { lang, t } = useI18n();
+  const { isDark } = useTheme();
   const isRtl = lang === "ar";
-  const brandLogo = getBrandLogoForLang(branding, lang);
+  const brandLogo = getBrandLogoForLang(branding, lang, isDark);
   const [showPayment, setShowPayment] = useState(false);
   const membershipActive = user?.coachMembershipActive || user?.role === "admin";
 
@@ -157,6 +160,7 @@ export function CoachLayout() {
     { path: "/coach/meetings",  icon: Video,           label: t("meetings") },
     { path: "/coach/chat",      icon: MessageSquare,   label: t("messages") },
     { path: "/coach/ads",       icon: Megaphone,       label: t("my_ads") },
+    { path: "/coach/blogs",     icon: FileText,        label: "No Pain No Shawerma" },
     { path: "/coach/community", icon: Globe,           label: t("community") },
     { path: "/coach/profile",   icon: Activity,        label: t("profile") },
   ];
@@ -172,6 +176,7 @@ export function CoachLayout() {
   const translatedMoreItems: NavItem[] = [
     { path: "/coach/meetings",  icon: Video,     label: t("meetings") },
     { path: "/coach/ads",       icon: Megaphone, label: t("my_ads") },
+    { path: "/coach/blogs",     icon: FileText,  label: "No Pain No Shawerma" },
     { path: "/coach/community", icon: Globe,     label: t("community") },
   ];
 

@@ -417,7 +417,8 @@ router.get('/payment-settings', authenticateToken, adminOnly, async (_req: any, 
 
 router.put('/payment-settings', authenticateToken, adminOnly, async (req: any, res: Response) => {
   const allowed = [
-    'paypal_user_link', 'paypal_coach_link', 'ewallet_phone',
+    'paypal_user_link', 'paypal_coach_link',
+    'ewallet_phone', 'ewallet_phone_vodafone', 'ewallet_phone_orange', 'ewallet_phone_we',
     'paypal_user_client_id', 'paypal_coach_client_id',
     'paypal_user_secret', 'paypal_coach_secret',
   ];

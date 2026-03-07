@@ -33,6 +33,7 @@ import workoutsRoutes from './server/routes/workoutsRoutes.js';
 import paymentRoutes from './server/routes/paymentRoutes.js';
 import cmsRoutes from './server/routes/cmsRoutes.js';
 import meetingRoutes from './server/routes/meetingRoutes.js';
+import blogRoutes from './server/routes/blogRoutes.js';
 import { errorHandler } from './server/middleware/error.js';
 
 const ALLOWED_ORIGINS = [
@@ -96,6 +97,7 @@ async function startServer() {
   app.use('/api/workouts', workoutsRoutes);
   app.use('/api/cms', cmsRoutes);
   app.use('/api/meetings', meetingRoutes);
+  app.use('/api/blogs', blogRoutes);
   console.log('API routes registered');
 
   // In production serve the built frontend; in dev, run `npx vite` separately

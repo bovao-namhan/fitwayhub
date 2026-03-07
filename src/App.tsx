@@ -9,45 +9,43 @@ import { ThemeProvider } from "@/context/ThemeContext";
 import { I18nProvider } from '@/context/I18nContext';
 import { BrandingProvider, useBranding } from "@/context/BrandingContext";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
-import { useEffect } from "react";
+import { useEffect, lazy, Suspense } from "react";
 
-import { AppLayout } from "@/layouts/AppLayout";
-import { AdminLayout } from "@/layouts/AdminLayout";
-import { CoachLayout } from "@/layouts/CoachLayout";
+const AppLayout = lazy(() => import("@/layouts/AppLayout").then((m) => ({ default: m.AppLayout })));
+const AdminLayout = lazy(() => import("@/layouts/AdminLayout").then((m) => ({ default: m.AdminLayout })));
+const CoachLayout = lazy(() => import("@/layouts/CoachLayout").then((m) => ({ default: m.CoachLayout })));
+const WebsiteLayout = lazy(() => import("@/layouts/WebsiteLayout").then((m) => ({ default: m.WebsiteLayout })));
 
-// public website pages restored — CMS-driven pages
-import { WebsiteLayout } from "@/layouts/WebsiteLayout";
-import CmsPage from "@/pages/website/CmsPage";
-import WebsiteBlogs from "@/pages/website/Blogs";
-
-import Login from "@/pages/auth/Login";
-import Register from "@/pages/auth/Register";
-import SocialCallback from "@/pages/auth/SocialCallback";
-
-import Dashboard from "@/pages/app/Dashboard";
-import Workouts from "@/pages/app/Workouts";
-import Community from "@/pages/app/Community";
-import Chat from "@/pages/app/Chat";
-import Profile from "@/pages/app/Profile";
-import Tools from "@/pages/app/Tools";
-import Pricing from "@/pages/app/Pricing";
-import Analytics from "@/pages/app/Analytics";
-import Coaching from "@/pages/app/Coaching";
-import Onboarding from "@/pages/app/Onboarding";
-import Steps from "@/pages/app/Steps";
-import Meetings from "@/pages/app/Meetings";
-import MeetingRoom from "@/pages/app/MeetingRoom";
-
-import AdminDashboard from "@/pages/admin/Dashboard";
-import CoachDashboard from "@/pages/coach/Dashboard";
-import CoachRequests from "@/pages/coach/Requests";
-import CoachAthletes from "@/pages/coach/Athletes";
-import CoachChat from "@/pages/coach/Chat";
-import CoachAds from "@/pages/coach/Ads";
-import CoachCommunity from "@/pages/coach/Community";
-import CoachProfile from "@/pages/coach/Profile";
-import PaymentResult from "@/pages/PaymentResult";
-import AppBlogs from "@/pages/app/Blogs";
+const CmsPage = lazy(() => import("@/pages/website/CmsPage"));
+const WebsiteBlogs = lazy(() => import("@/pages/website/Blogs"));
+const Login = lazy(() => import("@/pages/auth/Login"));
+const Register = lazy(() => import("@/pages/auth/Register"));
+const SocialCallback = lazy(() => import("@/pages/auth/SocialCallback"));
+const Dashboard = lazy(() => import("@/pages/app/Dashboard"));
+const Workouts = lazy(() => import("@/pages/app/Workouts"));
+const Community = lazy(() => import("@/pages/app/Community"));
+const Chat = lazy(() => import("@/pages/app/Chat"));
+const Profile = lazy(() => import("@/pages/app/Profile"));
+const Tools = lazy(() => import("@/pages/app/Tools"));
+const Pricing = lazy(() => import("@/pages/app/Pricing"));
+const Analytics = lazy(() => import("@/pages/app/Analytics"));
+const Coaching = lazy(() => import("@/pages/app/Coaching"));
+const Onboarding = lazy(() => import("@/pages/app/Onboarding"));
+const Steps = lazy(() => import("@/pages/app/Steps"));
+const Meetings = lazy(() => import("@/pages/app/Meetings"));
+const MeetingRoom = lazy(() => import("@/pages/app/MeetingRoom"));
+const AdminDashboard = lazy(() => import("@/pages/admin/Dashboard"));
+const CoachDashboard = lazy(() => import("@/pages/coach/Dashboard"));
+const CoachRequests = lazy(() => import("@/pages/coach/Requests"));
+const CoachAthletes = lazy(() => import("@/pages/coach/Athletes"));
+const CoachChat = lazy(() => import("@/pages/coach/Chat"));
+const CoachAds = lazy(() => import("@/pages/coach/Ads"));
+const CoachCommunity = lazy(() => import("@/pages/coach/Community"));
+const CoachProfile = lazy(() => import("@/pages/coach/Profile"));
+const CoachBlogs = lazy(() => import("@/pages/coach/Blogs"));
+const PaymentResult = lazy(() => import("@/pages/PaymentResult"));
+const AppBlogs = lazy(() => import("@/pages/app/Blogs"));
+const AdminBlogs = lazy(() => import("@/pages/admin/Blogs"));
 
 function SmartRedirect() {
   // Handled in AuthContext login flow
@@ -74,6 +72,7 @@ export default function App() {
           <BrandingProvider>
           <SplashGate />
           <BrowserRouter>
+            <Suspense fallback={null}>
             <Routes>
               {/* Public Website Routes */}
               <Route element={<WebsiteLayout />}>
@@ -136,6 +135,7 @@ export default function App() {
                 <Route path="/coach/ads" element={<CoachAds />} />
                 <Route path="/coach/community" element={<CoachCommunity />} />
                 <Route path="/coach/profile" element={<CoachProfile />} />
+                <Route path="/coach/blogs" element={<CoachBlogs />} />
                 <Route path="/coach/meetings" element={<Meetings />} />
               </Route>
 
@@ -164,7 +164,7 @@ export default function App() {
                 <Route path="/admin/settings" element={<AdminDashboard />} />
                 <Route path="/admin/website" element={<AdminDashboard />} />
                 <Route path="/admin/community" element={<AdminDashboard />} />
-                <Route path="/admin/app-config" element={<AdminDashboard />} />
+                <Route path="/admin/blogs" element={<AdminBlogs />} />
               </Route>
 
               {/* Payment Result Routes */}
@@ -175,6 +175,7 @@ export default function App() {
               {/* Catch all redirect */}
               <Route path="*" element={<Navigate to="/auth/login" replace />} />
             </Routes>
+            </Suspense>
           </BrowserRouter>
           </BrandingProvider>
         </I18nProvider>

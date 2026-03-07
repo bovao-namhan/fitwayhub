@@ -343,6 +343,26 @@ async function initTables() {
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
 
+    `CREATE TABLE IF NOT EXISTS blog_posts (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      title VARCHAR(255) NOT NULL,
+      slug VARCHAR(160) NOT NULL UNIQUE,
+      excerpt TEXT,
+      content LONGTEXT NOT NULL,
+      header_image_url VARCHAR(500),
+      video_url VARCHAR(500),
+      status VARCHAR(20) NOT NULL DEFAULT 'published',
+      author_id INT NOT NULL,
+      author_role VARCHAR(50) NOT NULL,
+      published_at DATETIME,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE CASCADE,
+      INDEX idx_blog_posts_status (status),
+      INDEX idx_blog_posts_author_id (author_id),
+      INDEX idx_blog_posts_published_at (published_at)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
+
     `CREATE TABLE IF NOT EXISTS payment_settings (
       id INT AUTO_INCREMENT PRIMARY KEY,
       setting_key VARCHAR(100) NOT NULL UNIQUE,
@@ -541,7 +561,10 @@ export async function initDatabase() {
     const defaultSettings = [
       ['app_name', 'FitWay Hub', 'text', 'branding', 'App Name'],
       ['app_tagline', 'Your fitness journey starts here', 'text', 'branding', 'Tagline'],
-      ['logo_url', '', 'image', 'branding', 'Logo Image'],
+      ['logo_url_en_light', '', 'image', 'branding', 'English Logo (Light Mode)'],
+      ['logo_url_en_dark', '', 'image', 'branding', 'English Logo (Dark Mode)'],
+      ['logo_url_ar_light', '', 'image', 'branding', 'Arabic Logo (Light Mode)'],
+      ['logo_url_ar_dark', '', 'image', 'branding', 'Arabic Logo (Dark Mode)'],
       ['favicon_url', '', 'image', 'branding', 'Favicon'],
       ['footer_text', "Egypt's #1 digital fitness ecosystem. Certified training, smart tools, and a community that pushes you forward.", 'text', 'branding', 'Footer Description'],
       ['copyright_text', '© 2025 FitWay Hub. All rights reserved.', 'text', 'branding', 'Copyright Text'],

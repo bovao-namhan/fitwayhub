@@ -18,7 +18,7 @@ export function WebsiteLayout() {
   const { user, logout } = useAuth();
   const { t, lang, setLang } = useI18n();
   const displayName = user?.name || user?.email?.split("@")[0] || "there";
-  const brandLogo = getBrandLogoForLang(branding, lang);
+  const brandLogo = getBrandLogoForLang(branding, lang, isDark);
 
   const appRoute = user?.role === "admin"
     ? "/admin/dashboard"
@@ -28,6 +28,7 @@ export function WebsiteLayout() {
 
   const navLinks: Array<{name:string;path:string}> = [
     { name: "Home", path: "/" },
+    { name: "No Pain No Shawerma", path: "/blogs" },
     { name: "About", path: "/about" },
     { name: "Contact", path: "/contact" },
   ];
@@ -63,15 +64,8 @@ export function WebsiteLayout() {
       }}>
         <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 20px", height: 64 }}>
           {/* Logo */}
-          <Link to="/" style={{ display: "flex", alignItems: "center", gap: 10, textDecoration: "none" }}>
-            {brandLogo ? (
-              <img src={brandLogo} alt="" style={{ width: 30, height: 30, borderRadius: 7, objectFit: "contain" }} />
-            ) : (
-              <div style={{ backgroundColor: "var(--accent)", width: 30, height: 30, borderRadius: 7, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <Activity size={16} color="#0A0A0B" />
-              </div>
-            )}
-            <span style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 18, fontWeight: 700, letterSpacing: "0.04em", color: "var(--text-primary)" }}>{branding.app_name || "FITWAY HUB"}</span>
+          <Link to="/" style={{ display: "flex", alignItems: "center", textDecoration: "none" }}>
+            <img src={brandLogo || "/logo.svg"} alt={branding.app_name || "FitWay Hub"} style={{ height: 36, borderRadius: 7, objectFit: "contain" }} />
           </Link>
 
           {/* Desktop nav */}

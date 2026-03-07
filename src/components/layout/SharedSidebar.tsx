@@ -265,38 +265,7 @@ export function SharedSidebar({
       >
         <div style={{ display: "flex", alignItems: "center", gap: 10, overflow: "hidden", flex: 1 }}>
           {!sidebarCollapsed && (
-            <div style={{ display: "flex", alignItems: "center", gap: 8, overflow: "hidden" }}>
-              {logoUrl ? (
-                <img src={logoUrl} alt="" style={{ width: 26, height: 26, borderRadius: 6, objectFit: 'contain', flexShrink: 0 }} />
-              ) : (
-                <div
-                  style={{
-                    backgroundColor: logoIconColor,
-                    width: 26,
-                    height: 26,
-                    borderRadius: 6,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0,
-                  }}
-                >
-                  <LogoIcon size={13} color="#fff" />
-                </div>
-              )}
-              <span
-                style={{
-                  fontFamily: "'Chakra Petch', sans-serif",
-                  fontSize: 13,
-                  fontWeight: 700,
-                  whiteSpace: "nowrap",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                }}
-              >
-                {logoLabel}
-              </span>
-            </div>
+            <img src={logoUrl || "/logo.svg"} alt={logoLabel} style={{ height: 30, borderRadius: 6, objectFit: 'contain', flexShrink: 0 }} />
           )}
         </div>
 
@@ -402,32 +371,7 @@ export function SharedSidebar({
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            {logoUrl ? (
-              <img src={logoUrl} alt="" style={{ width: 28, height: 28, borderRadius: 6, objectFit: 'contain' }} />
-            ) : (
-              <div
-                style={{
-                  backgroundColor: logoIconColor,
-                  width: 28,
-                  height: 28,
-                  borderRadius: 6,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <LogoIcon size={14} color="#fff" />
-              </div>
-            )}
-            <span
-              style={{
-                fontFamily: "'Chakra Petch', sans-serif",
-                fontSize: 14,
-                fontWeight: 700,
-              }}
-            >
-              {logoLabel}
-            </span>
+            <img src={logoUrl || "/logo.svg"} alt={logoLabel} style={{ height: 30, borderRadius: 6, objectFit: 'contain' }} />
           </div>
           <button
             onClick={() => setDrawerOpen(false)}
@@ -520,28 +464,7 @@ export function SharedSidebar({
         >
           {drawerOpen ? <X size={18} /> : <Menu size={18} />}
         </button>
-        {logoUrl ? (
-          <img src={logoUrl} alt="" style={{ width: 26, height: 26, borderRadius: 6, objectFit: 'contain' }} />
-        ) : (
-          <div
-            style={{
-              backgroundColor: logoIconColor,
-              width: 26,
-              height: 26,
-              borderRadius: 6,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <LogoIcon size={13} color="#fff" />
-          </div>
-        )}
-        <span
-          style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 14, fontWeight: 700 }}
-        >
-          {logoLabel}
-        </span>
+        <img src={logoUrl || "/logo.svg"} alt={logoLabel} style={{ height: 28, borderRadius: 6, objectFit: 'contain' }} />
       </div>
       <div style={{ display: "flex", alignItems: "center", gap: 8, flexDirection: isRtl ? "row-reverse" : "row" }}>
         <button

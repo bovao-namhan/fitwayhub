@@ -8,6 +8,10 @@ export interface Branding {
   logo_url: string;
   logo_url_en: string;
   logo_url_ar: string;
+  logo_url_en_light: string;
+  logo_url_en_dark: string;
+  logo_url_ar_light: string;
+  logo_url_ar_dark: string;
   favicon_url: string;
   footer_text: string;
   copyright_text: string;
@@ -30,6 +34,10 @@ const defaults: Branding = {
   logo_url: "",
   logo_url_en: "",
   logo_url_ar: "",
+  logo_url_en_light: "",
+  logo_url_en_dark: "",
+  logo_url_ar_light: "",
+  logo_url_ar_dark: "",
   favicon_url: "",
   footer_text: "Egypt's #1 digital fitness ecosystem. Certified training, smart tools, and a community that pushes you forward.",
   copyright_text: "© 2025 FitWay Hub. All rights reserved.",
@@ -110,6 +118,10 @@ export function BrandingProvider({ children }: { children: React.ReactNode }) {
           logo_url: resolveAssetUrl(data?.logo_url || ""),
           logo_url_en: resolveAssetUrl(data?.logo_url_en || ""),
           logo_url_ar: resolveAssetUrl(data?.logo_url_ar || ""),
+          logo_url_en_light: resolveAssetUrl(data?.logo_url_en_light || ""),
+          logo_url_en_dark: resolveAssetUrl(data?.logo_url_en_dark || ""),
+          logo_url_ar_light: resolveAssetUrl(data?.logo_url_ar_light || ""),
+          logo_url_ar_dark: resolveAssetUrl(data?.logo_url_ar_dark || ""),
           favicon_url: resolveAssetUrl(data?.favicon_url || ""),
         };
         setBranding(prev => ({ ...prev, ...normalized }));
@@ -222,7 +234,12 @@ export function useBranding() {
   return useContext(BrandingContext);
 }
 
-export function getBrandLogoForLang(branding: Branding, lang: "en" | "ar") {
-  if (lang === "ar") return branding.logo_url_ar || branding.logo_url_en || "";
-  return branding.logo_url_en || branding.logo_url_ar || "";
+export function getBrandLogoForLang(branding: Branding, lang: "en" | "ar", isDark?: boolean) {
+  const dark = isDark ?? true; // default to dark if not specified
+  if (lang === "ar") {
+    const themed = dark ? branding.logo_url_ar_dark : branding.logo_url_ar_light;
+    return themed || branding.logo_url_ar || branding.logo_url_en || "/logo.svg";
+  }
+  const themed = dark ? branding.logo_url_en_dark : branding.logo_url_en_light;
+  return themed || branding.logo_url_en || branding.logo_url_ar || "/logo.svg";
 }

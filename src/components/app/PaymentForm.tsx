@@ -36,7 +36,7 @@ export default function PaymentForm({ amount, plan, type, token, onSuccess, onEr
   const [method, setMethod] = useState<Method>(defaultMethod);
 
   const [paypalClientId, setPaypalClientId] = useState<string | null>(null);
-  const [ewalletPhone, setEwalletPhone] = useState<string>("+20 12 8790 4338");
+  const [ewalletPhones, setEwalletPhones] = useState<Record<string, string>>({ vodafone: "", orange: "", we: "" });
   const [settingsLoaded, setSettingsLoaded] = useState(false);
 
   const [walletType, setWalletType] = useState<"vodafone" | "orange" | "we">("vodafone");
@@ -66,7 +66,11 @@ export default function PaymentForm({ amount, plan, type, token, onSuccess, onEr
         const s = data.settings || {};
         const clientIdKey = type === "coach" ? "paypal_coach_client_id" : "paypal_user_client_id";
         if (s[clientIdKey]) setPaypalClientId(s[clientIdKey]);
-        if (s.ewallet_phone) setEwalletPhone(s.ewallet_phone);
+        setEwalletPhones({
+          vodafone: s.ewallet_phone_vodafone || s.ewallet_phone || "",
+          orange: s.ewallet_phone_orange || s.ewallet_phone || "",
+          we: s.ewallet_phone_we || s.ewallet_phone || "",
+        });
         setSettingsLoaded(true);
       })
       .catch(() => setSettingsLoaded(true));
@@ -86,13 +90,13 @@ export default function PaymentForm({ amount, plan, type, token, onSuccess, onEr
       window.paypal.Buttons({
         style: { layout: "vertical", color: "gold", shape: "rect", label: "pay", height: 45 },
         createOrder: async () => {
-          const res = await api("/api/payments/paypal/create-order", { method: "POST", body: JSON.stringify({ amount: amount.toFixed(2), plan, type }) });
+          const res = await api("/api/payments/paypal/create-order", { method: "POST", body: JSON.stringify({ amount: amount.toFixed(2), plan, type, coachId, coachName }) });
           const data = await res.json();
           if (!res.ok) throw new Error(data.message || "Failed to create order");
           return data.id;
         },
         onApprove: async (data: any) => {
-          const res = await api("/api/payments/paypal/capture-order", { method: "POST", body: JSON.stringify({ orderId: data.orderID, plan, type, amount }) });
+          const res = await api("/api/payments/paypal/capture-order", { method: "POST", body: JSON.stringify({ orderId: data.orderID, plan, type, amount, coachId }) });
           const result = await res.json();
           if (!res.ok) { onError?.(result.message || "Capture failed"); return; }
           onSuccess();
@@ -234,7 +238,7 @@ export default function PaymentForm({ amount, plan, type, token, onSuccess, onEr
             <Smartphone size={18} />,
             "E-Wallet"
           )}
-          {!coachId && methodBtn("paypal",
+          {methodBtn("paypal",
             <img src="https://www.paypalobjects.com/webstatic/mktg/logo/pp_cc_mark_37x23.jpg" alt="PayPal" style={{ height: 18, borderRadius: 2 }} />,
             "PayPal"
           )}
@@ -301,8 +305,8 @@ export default function PaymentForm({ amount, plan, type, token, onSuccess, onEr
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               <div style={{ fontSize: 13, color: "var(--text-primary)" }}>1. Send <strong style={{ color: walletColor }}>{amount} EGP</strong> to:</div>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 16px", backgroundColor: "var(--bg-surface)", borderRadius: 10, border: `1px solid ${walletColor}44` }}>
-                <span style={{ fontFamily: "monospace", fontSize: 20, fontWeight: 800, color: walletColor, letterSpacing: 2 }}>{ewalletPhone}</span>
-                <button type="button" onClick={() => navigator.clipboard?.writeText(ewalletPhone)} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 11, color: "var(--text-muted)", padding: "4px 8px", borderRadius: 6, backgroundColor: "var(--bg-card)" }}>Copy</button>
+                <span style={{ fontFamily: "monospace", fontSize: 20, fontWeight: 800, color: walletColor, letterSpacing: 2 }}>{ewalletPhones[walletType] || "—"}</span>
+                <button type="button" onClick={() => navigator.clipboard?.writeText(ewalletPhones[walletType] || "")} style={{ background: "none", border: "none", cursor: "pointer", fontSize: 11, color: "var(--text-muted)", padding: "4px 8px", borderRadius: 6, backgroundColor: "var(--bg-card)" }}>Copy</button>
               </div>
               <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>2. Take a screenshot of the confirmation</div>
               <div style={{ fontSize: 13, color: "var(--text-secondary)" }}>3. Upload it below</div>
