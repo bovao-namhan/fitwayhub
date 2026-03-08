@@ -1689,6 +1689,52 @@ const normalizeText = (v: string) =>
     .replace(/[\u200E\u200F\u202A-\u202E]/g, "")
     .toLowerCase();
 
+// Convert common MSA wording to Egyptian colloquial wording.
+const egyptianWordMap: Array<[string, string]> = [
+  ["يرجى إدخال", "من فضلك اكتب"],
+  ["يرجى", "من فضلك"],
+  ["تسجيل الدخول", "تسجيل دخول"],
+  ["تسجيل الخروج", "تسجيل خروج"],
+  ["إنشاء حساب", "اعمل حساب"],
+  ["لم يتم", "مافيش"],
+  ["لا توجد", "مفيش"],
+  ["لا يوجد", "مفيش"],
+  ["فشل في", "حصل مشكلة في"],
+  ["فشل", "حصلت مشكلة"],
+  ["جارٍ", "جاري"],
+  ["تعذر", "ماقدرناش"],
+  ["اذهب إلى", "روح لـ"],
+  ["الآن", "دلوقتي"],
+  ["قيد الانتظار", "مستني"],
+  ["تم حذف", "اتمسح"],
+  ["تم حفظ", "اتحفظ"],
+  ["تم تحديث", "اتحدّث"],
+  ["تم إرسال", "اتبعت"],
+  ["تم قبول", "اتقبل"],
+  ["تم رفض", "اترفض"],
+  ["تم تحقيق", "وصلت لـ"],
+  ["مجدولة", "مترتبة"],
+  ["مجدول", "مترتب"],
+  ["السعرات الحرارية", "السعرات"],
+  ["غير متصل", "أوفلاين"],
+  ["متصل", "أونلاين"],
+  ["الموقع الجغرافي", "خدمة تحديد المكان"],
+  ["دقائق", "دقايق"],
+  ["متبقي", "فاضل"],
+  ["أدخل", "اكتب"],
+  ["مطلوبة", "لازمة"],
+  ["مطلوب", "لازم"],
+  ["إلغاء", "إلغي"],
+  ["إرسال", "ابعت"],
+  ["غدًا", "بكرة"],
+];
+
+const toEgyptianArabic = (value: string) => {
+  let out = String(value || "");
+  for (const [from, to] of egyptianWordMap) out = out.split(from).join(to);
+  return out;
+};
+
 /* ── Build bidirectional reverse maps once ── */
 const enTextToKey: Record<string, string> = {};
 const arTextToKey: Record<string, string> = {};
@@ -1770,9 +1816,15 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
         // Try matching from either language → key → target
         const key = findKey(txt);
         if (key) {
-          const translated = translations[currentLang]?.[key];
+          const rawTranslated = translations[currentLang]?.[key];
+          const translated = currentLang === 'ar' && rawTranslated ? toEgyptianArabic(rawTranslated) : rawTranslated;
           if (translated && translated !== txt) {
             node.textContent = node.textContent!.replace(txt, translated);
+          }
+        } else if (currentLang === 'ar') {
+          const egyptian = toEgyptianArabic(txt);
+          if (egyptian && egyptian !== txt) {
+            node.textContent = node.textContent!.replace(txt, egyptian);
           }
         }
       } else if (node.nodeType === Node.ELEMENT_NODE) {
@@ -1785,8 +1837,12 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
           if (ph) {
             const key = findKey(ph);
             if (key) {
-              const translated = translations[currentLang]?.[key];
+              const rawTranslated = translations[currentLang]?.[key];
+              const translated = currentLang === 'ar' && rawTranslated ? toEgyptianArabic(rawTranslated) : rawTranslated;
               if (translated) el.placeholder = translated;
+            } else if (currentLang === 'ar') {
+              const egyptian = toEgyptianArabic(ph);
+              if (egyptian) el.placeholder = egyptian;
             }
           }
         }
@@ -1795,8 +1851,12 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
           const title = el.title.trim();
           const key = findKey(title);
           if (key) {
-            const translated = translations[currentLang]?.[key];
+            const rawTranslated = translations[currentLang]?.[key];
+            const translated = currentLang === 'ar' && rawTranslated ? toEgyptianArabic(rawTranslated) : rawTranslated;
             if (translated) el.title = translated;
+          } else if (currentLang === 'ar') {
+            const egyptian = toEgyptianArabic(title);
+            if (egyptian) el.title = egyptian;
           }
         }
       }
@@ -1863,6 +1923,7 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
   const t = useCallback((key: string, vars?: Record<string, string | number>) => {
     let v = translations[langRef.current]?.[key] || translations.en[key] || key;
     if (vars) Object.entries(vars).forEach(([k, val]) => { v = v.replace(`{${k}}`, String(val)); });
+    if (langRef.current === 'ar') v = toEgyptianArabic(v);
     return v;
   }, []);
 
