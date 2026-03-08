@@ -10,6 +10,7 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
+import { optimizeImage } from '../middleware/upload';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -30,7 +31,7 @@ const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 } });
 const router = express.Router();
 
 router.get('/posts', authenticateToken, getPosts);
-router.post('/posts', authenticateToken, upload.any(), createPost);
+router.post('/posts', authenticateToken, upload.any(), optimizeImage(), createPost);
 router.delete('/posts/:id', authenticateToken, deletePost);
 router.get('/posts/trending-tags', authenticateToken, getTrendingTags);
 router.post('/posts/:id/like', authenticateToken, likePost);
@@ -39,7 +40,7 @@ router.get('/posts/:id/comments', authenticateToken, getPostComments);
 router.post('/posts/:id/comments', authenticateToken, addComment);
 
 router.get('/challenges', authenticateToken, getChallenges);
-router.post('/challenges', authenticateToken, upload.any(), createChallenge);
+router.post('/challenges', authenticateToken, upload.any(), optimizeImage(), createChallenge);
 router.post('/challenges/:id/join', authenticateToken, joinChallenge);
 router.post('/challenges/:id/invite', authenticateToken, inviteToChallenge);
 

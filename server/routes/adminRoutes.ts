@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { authenticateToken } from '../middleware/auth';
 import { get, run, query } from '../config/database';
-import { uploadVideo, uploadFont, upload } from '../middleware/upload';
+import { uploadVideo, uploadFont, upload, optimizeImage } from '../middleware/upload';
 import bcrypt from 'bcryptjs';
 
 const router = Router();
@@ -54,7 +54,7 @@ router.post('/users/:id/add-points', authenticateToken, adminOnly, async (req: a
   res.json({ message: 'Points added' });
 });
 
-router.post('/users/:id/upload-medical', authenticateToken, adminOnly, upload.single('medical'), async (req: any, res: Response) => {
+router.post('/users/:id/upload-medical', authenticateToken, adminOnly, upload.single('medical'), optimizeImage(), async (req: any, res: Response) => {
   try {
     if (!req.file) return res.status(400).json({ message: 'No file provided' });
     const userId = Number(req.params.id);
@@ -228,7 +228,7 @@ router.get('/videos', authenticateToken, adminOnly, async (_req: any, res: Respo
 router.post('/videos', authenticateToken, adminOnly, uploadVideo.fields([
   { name: 'video', maxCount: 1 },
   { name: 'thumbnail', maxCount: 1 }
-]), async (req: any, res: Response) => {
+]), optimizeImage(), async (req: any, res: Response) => {
   try {
     const { title, description, duration, category, is_premium } = req.body;
     if (!title) return res.status(400).json({ message: 'Title is required' });
@@ -259,7 +259,7 @@ router.post('/videos', authenticateToken, adminOnly, uploadVideo.fields([
 router.patch('/videos/:id', authenticateToken, adminOnly, uploadVideo.fields([
   { name: 'video', maxCount: 1 },
   { name: 'thumbnail', maxCount: 1 }
-]), async (req: any, res: Response) => {
+]), optimizeImage(), async (req: any, res: Response) => {
   try {
     const { id } = req.params;
     const existing = await get<any>('SELECT * FROM workout_videos WHERE id = ?', [id]);
@@ -797,7 +797,7 @@ router.get('/branding', async (_req: Request, res: Response) => {
 });
 
 // ── Branding image upload (logo / favicon) ───────────────────────────────────
-router.post('/upload-branding-image', authenticateToken, adminOnly, upload.single('image'), async (req: any, res: Response) => {
+router.post('/upload-branding-image', authenticateToken, adminOnly, upload.single('image'), optimizeImage(), async (req: any, res: Response) => {
   try {
     if (!req.file) return res.status(400).json({ message: 'No image file provided' });
     const imageUrl = `/uploads/${req.file.filename}`;

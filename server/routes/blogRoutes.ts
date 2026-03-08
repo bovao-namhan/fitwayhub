@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { authenticateToken } from '../middleware/auth';
-import { uploadVideo } from '../middleware/upload';
+import { uploadVideo, optimizeImage } from '../middleware/upload';
 import {
   createBlog,
   deleteBlog,
@@ -26,6 +26,7 @@ router.post(
     { name: 'headerImage', maxCount: 1 },
     { name: 'video', maxCount: 1 },
   ]),
+  optimizeImage(),
   createBlog
 );
 
@@ -36,6 +37,7 @@ router.put(
     { name: 'headerImage', maxCount: 1 },
     { name: 'video', maxCount: 1 },
   ]),
+  optimizeImage(),
   updateBlog
 );
 

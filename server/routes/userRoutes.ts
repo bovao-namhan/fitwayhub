@@ -55,8 +55,8 @@ router.patch('/step-goal', authenticateToken, async (req: any, res: any) => {
 });
 
 // ── Upload proof image ─────────────────────────────────────────────────────────
-import { upload } from '../middleware/upload';
-router.post('/upload-proof', authenticateToken, upload.single('image'), async (req: any, res: any) => {
+import { upload, optimizeImage } from '../middleware/upload';
+router.post('/upload-proof', authenticateToken, upload.single('image'), optimizeImage(), async (req: any, res: any) => {
   try {
     if (!req.file) return res.status(400).json({ message: 'No file uploaded' });
     res.json({ url: `/uploads/${req.file.filename}` });
@@ -80,7 +80,7 @@ router.get('/medical-history', authenticateToken, async (req: any, res: any) => 
   } catch { res.status(500).json({ message: 'Failed to fetch medical history' }); }
 });
 
-router.post('/medical-history', authenticateToken, upload.single('medical'), async (req: any, res: any) => {
+router.post('/medical-history', authenticateToken, upload.single('medical'), optimizeImage(), async (req: any, res: any) => {
   try {
     const { medical_history } = req.body;
     const fileUrl = req.file ? `/uploads/${req.file.filename}` : null;

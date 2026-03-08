@@ -1,7 +1,7 @@
 import { Router, Response } from 'express';
 import { authenticateToken } from '../middleware/auth';
 import { query, get, run } from '../config/database';
-import { upload } from '../middleware/upload';
+import { upload, optimizeImage } from '../middleware/upload';
 
 const router = Router();
 
@@ -121,7 +121,7 @@ router.delete('/admin/sections/:id', authenticateToken, adminOnly, async (req: a
 });
 
 // ── Admin: upload image for section ──────────────────────────────────────────
-router.post('/admin/upload-image', authenticateToken, adminOnly, upload.single('image'), async (req: any, res: Response) => {
+router.post('/admin/upload-image', authenticateToken, adminOnly, upload.single('image'), optimizeImage(), async (req: any, res: Response) => {
   if (!req.file) return res.status(400).json({ message: 'No image uploaded' });
   res.json({ url: `/uploads/${req.file.filename}` });
 });

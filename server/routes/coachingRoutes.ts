@@ -1,12 +1,12 @@
 import { Router, Response } from 'express';
 import { bookSession } from '../controllers/coachingController';
 import { authenticateToken, requireActiveCoachMembershipForDeals } from '../middleware/auth';
-import { upload } from '../middleware/upload';
+import { upload, optimizeImage } from '../middleware/upload';
 import { get, run, query } from '../config/database';
 
 const router = Router();
 
-router.post('/book', authenticateToken, upload.fields([{ name: 'nowBodyPhoto', maxCount: 1 }, { name: 'dreamBodyPhoto', maxCount: 1 }]), bookSession);
+router.post('/book', authenticateToken, upload.fields([{ name: 'nowBodyPhoto', maxCount: 1 }, { name: 'dreamBodyPhoto', maxCount: 1 }]), optimizeImage(), bookSession);
 
 router.get('/reviews/:coachId', authenticateToken, async (req: any, res: Response) => {
   try {

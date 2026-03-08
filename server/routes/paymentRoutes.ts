@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { authenticateToken } from '../middleware/auth';
 import { run, get, query } from '../config/database';
-import { upload } from '../middleware/upload';
+import { upload, optimizeImage } from '../middleware/upload';
 import https from 'https';
 
 const router = Router();
@@ -298,7 +298,7 @@ function getPremiumAmount(plan: string): number {
 // ── E-Wallet: Coach or User ───────────────────────────────────────────────────
 // Coach e-wallet → PENDING (requires admin approval)
 // User e-wallet → PENDING (requires admin approval)
-router.post('/ewallet', authenticateToken, uploadPaymentProof, async (req: any, res: Response) => {
+router.post('/ewallet', authenticateToken, uploadPaymentProof, optimizeImage(), async (req: any, res: Response) => {
   const { plan, type, walletType, senderNumber, coachId } = req.body;
   if (!plan || !type || !walletType || !senderNumber) return res.status(400).json({ message: 'All fields required' });
   if (!req.file) return res.status(400).json({ message: 'Payment proof screenshot is required' });
@@ -460,7 +460,7 @@ router.post('/booking/paypal/capture', authenticateToken, async (req: any, res: 
 });
 
 // E-wallet proof for booking payment
-router.post('/booking/ewallet', authenticateToken, upload.single('proof'), async (req: any, res: Response) => {
+router.post('/booking/ewallet', authenticateToken, upload.single('proof'), optimizeImage(), async (req: any, res: Response) => {
   const { bookingId, walletType, senderNumber } = req.body;
   if (!bookingId || !walletType || !senderNumber || !req.file) {
     return res.status(400).json({ message: 'All fields and proof screenshot required' });
@@ -493,7 +493,7 @@ router.patch('/booking/confirm-payment/:bookingId', authenticateToken, async (re
 // ══════════════════════════════════════════════════════════════════════════════
 
 // User subscribes to a coach (monthly/yearly) via e-wallet
-router.post('/coach-subscribe', authenticateToken, upload.single('proof'), async (req: any, res: Response) => {
+router.post('/coach-subscribe', authenticateToken, upload.single('proof'), optimizeImage(), async (req: any, res: Response) => {
   const { coachId, planCycle, planType, walletType, senderNumber } = req.body;
   if (!coachId || !planCycle || !planType) return res.status(400).json({ message: 'Coach ID, plan cycle, and plan type are required' });
   if (!req.file) return res.status(400).json({ message: 'Payment proof screenshot is required' });
