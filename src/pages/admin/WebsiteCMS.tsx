@@ -928,7 +928,7 @@ export default function WebsiteCMS({ token, showMsg }: Props) {
             {/* Translations list */}
             <div style={{ maxHeight: 400, overflowY: "auto", display: "flex", flexDirection: "column", gap: 6 }}>
               {Object.entries(translationsForm)
-                .filter(([k, v]) => !translationSearch || k.toLowerCase().includes(translationSearch.toLowerCase()) || v.toLowerCase().includes(translationSearch.toLowerCase()))
+                .filter(([k, v]) => !translationSearch || k.toLowerCase().includes(translationSearch.toLowerCase()) || (v as string).toLowerCase().includes(translationSearch.toLowerCase()))
                 .map(([key, val]) => (
                   <div key={key} style={{ display: "grid", gridTemplateColumns: "1fr 1fr auto", gap: 8, alignItems: "center" }}>
                     <div style={{ fontSize: 12, color: "var(--text-secondary)", padding: "6px 8px", backgroundColor: "var(--bg-primary)", borderRadius: 6, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={key}>{key}</div>

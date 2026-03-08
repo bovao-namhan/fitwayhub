@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, type CSSProperties } from "react";
 import { Dumbbell, Utensils, Trash2, Plus, Video, Clock, Upload } from "lucide-react";
 import { useI18n } from "@/context/I18nContext";
 import { getApiBase } from "@/lib/api";
@@ -135,14 +135,14 @@ export default function Plans() {
     fetchNutrition();
   }
 
-  const card: React.CSSProperties = {
+  const card: CSSProperties = {
     backgroundColor: "var(--bg-card)",
     border: "1px solid var(--border)",
     borderRadius: 16,
     padding: isMobile ? "16px 14px" : "22px 20px",
   };
 
-  const selectStyle: React.CSSProperties = {
+  const selectStyle: CSSProperties = {
     width: "100%",
     padding: "10px 12px",
     borderRadius: 10,
@@ -153,7 +153,7 @@ export default function Plans() {
     outline: "none",
   };
 
-  const inputStyle: React.CSSProperties = {
+  const inputStyle: CSSProperties = {
     ...selectStyle,
   };
 
@@ -358,7 +358,7 @@ export default function Plans() {
               <p style={{ color: "var(--text-muted)", fontSize: 14 }}>{t("no_workout_plans")}</p>
             </div>
           ) : (
-            Object.entries(groupByDay(filteredWorkouts)).map(([day, items]) => (
+            Object.entries(groupByDay<WorkoutPlan>(filteredWorkouts)).map(([day, items]) => (
               <div key={day} style={{ marginBottom: 20 }}>
                 <h3 style={{ fontSize: 14, fontWeight: 700, color: "var(--accent)", marginBottom: 10, fontFamily: "'Chakra Petch', sans-serif" }}>
                   {dayLabel(day)}
@@ -547,7 +547,7 @@ export default function Plans() {
               <p style={{ color: "var(--text-muted)", fontSize: 14 }}>{t("no_nutrition_plans")}</p>
             </div>
           ) : (
-            Object.entries(groupByDay(filteredNutrition)).map(([day, items]) => (
+            Object.entries(groupByDay<NutritionPlan>(filteredNutrition)).map(([day, items]) => (
               <div key={day} style={{ marginBottom: 20 }}>
                 <h3 style={{ fontSize: 14, fontWeight: 700, color: "var(--accent)", marginBottom: 10, fontFamily: "'Chakra Petch', sans-serif" }}>
                   {dayLabel(day)}
