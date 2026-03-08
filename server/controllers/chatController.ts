@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { query, get, run } from '../config/database';
 
-const PRESENCE_TTL_MS = 45_000;
+const PRESENCE_TTL_MS = 20_000;
 const presenceMap = new Map<number, number>();
 
 function markOnline(userId: number) {
@@ -202,6 +202,8 @@ export const pingPresence = async (req: Request, res: Response) => {
   try {
     const userId = Number((req as any).user?.id || 0);
     markOnline(userId);
+    // Persist last_active to DB for accuracy across restarts
+    await run('UPDATE users SET last_active = NOW() WHERE id = ?', [userId]);
     res.json({ ok: true, ts: Date.now() });
   } catch {
     res.status(500).json({ message: 'Failed to update presence' });
@@ -212,8 +214,15 @@ export const getPresence = async (req: Request, res: Response) => {
   try {
     const userId = Number((req as any).user?.id || 0);
     markOnline(userId);
-    const onlineUserIds = Array.from(getOnlineUserSet());
-    res.json({ onlineUserIds });
+    // Combine in-memory presence with DB last_active (within 25s)
+    const memoryOnline = Array.from(getOnlineUserSet());
+    const dbOnline = await query(
+      'SELECT id FROM users WHERE last_active >= DATE_SUB(NOW(), INTERVAL 25 SECOND)',
+      []
+    ) as any[];
+    const combined = new Set(memoryOnline);
+    for (const row of dbOnline) combined.add(Number(row.id));
+    res.json({ onlineUserIds: Array.from(combined) });
   } catch {
     res.status(500).json({ message: 'Failed to fetch presence' });
   }

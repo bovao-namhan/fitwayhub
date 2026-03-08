@@ -3,7 +3,7 @@ import { useState, useEffect, useRef, useMemo } from "react";
 import React from "react";
 import {
   Search, Send, Paperclip, X, Users, Image as ImageIcon,
-  ArrowLeft, Phone, Video, SmilePlus, CheckCheck, Hash
+  ArrowLeft, SmilePlus, CheckCheck, Hash, Mic, Square, Play, Pause
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useI18n } from "@/context/I18nContext";
@@ -48,6 +48,8 @@ const avatarFallback = (name: string) => {
   return parts.length > 1 ? parts[0][0] + parts[1][0] : name.slice(0, 2);
 };
 
+const isAudioUrl = (url: string) => /\.(webm|ogg|mp3|wav|m4a|aac|opus)$/i.test(url) || url.includes('voice-');
+
 /* Keyframes injected once */
 const STYLE_ID = "chat-keyframes";
 if (typeof document !== "undefined" && !document.getElementById(STYLE_ID)) {
@@ -84,6 +86,78 @@ export default function Chat() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  /* voice recording */
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingDuration, setRecordingDuration] = useState(0);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const recordingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mimeTypes = ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus', 'audio/ogg', 'audio/mp4', 'audio/aac'];
+      const supported = mimeTypes.find(m => MediaRecorder.isTypeSupported(m));
+      const mediaRecorder = supported ? new MediaRecorder(stream, { mimeType: supported }) : new MediaRecorder(stream);
+      audioChunksRef.current = [];
+      mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) audioChunksRef.current.push(e.data); };
+      mediaRecorder.onstop = async () => {
+        stream.getTracks().forEach(t => t.stop());
+        const mime = mediaRecorder.mimeType || 'audio/webm';
+        const blob = new Blob(audioChunksRef.current, { type: mime });
+        if (blob.size < 500) return;
+        const ext = mime.includes('mp4') || mime.includes('aac') ? 'mp4' : mime.includes('ogg') ? 'ogg' : 'webm';
+        await sendVoiceNote(blob, ext);
+      };
+      mediaRecorderRef.current = mediaRecorder;
+      mediaRecorder.start(250);
+      setIsRecording(true);
+      setRecordingDuration(0);
+      recordingTimerRef.current = setInterval(() => setRecordingDuration(d => d + 1), 1000);
+    } catch { /* mic permission denied or not available */ }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop();
+    }
+    setIsRecording(false);
+    if (recordingTimerRef.current) { clearInterval(recordingTimerRef.current); recordingTimerRef.current = null; }
+  };
+
+  const cancelRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.ondataavailable = null;
+      mediaRecorderRef.current.onstop = null;
+      mediaRecorderRef.current.stop();
+      mediaRecorderRef.current.stream.getTracks().forEach(t => t.stop());
+    }
+    setIsRecording(false);
+    setRecordingDuration(0);
+    if (recordingTimerRef.current) { clearInterval(recordingTimerRef.current); recordingTimerRef.current = null; }
+  };
+
+  const sendVoiceNote = async (blob: Blob, ext: string) => {
+    setSending(true);
+    try {
+      const fd = new FormData();
+      fd.append('file', blob, `voice-${Date.now()}.${ext}`);
+      if (selectedContact) fd.append('receiverId', selectedContact.id.toString());
+      if (selectedChallenge && canUseChallengeChat) fd.append('challengeId', selectedChallenge.id.toString());
+      const response = await fetch(getApiBase() + '/api/chat/send-voice', { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: fd });
+      if (response.status === 403) {
+        const d = await response.json().catch(() => ({}));
+        setSubscriptionError(d.message || 'You must subscribe to this coach before chatting.');
+        return;
+      }
+      setSubscriptionError('');
+      if (selectedContact) fetchMessages(selectedContact.id);
+      else if (selectedChallenge && canUseChallengeChat) fetchChallengeMessages(selectedChallenge.id);
+    } catch {} finally { setSending(false); }
+  };
+
+  const formatRecTime = (s: number) => `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}`;
+
   /* responsive */
   const [isMobile, setIsMobile] = useState(typeof window !== "undefined" && window.innerWidth < 768);
   useEffect(() => {
@@ -118,7 +192,7 @@ export default function Chat() {
     };
 
     syncPresence();
-    const id = setInterval(syncPresence, 10000);
+    const id = setInterval(syncPresence, 5000);
     return () => {
       clearInterval(id);
     };
@@ -494,18 +568,7 @@ export default function Chat() {
               )}
             </div>
 
-            <div style={{ display: "flex", gap: 6 }}>
-              {[Phone, Video].map((Icon, idx) => (
-                <button key={idx} style={{
-                  width: 34, height: 34, borderRadius: 10, backgroundColor: cv.surface,
-                  border: `1px solid ${cv.border}`, cursor: "pointer", display: "flex",
-                  alignItems: "center", justifyContent: "center", color: cv.textSecondary,
-                  transition: "all 0.15s",
-                }}>
-                  <Icon size={15} />
-                </button>
-              ))}
-            </div>
+
           </div>
 
           {/* ---- Messages ---- */}
@@ -597,12 +660,21 @@ export default function Chat() {
                           position: "relative",
                           boxShadow: isMe ? "0 1px 4px rgba(200,255,0,0.15)" : "0 1px 3px rgba(0,0,0,0.1)",
                         }}>
-                          {m.media_url && (
-                            <img src={m.media_url} alt="media" style={{
+                          {m.media_url && isAudioUrl(m.media_url) ? (
+                            <div style={{ padding: "8px 10px", minWidth: 200 }}>
+                              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                                <Mic size={14} color={isMe ? "#0A0A0B" : cv.accent} />
+                                <span style={{ fontSize: 11, fontWeight: 600, opacity: 0.7 }}>Voice note</span>
+                              </div>
+                              <audio controls preload="metadata" style={{ width: "100%", height: 32, borderRadius: 8 }}
+                                src={m.media_url.startsWith('http') ? m.media_url : getApiBase() + m.media_url} />
+                            </div>
+                          ) : m.media_url ? (
+                            <img src={m.media_url.startsWith('http') ? m.media_url : getApiBase() + m.media_url} alt="media" style={{
                               maxWidth: "100%", maxHeight: 220, borderRadius: m.content ? "12px 12px 4px 4px" : 12,
                               display: "block",
                             }} />
-                          )}
+                          ) : null}
                           {m.content && (
                             <span style={{ display: "block", padding: m.media_url ? "6px 10px 4px" : 0 }}>{m.content}</span>
                           )}
@@ -673,45 +745,89 @@ export default function Chat() {
           }}>
             <input type="file" ref={fileInputRef} accept="image/*,video/*,.pdf,.doc,.docx" onChange={(e) => setSelectedFile(e.target.files?.[0] ?? null)} style={{ display: "none" }} />
 
-            <button onClick={() => fileInputRef.current?.click()} style={{
-              width: 38, height: 38, borderRadius: 12, backgroundColor: cv.surface,
-              border: `1px solid ${cv.border}`, cursor: "pointer", display: "flex",
-              alignItems: "center", justifyContent: "center", flexShrink: 0, color: cv.textMuted,
-              transition: "all 0.15s",
-            }}>
-              <Paperclip size={16} />
-            </button>
+            {isRecording ? (
+              /* Recording UI */
+              <>
+                <button onClick={cancelRecording} style={{
+                  width: 38, height: 38, borderRadius: 12, backgroundColor: "rgba(255,68,68,0.12)",
+                  border: "1px solid rgba(255,68,68,0.3)", cursor: "pointer", display: "flex",
+                  alignItems: "center", justifyContent: "center", flexShrink: 0,
+                }}>
+                  <X size={16} color="#FF6B6B" />
+                </button>
+                <div style={{
+                  flex: 1, display: "flex", alignItems: "center", gap: 10, padding: "8px 14px",
+                  backgroundColor: "rgba(255,68,68,0.06)", borderRadius: 14, border: "1px solid rgba(255,68,68,0.15)",
+                }}>
+                  <div style={{ width: 8, height: 8, borderRadius: "50%", backgroundColor: "#FF4444", animation: "chatSlideUp 1s ease-in-out infinite alternate" }} />
+                  <span style={{ fontSize: 13, fontWeight: 600, color: "#FF6B6B", fontFamily: "'Chakra Petch', sans-serif" }}>
+                    Recording {formatRecTime(recordingDuration)}
+                  </span>
+                </div>
+                <button onClick={stopRecording} style={{
+                  width: 38, height: 38, borderRadius: 12, backgroundColor: cv.accent,
+                  border: "none", cursor: "pointer", display: "flex",
+                  alignItems: "center", justifyContent: "center", flexShrink: 0,
+                }}>
+                  <Send size={16} color="#0A0A0B" />
+                </button>
+              </>
+            ) : (
+              /* Normal input */
+              <>
+                <button onClick={() => fileInputRef.current?.click()} style={{
+                  width: 38, height: 38, borderRadius: 12, backgroundColor: cv.surface,
+                  border: `1px solid ${cv.border}`, cursor: "pointer", display: "flex",
+                  alignItems: "center", justifyContent: "center", flexShrink: 0, color: cv.textMuted,
+                  transition: "all 0.15s",
+                }}>
+                  <Paperclip size={16} />
+                </button>
 
-            <div style={{ flex: 1, position: "relative" }}>
-              <input
-                ref={inputRef}
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMsg(); } }}
-                placeholder={t("type_message") || "Type a message…"}
-                style={{
-                  width: "100%", backgroundColor: cv.surface, border: `1px solid ${cv.border}`,
-                  borderRadius: 14, padding: "10px 44px 10px 14px", fontSize: 14,
-                  color: cv.textPrimary, fontFamily: "'Outfit', sans-serif", outline: "none",
-                }}
-              />
-              <button style={{
-                position: "absolute", insetInlineEnd: 6, top: "50%", transform: "translateY(-50%)",
-                background: "none", border: "none", cursor: "pointer", color: cv.textMuted, padding: 4,
-              }}>
-                <SmilePlus size={18} />
-              </button>
-            </div>
+                <div style={{ flex: 1, position: "relative" }}>
+                  <input
+                    ref={inputRef}
+                    value={newMessage}
+                    onChange={(e) => setNewMessage(e.target.value)}
+                    onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMsg(); } }}
+                    placeholder={t("type_message") || "Type a message…"}
+                    style={{
+                      width: "100%", backgroundColor: cv.surface, border: `1px solid ${cv.border}`,
+                      borderRadius: 14, padding: "10px 44px 10px 14px", fontSize: 14,
+                      color: cv.textPrimary, fontFamily: "'Outfit', sans-serif", outline: "none",
+                    }}
+                  />
+                  <button style={{
+                    position: "absolute", insetInlineEnd: 6, top: "50%", transform: "translateY(-50%)",
+                    background: "none", border: "none", cursor: "pointer", color: cv.textMuted, padding: 4,
+                  }}>
+                    <SmilePlus size={18} />
+                  </button>
+                </div>
 
-            <button onClick={sendMsg} disabled={sending} style={{
-              width: 38, height: 38, borderRadius: 12,
-              backgroundColor: (newMessage.trim() || selectedFile) ? cv.accent : cv.surface,
-              border: (newMessage.trim() || selectedFile) ? "none" : `1px solid ${cv.border}`,
-              cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-              transition: "all 0.2s", opacity: sending ? 0.6 : 1,
-            }}>
-              <Send size={16} color={(newMessage.trim() || selectedFile) ? "#0A0A0B" : cv.textMuted} />
-            </button>
+                {/* Mic button — shown when no text or file */}
+                {!newMessage.trim() && !selectedFile ? (
+                  <button onClick={startRecording} style={{
+                    width: 38, height: 38, borderRadius: 12, backgroundColor: cv.surface,
+                    border: `1px solid ${cv.border}`, cursor: "pointer", display: "flex",
+                    alignItems: "center", justifyContent: "center", flexShrink: 0,
+                    transition: "all 0.2s",
+                  }}>
+                    <Mic size={16} color={cv.textMuted} />
+                  </button>
+                ) : (
+                  <button onClick={sendMsg} disabled={sending} style={{
+                    width: 38, height: 38, borderRadius: 12,
+                    backgroundColor: cv.accent,
+                    border: "none",
+                    cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+                    transition: "all 0.2s", opacity: sending ? 0.6 : 1,
+                  }}>
+                    <Send size={16} color="#0A0A0B" />
+                  </button>
+                )}
+              </>
+            )}
           </div>
         </div>
       )}

@@ -2,6 +2,7 @@ import { Outlet } from "react-router-dom";
 import {
   LayoutDashboard, Users, Settings, Activity,
   Gift, DollarSign, Video, Megaphone, UserCheck, Globe, MessageCircle, FileText,
+  ClipboardList, Wallet,
 } from "lucide-react";
 import { useBranding, getBrandLogoForLang } from "@/context/BrandingContext";
 import { useI18n } from "@/context/I18nContext";
@@ -17,9 +18,11 @@ const navItems: NavItem[] = [
   { path: "/admin/ads",       icon: Megaphone,       label: "Coach Ads" },
   { path: "/admin/chat",      icon: MessageCircle,   label: "Chat" },
   { path: "/admin/gifts",     icon: Gift,            label: "Gifts" },
-  { path: "/admin/blogs",     icon: FileText,        label: "No Pain No Shawerma" },
-  { path: "/admin/website",   icon: Globe,           label: "Website" },
-  { path: "/admin/settings",  icon: Settings,        label: "Settings" },
+  { path: "/admin/blogs",          icon: FileText,        label: "No Pain No Shawerma" },
+  { path: "/admin/website",        icon: Globe,           label: "Website" },
+  { path: "/admin/subscriptions",  icon: ClipboardList,   label: "Subscriptions" },
+  { path: "/admin/withdrawals",    icon: Wallet,          label: "Withdrawals" },
+  { path: "/admin/settings",       icon: Settings,        label: "Settings" },
 ];
 
 const bottomNavItems: NavItem[] = [
@@ -33,9 +36,11 @@ const bottomNavItems: NavItem[] = [
 const moreItems: NavItem[] = [
   { path: "/admin/videos",  icon: Video,     label: "Videos" },
   { path: "/admin/ads",     icon: Megaphone, label: "Coach Ads" },
-  { path: "/admin/chat",    icon: MessageCircle, label: "Chat" },
-  { path: "/admin/gifts",   icon: Gift,      label: "Gifts" },
-  { path: "/admin/website", icon: Globe,     label: "Website" },
+  { path: "/admin/chat",           icon: MessageCircle, label: "Chat" },
+  { path: "/admin/gifts",          icon: Gift,          label: "Gifts" },
+  { path: "/admin/website",        icon: Globe,         label: "Website" },
+  { path: "/admin/subscriptions",  icon: ClipboardList, label: "Subscriptions" },
+  { path: "/admin/withdrawals",    icon: Wallet,        label: "Withdrawals" },
 ];
 
 export function AdminLayout() {
@@ -53,9 +58,11 @@ export function AdminLayout() {
     { path: "/admin/ads",       icon: Megaphone,       label: t("coach_ads") },
     { path: "/admin/chat",      icon: MessageCircle,   label: t("chat") },
     { path: "/admin/gifts",     icon: Gift,            label: t("gifts") },
-    { path: "/admin/blogs",     icon: FileText,        label: "No Pain No Shawerma" },
-    { path: "/admin/website",   icon: Globe,           label: t("website") },
-    { path: "/admin/settings",  icon: Settings,        label: t("settings") },
+    { path: "/admin/blogs",          icon: FileText,        label: "No Pain No Shawerma" },
+    { path: "/admin/website",        icon: Globe,           label: t("website") },
+    { path: "/admin/subscriptions",  icon: ClipboardList,   label: t("subscriptions") || "Subscriptions" },
+    { path: "/admin/withdrawals",    icon: Wallet,          label: t("withdrawals") || "Withdrawals" },
+    { path: "/admin/settings",       icon: Settings,        label: t("settings") },
   ];
 
   const translatedBottomNavItems: NavItem[] = [
@@ -69,10 +76,12 @@ export function AdminLayout() {
   const translatedMoreItems: NavItem[] = [
     { path: "/admin/videos",  icon: Video,          label: t("videos") },
     { path: "/admin/ads",     icon: Megaphone,      label: t("coach_ads") },
-    { path: "/admin/chat",    icon: MessageCircle,  label: t("chat") },
-    { path: "/admin/gifts",   icon: Gift,           label: t("gifts") },
-    { path: "/admin/blogs",   icon: FileText,       label: "No Pain No Shawerma" },
-    { path: "/admin/website", icon: Globe,          label: t("website") },
+    { path: "/admin/chat",           icon: MessageCircle,  label: t("chat") },
+    { path: "/admin/gifts",          icon: Gift,           label: t("gifts") },
+    { path: "/admin/blogs",          icon: FileText,       label: "No Pain No Shawerma" },
+    { path: "/admin/website",        icon: Globe,          label: t("website") },
+    { path: "/admin/subscriptions",  icon: ClipboardList,  label: t("subscriptions") || "Subscriptions" },
+    { path: "/admin/withdrawals",    icon: Wallet,         label: t("withdrawals") || "Withdrawals" },
   ];
   const { isMobile, sidebarW, DesktopSidebar, OverlayDrawer, MobileTopBar, MobileBottomBar } = SharedSidebar({
     navItems: translatedNavItems,

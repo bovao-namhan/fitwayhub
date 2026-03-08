@@ -149,6 +149,8 @@ export default function App() {
                 <Route path="/admin/settings" element={<AdminDashboard />} />
                 <Route path="/admin/website" element={<AdminDashboard />} />
                 <Route path="/admin/community" element={<AdminDashboard />} />
+                <Route path="/admin/subscriptions" element={<AdminDashboard />} />
+                <Route path="/admin/withdrawals" element={<AdminDashboard />} />
                 <Route path="/admin/blogs" element={<AdminBlogs />} />
               </Route>
 

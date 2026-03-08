@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
-import { Eye, EyeOff, Mail, Lock, User, Activity, CheckCircle2, Dumbbell, Trophy, Chrome, Facebook, ArrowLeft } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, User, Activity, CheckCircle2, Dumbbell, Trophy, Chrome, ArrowLeft } from "lucide-react";
 
 export default function Register() {
   const [name, setName] = useState("");
@@ -14,7 +14,7 @@ export default function Register() {
   const { register } = useAuth();
   const navigate = useNavigate();
 
-  const startSocialSignup = (provider: "google" | "facebook") => {
+  const startSocialSignup = (provider: "google") => {
     const base = (import.meta.env.VITE_API_BASE as string) || "";
     window.location.href = `${base}/api/auth/oauth/${provider}`;
   };
@@ -189,16 +189,6 @@ export default function Register() {
             >
               <Chrome size={16} />
               Sign up with Google
-            </button>
-
-            <button
-              type="button"
-              className="input-base"
-              onClick={() => startSocialSignup("facebook")}
-              style={{ padding: "12px", fontSize: 14, fontWeight: 600, cursor: "pointer", backgroundColor: "var(--bg-card)", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
-            >
-              <Facebook size={16} />
-              Sign up with Facebook
             </button>
           </form>
 

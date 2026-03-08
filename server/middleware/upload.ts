@@ -66,11 +66,25 @@ const fontFilter = (req: any, file: any, cb: any) => {
   }
 };
 
+const audioFilter = (req: any, file: any, cb: any) => {
+  if (file.mimetype.startsWith('audio/') || file.mimetype === 'application/ogg' || file.mimetype === 'video/webm') {
+    cb(null, true);
+  } else {
+    cb(new Error('Only audio files are allowed'), false);
+  }
+};
+
 const uploadFont = multer({
   storage: storage,
   fileFilter: fontFilter,
   limits: { fileSize: 10 * 1024 * 1024 }
 });
 
+const uploadAudio = multer({
+  storage: storage,
+  fileFilter: audioFilter,
+  limits: { fileSize: 10 * 1024 * 1024 }
+});
+
 export default upload;
-export { upload, uploadAny, uploadVideo, uploadFont };
+export { upload, uploadAny, uploadVideo, uploadFont, uploadAudio };

@@ -26,7 +26,7 @@ export default function Login() {
     if (oauthError) setError(oauthError);
   }, [searchParams]);
 
-  const startSocialLogin = (provider: "google" | "facebook") => {
+  const startSocialLogin = (provider: "google") => {
     const base = (import.meta.env.VITE_API_BASE as string) || "";
     window.location.href = `${base}/api/auth/oauth/${provider}`;
   };
@@ -248,15 +248,6 @@ export default function Login() {
               style={{ padding: "12px", fontSize: 14, fontWeight: 600, cursor: "pointer", backgroundColor: "var(--bg-card)" }}
             >
               Continue with Google
-            </button>
-
-            <button
-              type="button"
-              className="input-base"
-              onClick={() => startSocialLogin("facebook")}
-              style={{ padding: "12px", fontSize: 14, fontWeight: 600, cursor: "pointer", backgroundColor: "var(--bg-card)" }}
-            >
-              Continue with Facebook
             </button>
           </form>
 

@@ -2,6 +2,7 @@ import express from 'express';
 import { getChatHistory, sendMessage, getContacts, getChallengeMessages, sendMediaMessage, pingPresence, getPresence } from '../controllers/chatController';
 import { authenticateToken } from '../middleware/auth';
 import upload from '../middleware/upload';
+import { uploadAudio } from '../middleware/upload';
 
 const router = express.Router();
 
@@ -14,6 +15,7 @@ router.get('/challenge/:challengeId/messages', authenticateToken, getChallengeMe
 router.get('/challenge/:challengeId', authenticateToken, getChallengeMessages);    // alias
 router.post('/send', authenticateToken, sendMessage);                              // POST /api/chat/send
 router.post('/send-media', authenticateToken, upload.single('file'), sendMessage); // POST /api/chat/send-media
+router.post('/send-voice', authenticateToken, uploadAudio.single('file'), sendMessage); // POST /api/chat/send-voice
 router.post('/presence/ping', authenticateToken, pingPresence);                    // POST /api/chat/presence/ping
 router.get('/presence', authenticateToken, getPresence);                           // GET /api/chat/presence
 

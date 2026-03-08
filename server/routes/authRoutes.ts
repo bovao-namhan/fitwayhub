@@ -9,8 +9,6 @@ import {
   updateProfile,
   oauthGoogleStart,
   oauthGoogleCallback,
-  oauthFacebookStart,
-  oauthFacebookCallback,
 } from '../controllers/authController';
 import { authenticateToken } from '../middleware/auth';
 import { get } from '../config/database';
@@ -21,8 +19,6 @@ router.post('/register', register);
 router.post('/login', login);
 router.get('/oauth/google', oauthGoogleStart);
 router.get('/oauth/google/callback', oauthGoogleCallback);
-router.get('/oauth/facebook', oauthFacebookStart);
-router.get('/oauth/facebook/callback', oauthFacebookCallback);
 router.post('/forgot-password', forgotPassword);
 router.post('/reset-password', resetPassword);
 router.post('/login-remember', loginWithRememberToken);

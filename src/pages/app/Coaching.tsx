@@ -1,5 +1,5 @@
 import { getApiBase } from "@/lib/api";
-import { Calendar, MessageSquare, Star, Lock, X, Search, SlidersHorizontal, Camera, UserPlus, UserCheck, Gift } from "lucide-react";
+import { Calendar, MessageSquare, Star, Lock, X, Search, SlidersHorizontal, Camera, UserPlus, UserCheck, Gift, Eye } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
 import { useState, useMemo, useEffect } from "react";
@@ -68,6 +68,7 @@ export default function Coaching() {
   const [giftMsg, setGiftMsg] = useState("");
   const [giftSending, setGiftSending] = useState(false);
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
+  const [viewProfileCoach, setViewProfileCoach] = useState<Coach | null>(null);
 
   useEffect(() => {
     const onResize = () => setIsMobile(window.innerWidth < 768);
@@ -393,6 +394,9 @@ export default function Coaching() {
                     <Gift size={14} />
                   </button>
                 )}
+                <button onClick={() => { setViewProfileCoach(c); fetchReviews(c.id); }} style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "9px 12px", borderRadius: 9, backgroundColor: "rgba(59,130,246,0.06)", border: "1px solid rgba(59,130,246,0.2)", color: "var(--blue)", cursor: "pointer", flex: isMobile ? "1 1 calc(50% - 4px)" : "0 0 auto" }} title="View Profile">
+                  <Eye size={14} />
+                </button>
               </div>
             </div>
           ))}
@@ -658,6 +662,122 @@ export default function Coaching() {
                 <button onClick={sendGift} disabled={giftSending} style={{ flex: 2, padding: "11px", borderRadius: 10, backgroundColor: "var(--accent)", color: "#0A0A0B", fontFamily: "'Chakra Petch', sans-serif", fontWeight: 700, fontSize: 14, border: "none", cursor: giftSending ? "not-allowed" : "pointer", opacity: giftSending ? 0.6 : 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
                   <Gift size={15} /> {giftSending ? "Sending…" : `Send ${giftAmount} Points`}
                 </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* View Profile Modal */}
+      {viewProfileCoach && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 100, display: "flex", alignItems: isMobile ? "flex-end" : "center", justifyContent: "center", padding: isMobile ? 8 : 20, backgroundColor: "rgba(0,0,0,0.7)", overflowY: "auto" }}>
+          <div style={{ width: "100%", maxWidth: 520, backgroundColor: "var(--bg-surface)", border: "1px solid var(--border)", borderRadius: isMobile ? 16 : 20, padding: 0, margin: "auto", maxHeight: "90dvh", overflowY: "auto" }}>
+            {/* Header */}
+            <div style={{ padding: isMobile ? "20px 16px" : "28px 24px", background: "linear-gradient(135deg, rgba(200,255,0,0.06), rgba(59,130,246,0.04))", borderBottom: "1px solid var(--border)", position: "relative" }}>
+              <button onClick={() => setViewProfileCoach(null)} style={{ position: "absolute", top: 14, insetInlineEnd: 14, width: 30, height: 30, borderRadius: 8, backgroundColor: "var(--bg-card)", border: "1px solid var(--border)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-secondary)" }}><X size={15} /></button>
+              <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 16 }}>
+                <img src={viewProfileCoach.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${viewProfileCoach.email}`} alt={viewProfileCoach.name} style={{ width: 72, height: 72, borderRadius: "50%", backgroundColor: "var(--bg-card)", border: "3px solid var(--border)" }} />
+                <div>
+                  <h2 style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 20, fontWeight: 700, marginBottom: 4 }}>{viewProfileCoach.name}</h2>
+                  <p style={{ fontSize: 13, color: "var(--accent)", fontWeight: 600, marginBottom: 4 }}>{viewProfileCoach.specialty || "General Fitness"}</p>
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                    {viewProfileCoach.location && <span style={{ fontSize: 12, color: "var(--text-muted)" }}>📍 {viewProfileCoach.location}</span>}
+                    <span style={{ fontSize: 12, color: viewProfileCoach.available ? "var(--accent)" : "var(--text-muted)" }}>
+                      {viewProfileCoach.available ? "● Available" : "○ Unavailable"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              {/* Stats row */}
+              <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+                <div style={{ flex: "1 1 80px", padding: "10px 14px", backgroundColor: "var(--bg-card)", borderRadius: 12, border: "1px solid var(--border)", textAlign: "center" }}>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 4, marginBottom: 4 }}>
+                    <Star size={14} style={{ fill: "var(--amber)", color: "var(--amber)" }} />
+                    <span style={{ fontSize: 18, fontWeight: 700, fontFamily: "'Chakra Petch', sans-serif" }}>{Number(viewProfileCoach.rating).toFixed(1)}</span>
+                  </div>
+                  <span style={{ fontSize: 11, color: "var(--text-muted)" }}>{viewProfileCoach.review_count} reviews</span>
+                </div>
+                <div style={{ flex: "1 1 80px", padding: "10px 14px", backgroundColor: "var(--bg-card)", borderRadius: 12, border: "1px solid var(--border)", textAlign: "center" }}>
+                  <span style={{ fontSize: 18, fontWeight: 700, fontFamily: "'Chakra Petch', sans-serif", color: "var(--accent)" }}>{viewProfileCoach.sessions_count}</span>
+                  <span style={{ fontSize: 11, color: "var(--text-muted)", display: "block" }}>Sessions</span>
+                </div>
+                <div style={{ flex: "1 1 80px", padding: "10px 14px", backgroundColor: "var(--bg-card)", borderRadius: 12, border: "1px solid var(--border)", textAlign: "center" }}>
+                  <span style={{ fontSize: 14, fontWeight: 700, fontFamily: "'Chakra Petch', sans-serif" }}>
+                    {viewProfileCoach.plan_types === "workout" ? "💪" : viewProfileCoach.plan_types === "nutrition" ? "🥗" : "🏆"}
+                  </span>
+                  <span style={{ fontSize: 11, color: "var(--text-muted)", display: "block", marginTop: 2 }}>
+                    {viewProfileCoach.plan_types === "workout" ? "Workout" : viewProfileCoach.plan_types === "nutrition" ? "Nutrition" : "Complete"}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Body */}
+            <div style={{ padding: isMobile ? "16px" : "24px", display: "flex", flexDirection: "column", gap: 16 }}>
+              {/* Bio */}
+              <div>
+                <h4 style={{ fontSize: 12, fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>About</h4>
+                <p style={{ fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.7 }}>{viewProfileCoach.bio || "No bio provided yet."}</p>
+              </div>
+
+              {/* Pricing */}
+              <div>
+                <h4 style={{ fontSize: 12, fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>Pricing</h4>
+                <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                  {(viewProfileCoach.monthly_price || 0) > 0 && (
+                    <div style={{ flex: "1 1 140px", padding: "12px 16px", backgroundColor: "var(--accent-dim)", borderRadius: 12, border: "1px solid rgba(200,255,0,0.2)" }}>
+                      <span style={{ fontSize: 11, color: "var(--text-muted)", display: "block", marginBottom: 4 }}>Monthly</span>
+                      <span style={{ fontSize: 20, fontWeight: 700, fontFamily: "'Chakra Petch', sans-serif", color: "var(--accent)" }}>{viewProfileCoach.monthly_price} EGP</span>
+                    </div>
+                  )}
+                  {(viewProfileCoach.yearly_price || 0) > 0 && (
+                    <div style={{ flex: "1 1 140px", padding: "12px 16px", backgroundColor: "rgba(6,182,212,0.06)", borderRadius: 12, border: "1px solid rgba(6,182,212,0.2)" }}>
+                      <span style={{ fontSize: 11, color: "var(--text-muted)", display: "block", marginBottom: 4 }}>Yearly</span>
+                      <span style={{ fontSize: 20, fontWeight: 700, fontFamily: "'Chakra Petch', sans-serif", color: "var(--cyan)" }}>{viewProfileCoach.yearly_price} EGP</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Reviews */}
+              <div>
+                <h4 style={{ fontSize: 12, fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>Reviews ({viewProfileCoach.review_count})</h4>
+                {(coachReviews[viewProfileCoach.id] || []).length === 0 ? (
+                  <p style={{ fontSize: 13, color: "var(--text-muted)", padding: "12px 0" }}>No reviews yet.</p>
+                ) : (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 10, maxHeight: 220, overflowY: "auto" }}>
+                    {(coachReviews[viewProfileCoach.id] || []).map((r: any) => (
+                      <div key={r.id} style={{ padding: "12px 14px", backgroundColor: "var(--bg-card)", borderRadius: 12, border: "1px solid var(--border)" }}>
+                        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+                          <span style={{ fontSize: 13, fontWeight: 600 }}>{r.userName}</span>
+                          <div style={{ display: "flex", gap: 2 }}>
+                            {Array.from({ length: 5 }).map((_, i) => (
+                              <Star key={i} size={11} style={{ fill: i < r.rating ? "var(--amber)" : "transparent", color: i < r.rating ? "var(--amber)" : "var(--text-muted)" }} />
+                            ))}
+                          </div>
+                        </div>
+                        <p style={{ fontSize: 12.5, color: "var(--text-secondary)", lineHeight: 1.5 }}>{r.text}</p>
+                        <p style={{ fontSize: 10, color: "var(--text-muted)", marginTop: 6 }}>{new Date(r.created_at).toLocaleDateString()}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Actions */}
+              <div style={{ display: "flex", gap: 10, flexDirection: isMobile ? "column" : "row" }}>
+                <button onClick={() => { setViewProfileCoach(null); navigate(`/app/chat?coach=${viewProfileCoach.id}`); }} style={{ flex: 1, padding: "11px", borderRadius: 10, backgroundColor: "var(--bg-card)", border: "1px solid var(--border)", color: "var(--text-primary)", cursor: "pointer", fontSize: 14, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }}>
+                  <MessageSquare size={15} /> Chat
+                </button>
+                {!subscribedCoaches[viewProfileCoach.id]?.subscribed && (viewProfileCoach.monthly_price || viewProfileCoach.yearly_price) ? (
+                  <button onClick={() => { setViewProfileCoach(null); setSubscribeCoach(viewProfileCoach); setSubCycle("monthly"); setSubMsg(""); }} disabled={!viewProfileCoach.available} style={{ flex: 2, padding: "11px", borderRadius: 10, backgroundColor: "var(--accent)", color: "#0A0A0B", fontFamily: "'Chakra Petch', sans-serif", fontWeight: 700, fontSize: 14, border: "none", cursor: viewProfileCoach.available ? "pointer" : "not-allowed", opacity: viewProfileCoach.available ? 1 : 0.6 }}>
+                    Subscribe
+                  </button>
+                ) : (
+                  <button onClick={() => setViewProfileCoach(null)} style={{ flex: 2, padding: "11px", borderRadius: 10, backgroundColor: "var(--bg-card)", border: "1px solid var(--border)", color: "var(--text-secondary)", cursor: "pointer", fontSize: 14 }}>
+                    Close
+                  </button>
+                )}
               </div>
             </div>
           </div>

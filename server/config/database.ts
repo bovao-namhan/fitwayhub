@@ -630,6 +630,7 @@ export async function initDatabase() {
   try { await pool.execute("ALTER TABLE users ADD COLUMN card_holder_name VARCHAR(100)"); } catch {}
   try { await pool.execute("ALTER TABLE users ADD COLUMN card_number VARCHAR(30)"); } catch {}
   try { await pool.execute("ALTER TABLE users ADD COLUMN instapay_handle VARCHAR(100)"); } catch {}
+  try { await pool.execute("ALTER TABLE users ADD COLUMN last_active DATETIME"); } catch {}
 
   // Coach subscriptions: user subscribes to a coach (monthly/yearly)
   try {

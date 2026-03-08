@@ -1,11 +1,13 @@
 import { getApiBase } from "@/lib/api";
 import { useState, useRef, useEffect } from "react";
-import { Send, Search } from "lucide-react";
+import { Send, Search, Mic, X } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useI18n } from "@/context/I18nContext";
 
-interface Message { id: number; sender_id: number; receiver_id: number; content: string; created_at: string; }
+interface Message { id: number; sender_id: number; receiver_id: number; content: string; media_url?: string | null; created_at: string; }
 interface ChatUser { id: number; name: string; email: string; avatar: string; role: string; online?: boolean; }
+
+const isAudioUrl = (url: string) => /\.(webm|ogg|mp3|wav|m4a|aac|opus)$/i.test(url) || url.includes('voice-');
 
 export default function CoachChat() {
   const { user, token } = useAuth();
@@ -55,7 +57,7 @@ export default function CoachChat() {
     };
 
     syncPresence();
-    const id = setInterval(syncPresence, 10000);
+    const id = setInterval(syncPresence, 5000);
     return () => {
       clearInterval(id);
     };
@@ -85,6 +87,64 @@ export default function CoachChat() {
       if (r.ok) { const d = await r.json(); setMessages(d.messages || []); }
     } catch {}
   };
+
+  /* voice recording */
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingDuration, setRecordingDuration] = useState(0);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const recordingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mimeTypes = ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus', 'audio/ogg', 'audio/mp4', 'audio/aac'];
+      const supported = mimeTypes.find(m => MediaRecorder.isTypeSupported(m));
+      const mediaRecorder = supported ? new MediaRecorder(stream, { mimeType: supported }) : new MediaRecorder(stream);
+      audioChunksRef.current = [];
+      mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) audioChunksRef.current.push(e.data); };
+      mediaRecorder.onstop = async () => {
+        stream.getTracks().forEach(t => t.stop());
+        const mime = mediaRecorder.mimeType || 'audio/webm';
+        const blob = new Blob(audioChunksRef.current, { type: mime });
+        if (blob.size < 500 || !activeUser) return;
+        const ext = mime.includes('mp4') || mime.includes('aac') ? 'mp4' : mime.includes('ogg') ? 'ogg' : 'webm';
+        const fd = new FormData();
+        fd.append('file', blob, `voice-${Date.now()}.${ext}`);
+        fd.append('receiverId', activeUser.id.toString());
+        try {
+          await fetch(getApiBase() + '/api/chat/send-voice', { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: fd });
+          const r2 = await api(`/api/chat/messages/${activeUser.id}`);
+          if (r2.ok) { const d2 = await r2.json(); setMessages(d2.messages || []); }
+        } catch {}
+      };
+      mediaRecorderRef.current = mediaRecorder;
+      mediaRecorder.start(250);
+      setIsRecording(true);
+      setRecordingDuration(0);
+      recordingTimerRef.current = setInterval(() => setRecordingDuration(d => d + 1), 1000);
+    } catch {}
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') mediaRecorderRef.current.stop();
+    setIsRecording(false);
+    if (recordingTimerRef.current) { clearInterval(recordingTimerRef.current); recordingTimerRef.current = null; }
+  };
+
+  const cancelRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.ondataavailable = null;
+      mediaRecorderRef.current.onstop = null;
+      mediaRecorderRef.current.stop();
+      mediaRecorderRef.current.stream.getTracks().forEach(t => t.stop());
+    }
+    setIsRecording(false);
+    setRecordingDuration(0);
+    if (recordingTimerRef.current) { clearInterval(recordingTimerRef.current); recordingTimerRef.current = null; }
+  };
+
+  const formatRecTime = (s: number) => `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}`;
 
   const filtered = chatUsers.filter(u => u.name.toLowerCase().includes(search.toLowerCase()) || u.email.toLowerCase().includes(search.toLowerCase()));
 
@@ -145,7 +205,19 @@ export default function CoachChat() {
               return (
                 <div key={msg.id} style={{ display: "flex", justifyContent: isMe ? "flex-end" : "flex-start" }}>
                   <div style={{ maxWidth: "70%", padding: "10px 14px", borderRadius: isMe ? "14px 14px 4px 14px" : "14px 14px 14px 4px", backgroundColor: isMe ? "var(--blue)" : "var(--bg-surface)", border: isMe ? "none" : "1px solid var(--border)", color: isMe ? "#fff" : "var(--text-primary)" }}>
-                    <p style={{ fontSize: 13, lineHeight: 1.5 }}>{msg.content}</p>
+                    {msg.media_url && isAudioUrl(msg.media_url) ? (
+                      <div style={{ minWidth: 180 }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
+                          <Mic size={13} color={isMe ? "#fff" : "var(--accent)"} />
+                          <span style={{ fontSize: 10, fontWeight: 600, opacity: 0.7 }}>Voice note</span>
+                        </div>
+                        <audio controls preload="metadata" style={{ width: "100%", height: 28, borderRadius: 6 }}
+                          src={msg.media_url.startsWith('http') ? msg.media_url : getApiBase() + msg.media_url} />
+                      </div>
+                    ) : msg.media_url ? (
+                      <img src={msg.media_url.startsWith('http') ? msg.media_url : getApiBase() + msg.media_url} alt="media" style={{ maxWidth: "100%", maxHeight: 200, borderRadius: 10, display: "block", marginBottom: msg.content ? 6 : 0 }} />
+                    ) : null}
+                    {msg.content && <p style={{ fontSize: 13, lineHeight: 1.5 }}>{msg.content}</p>}
                     <p style={{ fontSize: 10, opacity: 0.7, marginTop: 4, textAlign: isMe ? "end" : "start" }}>{formatTime(msg.created_at)}</p>
                   </div>
                 </div>
@@ -154,10 +226,33 @@ export default function CoachChat() {
             <div ref={bottomRef} />
           </div>
           <div style={{ padding: "14px 16px", borderTop: "1px solid var(--border)", display: "flex", gap: 10, alignItems: "flex-end" }}>
-            <input className="input-base" value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === "Enter" && !e.shiftKey && sendMsg()} placeholder={t("coach_chat_type_message")} style={{ flex: 1, padding: "10px 14px", fontSize: 13 }} />
-            <button onClick={sendMsg} disabled={!input.trim()} style={{ width: 42, height: 42, borderRadius: 11, backgroundColor: input.trim() ? "var(--blue)" : "var(--bg-surface)", border: `1px solid ${input.trim() ? "var(--blue)" : "var(--border)"}`, display: "flex", alignItems: "center", justifyContent: "center", cursor: input.trim() ? "pointer" : "default", flexShrink: 0 }}>
-              <Send size={16} color={input.trim() ? "#fff" : "var(--text-muted)"} />
-            </button>
+            {isRecording ? (
+              <>
+                <button onClick={cancelRecording} style={{ width: 42, height: 42, borderRadius: 11, backgroundColor: "rgba(255,68,68,0.12)", border: "1px solid rgba(255,68,68,0.3)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}>
+                  <X size={16} color="#FF6B6B" />
+                </button>
+                <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", backgroundColor: "rgba(255,68,68,0.06)", borderRadius: 11, border: "1px solid rgba(255,68,68,0.15)" }}>
+                  <div style={{ width: 8, height: 8, borderRadius: "50%", backgroundColor: "#FF4444" }} />
+                  <span style={{ fontSize: 13, fontWeight: 600, color: "#FF6B6B" }}>Recording {formatRecTime(recordingDuration)}</span>
+                </div>
+                <button onClick={stopRecording} style={{ width: 42, height: 42, borderRadius: 11, backgroundColor: "var(--blue)", border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}>
+                  <Send size={16} color="#fff" />
+                </button>
+              </>
+            ) : (
+              <>
+                <input className="input-base" value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => e.key === "Enter" && !e.shiftKey && sendMsg()} placeholder={t("coach_chat_type_message")} style={{ flex: 1, padding: "10px 14px", fontSize: 13 }} />
+                {!input.trim() ? (
+                  <button onClick={startRecording} style={{ width: 42, height: 42, borderRadius: 11, backgroundColor: "var(--bg-surface)", border: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}>
+                    <Mic size={16} color="var(--text-muted)" />
+                  </button>
+                ) : (
+                  <button onClick={sendMsg} style={{ width: 42, height: 42, borderRadius: 11, backgroundColor: "var(--blue)", border: `1px solid var(--blue)`, display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}>
+                    <Send size={16} color="#fff" />
+                  </button>
+                )}
+              </>
+            )}
           </div>
         </div>
       )}
