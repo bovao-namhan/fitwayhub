@@ -166,6 +166,14 @@ export function startSmtpServer(port = 2525) {
     },
   } as any);
 
+  smtpInstance.on('error', (err: any) => {
+    if (err.code === 'EADDRINUSE') {
+      console.warn(`⚠️  SMTP port ${port} already in use — skipping SMTP server`);
+    } else {
+      console.error('SMTP server error:', err);
+    }
+  });
+
   smtpInstance.listen(port, '0.0.0.0', () => {
     console.log(`📧  SMTP server listening on port ${port} (domain: ${domain})`);
   });
