@@ -48,6 +48,7 @@ html.light {
 
 * {
   box-sizing: border-box;
+  border-color: transparent !important;
 }
 
 html, body {
@@ -116,12 +117,10 @@ html[dir="rtl"] * {
 /* Card base */
 .card {
   background-color: var(--bg-card);
-  border: 1px solid var(--border);
   border-radius: 16px;
-  transition: border-color 0.2s, transform 0.2s;
+  transition: transform 0.2s;
 }
 .card:hover {
-  border-color: var(--border-light);
 }
 
 /* Accent glow effect */
@@ -132,18 +131,17 @@ html[dir="rtl"] * {
 /* Input base */
 .input-base {
   background-color: var(--bg-surface);
-  border: 1px solid var(--border);
   color: var(--text-primary);
   border-radius: 10px;
   padding: 12px 16px;
   width: 100%;
   font-family: var(--font-en);
   font-size: 14px;
-  transition: border-color 0.2s;
+  transition: box-shadow 0.2s;
   outline: none;
 }
 .input-base::placeholder { color: var(--text-muted); }
-.input-base:focus { border-color: var(--accent); }
+.input-base:focus { box-shadow: 0 0 0 2px var(--accent-dim); }
 
 /* Button accent */
 .btn-accent {
