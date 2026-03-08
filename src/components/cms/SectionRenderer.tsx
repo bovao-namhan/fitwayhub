@@ -1,8 +1,10 @@
 import { Link } from "react-router-dom";
-import { ArrowRight, CheckCircle2, Target, Eye, Shield, Globe, Users, BookOpen, Heart, Dumbbell, Brain, BarChart, Zap, Star, Award, Activity, HelpCircle, ChevronDown, ChevronUp, Mail, MessageCircle, Phone, Send, Smartphone } from "lucide-react";
-import { useState, type CSSProperties } from "react";
+import { ArrowRight, CheckCircle2, Target, Eye, Shield, Globe, Users, BookOpen, Heart, Dumbbell, Brain, BarChart, Zap, Star, Award, Activity, HelpCircle, ChevronDown, ChevronUp, Mail, MessageCircle, Phone, Send, Smartphone, Calendar, User } from "lucide-react";
+import { useState, useEffect, type CSSProperties } from "react";
 import { CalorieCalculator } from "@/components/website/CalorieCalculator";
 import { useI18n } from "@/context/I18nContext";
+import { getApiBase } from "@/lib/api";
+import { resolveMediaUrl, type BlogPost } from "@/lib/blogs";
 
 const ICONS: Record<string, any> = { Target, Eye, Shield, Globe, Users, BookOpen, Heart, Dumbbell, Brain, BarChart, Zap, Star, Award, Activity, ArrowRight, Smartphone };
 
@@ -357,6 +359,85 @@ function CalcSection({ c, lang }: { c: any; lang: RenderLang }) {
   );
 }
 
+// ── Section: Latest Blogs ─────────────────────────────────────────────────────
+export function LatestBlogsSection({ c, lang }: { c?: any; lang: RenderLang }) {
+  const [blogs, setBlogs] = useState<BlogPost[]>([]);
+  const [isMobile, setIsMobile] = useState(() => typeof window !== "undefined" && window.innerWidth < 768);
+  useEffect(() => { const h = () => setIsMobile(window.innerWidth < 768); window.addEventListener("resize", h); return () => window.removeEventListener("resize", h); }, []);
+
+  useEffect(() => {
+    fetch(`${getApiBase()}/api/blogs/public?limit=4`)
+      .then(r => r.json())
+      .then(d => setBlogs((d.posts || []).slice(0, 4)))
+      .catch(() => {});
+  }, []);
+
+  if (blogs.length === 0) return null;
+
+  const sectionLabel = c ? pickText(c, "sectionLabel", lang) : (lang === "ar" ? "المدونة" : "FROM OUR BLOG");
+  const heading = c ? pickText(c, "heading", lang) : (lang === "ar" ? "أحدث المقالات" : "Latest Articles");
+
+  return (
+    <section style={{ maxWidth: 1100, margin: "0 auto", padding: "80px 24px" }}>
+      <div style={{ textAlign: "center", marginBottom: 48 }}>
+        {sectionLabel && <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--accent)", marginBottom: 12 }}>{sectionLabel}</p>}
+        {heading && <h2 style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: "clamp(26px, 4vw, 42px)", fontWeight: 700, color: "var(--text-primary)" }}>{heading}</h2>}
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fill, minmax(260px, 1fr))", gap: 24 }}>
+        {blogs.map(blog => {
+          const img = resolveMediaUrl(blog.header_image_url);
+          const date = blog.published_at || blog.created_at;
+          const formattedDate = date ? new Date(date).toLocaleDateString(lang === "ar" ? "ar-EG" : "en-US", { month: "short", day: "numeric", year: "numeric" }) : "";
+          return (
+            <Link
+              key={blog.id}
+              to="/blogs"
+              style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 16, overflow: "hidden", textDecoration: "none", display: "flex", flexDirection: "column", transition: "border-color 0.2s, transform 0.2s" }}
+              onMouseOver={e => { e.currentTarget.style.borderColor = "var(--accent)"; e.currentTarget.style.transform = "translateY(-4px)"; }}
+              onMouseOut={e => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.transform = "translateY(0)"; }}
+            >
+              <div style={{ height: 180, overflow: "hidden", backgroundColor: "var(--bg-surface)", position: "relative" }}>
+                {img ? (
+                  <img src={img} alt={blog.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                ) : (
+                  <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <BookOpen size={36} color="var(--text-muted)" />
+                  </div>
+                )}
+              </div>
+              <div style={{ padding: "18px 20px", flex: 1, display: "flex", flexDirection: "column", gap: 10 }}>
+                <h3 style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 15, fontWeight: 700, color: "var(--text-primary)", lineHeight: 1.3, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as any }}>{blog.title}</h3>
+                {blog.excerpt && <p style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.6, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as any, flex: 1 }}>{blog.excerpt}</p>}
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginTop: "auto", paddingTop: 8, borderTop: "1px solid var(--border)" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                    {blog.author_avatar ? (
+                      <img src={resolveMediaUrl(blog.author_avatar)} alt={blog.author_name} style={{ width: 22, height: 22, borderRadius: "50%", objectFit: "cover" }} />
+                    ) : (
+                      <User size={14} color="var(--text-muted)" />
+                    )}
+                    <span style={{ fontSize: 11, color: "var(--text-muted)" }}>{blog.author_name || "FitWay"}</span>
+                  </div>
+                  {formattedDate && (
+                    <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                      <Calendar size={11} color="var(--text-muted)" />
+                      <span style={{ fontSize: 11, color: "var(--text-muted)" }}>{formattedDate}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </Link>
+          );
+        })}
+      </div>
+      <div style={{ textAlign: "center", marginTop: 40 }}>
+        <Link to="/blogs" style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "12px 28px", borderRadius: 11, backgroundColor: "var(--accent)", color: "#0A0A0B", fontFamily: "'Chakra Petch', sans-serif", fontWeight: 700, fontSize: 14, textDecoration: "none", letterSpacing: "0.02em" }}>
+          {lang === "ar" ? "عرض جميع المقالات" : "View All Articles"} <ArrowRight size={16} />
+        </Link>
+      </div>
+    </section>
+  );
+}
+
 // ── Main Renderer ─────────────────────────────────────────────────────────────
 export interface CmsSection {
   id: number;
@@ -378,6 +459,7 @@ export default function SectionRenderer({ section }: { section: CmsSection }) {
     case "contact_info":  return <ContactInfoSection c={c} lang={lang} />;
     case "calculator":    return <CalcSection c={c} lang={lang} />;
     case "html":          return <HtmlSection c={c} lang={lang} />;
+    case "latest_blogs":  return <LatestBlogsSection c={c} lang={lang} />;
     default:              return null;
   }
 }

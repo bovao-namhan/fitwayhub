@@ -1,14 +1,17 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { getApiBase } from "@/lib/api";
-import SectionRenderer, { type CmsSection } from "@/components/cms/SectionRenderer";
+import SectionRenderer, { type CmsSection, LatestBlogsSection } from "@/components/cms/SectionRenderer";
 import { Loader2 } from "lucide-react";
+import { useI18n } from "@/context/I18nContext";
 
 export default function CmsPage({ page: pageProp }: { page?: string }) {
   const { page: pageParam } = useParams();
   const page = pageProp || pageParam || "home";
   const [sections, setSections] = useState<CmsSection[]>([]);
   const [loading, setLoading] = useState(true);
+  const { lang } = useI18n();
+  const hasBlogSection = sections.some(s => s.type === "latest_blogs");
 
   useEffect(() => {
     setLoading(true);
@@ -42,6 +45,7 @@ export default function CmsPage({ page: pageProp }: { page?: string }) {
           <SectionRenderer section={s} />
         </div>
       ))}
+      {page === "home" && !hasBlogSection && <LatestBlogsSection lang={lang} />}
     </>
   );
 }
