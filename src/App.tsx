@@ -33,8 +33,7 @@ const Analytics = lazy(() => import("@/pages/app/Analytics"));
 const Coaching = lazy(() => import("@/pages/app/Coaching"));
 const Onboarding = lazy(() => import("@/pages/app/Onboarding"));
 const Steps = lazy(() => import("@/pages/app/Steps"));
-const Meetings = lazy(() => import("@/pages/app/Meetings"));
-const MeetingRoom = lazy(() => import("@/pages/app/MeetingRoom"));
+
 const AdminDashboard = lazy(() => import("@/pages/admin/Dashboard"));
 const CoachDashboard = lazy(() => import("@/pages/coach/Dashboard"));
 const CoachRequests = lazy(() => import("@/pages/coach/Requests"));
@@ -112,16 +111,8 @@ export default function App() {
                 <Route path="/app/pricing" element={<Pricing />} />
                 <Route path="/app/analytics" element={<Analytics />} />
                 <Route path="/app/coaching" element={<Coaching />} />
-                <Route path="/app/meetings" element={<Meetings />} />
                 <Route path="/app/blogs" element={<AppBlogs />} />
               </Route>
-
-              {/* Meeting Room (full-screen, no layout) */}
-              <Route path="/app/meeting/:roomId" element={
-                <ProtectedRoute role="user">
-                  <MeetingRoom />
-                </ProtectedRoute>
-              } />
 
               {/* Coach Routes */}
               <Route path="/coach" element={<Navigate to="/coach/dashboard" replace />} />
@@ -138,15 +129,7 @@ export default function App() {
                 <Route path="/coach/community" element={<CoachCommunity />} />
                 <Route path="/coach/profile" element={<CoachProfile />} />
                 <Route path="/coach/blogs" element={<CoachBlogs />} />
-                <Route path="/coach/meetings" element={<Meetings />} />
               </Route>
-
-              {/* Coach Meeting Room (full-screen, no layout) */}
-              <Route path="/coach/meeting/:roomId" element={
-                <ProtectedRoute role="coach">
-                  <MeetingRoom />
-                </ProtectedRoute>
-              } />
 
               {/* Admin Routes */}
               <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />

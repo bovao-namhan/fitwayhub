@@ -1,7 +1,7 @@
 import { Outlet } from "react-router-dom";
 import {
   Home, Dumbbell, Users, MessageSquare, User,
-  Wrench, TrendingUp, UserCheck, Activity, Video, FileText, ClipboardList,
+  Wrench, TrendingUp, UserCheck, Activity, FileText, ClipboardList,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useBranding, getBrandLogoForLang } from "@/context/BrandingContext";
@@ -15,7 +15,6 @@ const allNavItems: NavItem[] = [
   { path: "/app/steps",      icon: Activity,      label: "Steps" },
   { path: "/app/analytics",  icon: TrendingUp,    label: "Analytics" },
   { path: "/app/coaching",   icon: UserCheck,     label: "Coaching" },
-  { path: "/app/meetings",   icon: Video,         label: "Meetings" },
   { path: "/app/blogs",      icon: FileText,      label: "No Pain No Shawerma" },
   { path: "/app/community",  icon: Users,         label: "Community" },
   { path: "/app/chat",       icon: MessageSquare, label: "Chat" },
@@ -34,7 +33,6 @@ const bottomNavItems: NavItem[] = [
 const moreDrawerItems: NavItem[] = [
   { path: "/app/analytics",  icon: TrendingUp,    label: "Analytics" },
   { path: "/app/coaching",   icon: UserCheck,     label: "Coaching" },
-  { path: "/app/meetings",   icon: Video,         label: "Meetings" },
   { path: "/app/blogs",      icon: FileText,      label: "No Pain No Shawerma" },
   { path: "/app/chat",       icon: MessageSquare, label: "Chat" },
   { path: "/app/plans",      icon: ClipboardList, label: "My Plans" },

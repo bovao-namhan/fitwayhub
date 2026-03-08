@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Outlet } from "react-router-dom";
 import {
   LayoutDashboard, Users, Activity, MessageSquare,
-  Megaphone, Globe, ClipboardList, CreditCard, Lock, X, Video, FileText,
+  Megaphone, Globe, ClipboardList, CreditCard, Lock, X, FileText,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useBranding, getBrandLogoForLang } from "@/context/BrandingContext";
@@ -15,7 +15,6 @@ const navItems: NavItem[] = [
   { path: "/coach/dashboard", icon: LayoutDashboard, label: "Dashboard" },
   { path: "/coach/requests",  icon: ClipboardList,   label: "Requests" },
   { path: "/coach/athletes",  icon: Users,           label: "Athletes" },
-  { path: "/coach/meetings",  icon: Video,           label: "Meetings" },
   { path: "/coach/chat",      icon: MessageSquare,   label: "Messages" },
   { path: "/coach/ads",       icon: Megaphone,       label: "My Ads" },
   { path: "/coach/blogs",     icon: FileText,        label: "No Pain No Shawerma" },
@@ -32,7 +31,6 @@ const bottomNavItems: NavItem[] = [
 ];
 
 const moreItems: NavItem[] = [
-  { path: "/coach/meetings",  icon: Video,    label: "Meetings" },
   { path: "/coach/ads",       icon: Megaphone, label: "My Ads" },
   { path: "/coach/community", icon: Globe,     label: "Community" },
 ];
@@ -157,7 +155,6 @@ export function CoachLayout() {
     { path: "/coach/dashboard", icon: LayoutDashboard, label: t("dashboard") },
     { path: "/coach/requests",  icon: ClipboardList,   label: t("requests") },
     { path: "/coach/athletes",  icon: Users,           label: t("athletes") },
-    { path: "/coach/meetings",  icon: Video,           label: t("meetings") },
     { path: "/coach/chat",      icon: MessageSquare,   label: t("messages") },
     { path: "/coach/ads",       icon: Megaphone,       label: t("my_ads") },
     { path: "/coach/blogs",     icon: FileText,        label: "No Pain No Shawerma" },
@@ -174,7 +171,6 @@ export function CoachLayout() {
   ];
 
   const translatedMoreItems: NavItem[] = [
-    { path: "/coach/meetings",  icon: Video,     label: t("meetings") },
     { path: "/coach/ads",       icon: Megaphone, label: t("my_ads") },
     { path: "/coach/blogs",     icon: FileText,  label: "No Pain No Shawerma" },
     { path: "/coach/community", icon: Globe,     label: t("community") },
