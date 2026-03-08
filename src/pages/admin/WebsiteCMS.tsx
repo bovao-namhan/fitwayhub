@@ -74,7 +74,7 @@ export default function WebsiteCMS({ token, showMsg }: Props) {
   const [uploadingFor, setUploadingFor] = useState<string | null>(null);
   const [translations, setTranslations] = useState<Record<string, string>>({});
   const [translationsForm, setTranslationsForm] = useState<Record<string, string>>({});
-  const [translationsLoading, setTranslationsLoading] = useState(false);
+  const [translationsLoaded, setTranslationsLoaded] = useState(false);
   const [translationsSaving, setTranslationsSaving] = useState(false);
   const [translationSearch, setTranslationSearch] = useState("");
   const [newTransKey, setNewTransKey] = useState("");
@@ -195,14 +195,14 @@ export default function WebsiteCMS({ token, showMsg }: Props) {
   };
 
   const loadTranslations = async () => {
-    setTranslationsLoading(true);
+    setTranslationsLoaded(false);
     try {
       const r = await api("/api/admin/website-translations");
       const d = await r.json();
       const t = d.translations || {};
       setTranslations(t);
       setTranslationsForm({ ...t });
-    } catch {} finally { setTranslationsLoading(false); }
+    } catch {} finally { setTranslationsLoaded(true); }
   };
 
   const saveTranslations = async () => {
@@ -236,7 +236,7 @@ export default function WebsiteCMS({ token, showMsg }: Props) {
   };
 
   useEffect(() => { load(); setEditingId(null); }, [activePage]);
-  useEffect(() => { loadBranding(); }, []);
+  useEffect(() => { loadBranding(); loadTranslations(); }, []);
 
   const toggleVisible = async (s: Section) => {
     await api(`/api/cms/admin/sections/${s.id}`, { method: "PUT", body: JSON.stringify({ is_visible: !s.is_visible }) });
@@ -894,7 +894,7 @@ export default function WebsiteCMS({ token, showMsg }: Props) {
             <p style={{ fontSize: 13, color: "var(--text-muted)" }}>Manage Arabic fallback translations for website text</p>
           </div>
           <div style={{ display: "flex", gap: 8 }}>
-            {Object.keys(translationsForm).length > 0 && (
+            {translationsLoaded && (
               <button onClick={saveTranslations} disabled={translationsSaving} style={{ padding: "8px 20px", borderRadius: 9, background: translationsSaving ? "var(--bg-surface)" : "var(--accent)", color: translationsSaving ? "var(--text-muted)" : "#0A0A0B", border: "none", cursor: "pointer", fontFamily: "'Chakra Petch', sans-serif", fontWeight: 700, fontSize: 13 }}>
                 {translationsSaving ? "Saving…" : "💾 Save Translations"}
               </button>
@@ -902,11 +902,7 @@ export default function WebsiteCMS({ token, showMsg }: Props) {
           </div>
         </div>
 
-        {Object.keys(translationsForm).length === 0 && !translationsLoading ? (
-          <div style={{ padding: 40, textAlign: "center", color: "var(--text-muted)" }}>
-            <button onClick={loadTranslations} style={{ padding: "10px 24px", borderRadius: 10, background: "var(--accent)", color: "#0A0A0B", border: "none", cursor: "pointer", fontWeight: 700 }}>Load Translations</button>
-          </div>
-        ) : translationsLoading ? (
+        {!translationsLoaded ? (
           <div style={{ padding: 30, textAlign: "center", color: "var(--text-muted)" }}>Loading translations...</div>
         ) : (
           <div style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 14, padding: "18px 20px" }}>

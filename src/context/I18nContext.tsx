@@ -2039,7 +2039,12 @@ const egyptianWordMap: Array<[string, string]> = [
 
 const toEgyptianArabic = (value: string) => {
   let out = String(value || "");
-  for (const [from, to] of egyptianWordMap) out = out.split(from).join(to);
+  for (const [from, to] of egyptianWordMap) {
+    // Skip if the replacement target already contains the source as a substring
+    // (e.g. "حفظ" → "احفظ" would loop since "احفظ" contains "حفظ")
+    if (to.includes(from)) continue;
+    out = out.split(from).join(to);
+  }
   return out;
 };
 
@@ -2065,6 +2070,8 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
   const [lang, setLang] = useState<Lang>(() => (localStorage.getItem('fithub_lang') as Lang) || 'en');
   const langRef = useRef(lang);
   const observerRef = useRef<MutationObserver | null>(null);
+  const translatingRef = useRef(false);
+  const translatedNodes = useRef(new WeakSet<Node>());
 
   /* ── Load admin font settings and apply via CSS variables ── */
   useEffect(() => {
@@ -2107,6 +2114,7 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
 
   /* Translate a single DOM node */
   const translateNode = useCallback((node: Node) => {
+    if (translatedNodes.current.has(node)) return;
     const currentLang = langRef.current;
     const findKey = (raw: string) => {
       const txt = raw?.trim();
@@ -2127,12 +2135,18 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
           const rawTranslated = translations[currentLang]?.[key];
           const translated = currentLang === 'ar' && rawTranslated ? toEgyptianArabic(rawTranslated) : rawTranslated;
           if (translated && translated !== txt) {
+            translatingRef.current = true;
             node.textContent = node.textContent!.replace(txt, translated);
+            translatedNodes.current.add(node);
+            translatingRef.current = false;
           }
         } else if (currentLang === 'ar') {
           const egyptian = toEgyptianArabic(txt);
           if (egyptian && egyptian !== txt) {
+            translatingRef.current = true;
             node.textContent = node.textContent!.replace(txt, egyptian);
+            translatedNodes.current.add(node);
+            translatingRef.current = false;
           }
         }
       } else if (node.nodeType === Node.ELEMENT_NODE) {
@@ -2207,11 +2221,12 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
     let mutationTimer: ReturnType<typeof setTimeout> | null = null;
     const pendingNodes: Node[] = [];
     const observer = new MutationObserver((mutations) => {
+      if (translatingRef.current) return;
       for (const m of mutations) {
         if (m.type === 'childList') {
           m.addedNodes.forEach(n => pendingNodes.push(n));
         } else if (m.type === 'characterData' && m.target) {
-          pendingNodes.push(m.target);
+          if (!translatedNodes.current.has(m.target)) pendingNodes.push(m.target);
         }
       }
       if (mutationTimer) clearTimeout(mutationTimer);
