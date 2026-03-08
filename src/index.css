@@ -92,6 +92,12 @@ h1, h2, h3, h4, h5, h6, .font-display {
   font-family: var(--font-heading);
 }
 
+/* Force Cairo font on ALL elements when in RTL/Arabic mode.
+   !important is needed to override inline fontFamily styles (Chakra Petch, Outfit). */
+html[dir="rtl"] * {
+  font-family: var(--font-ar) !important;
+}
+
 /* Scrollbar */
 ::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
