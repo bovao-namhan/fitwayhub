@@ -10,12 +10,18 @@ import {
   Download,
   FileText,
   MessageSquare,
+  Mic,
+  MicOff,
   NotebookPen,
   Paperclip,
+  Phone,
+  PhoneOff,
   Play,
   Save,
   Square,
   Upload,
+  Video as VideoIcon,
+  VideoOff,
 } from "lucide-react";
 
 interface MeetingPresence {
@@ -85,6 +91,21 @@ export default function MeetingRoom() {
   const notesSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // ── Call state ──
+  const [callState, setCallState] = useState<"idle" | "calling" | "ringing" | "connected">("idle");
+  const [callMode, setCallMode] = useState<"video" | "audio" | null>(null);
+  const [isMuted, setIsMuted] = useState(false);
+  const [isCameraOff, setIsCameraOff] = useState(false);
+  const [incomingOffer, setIncomingOffer] = useState<{ sdp: string; mode: "video" | "audio" } | null>(null);
+  const [callDuration, setCallDuration] = useState(0);
+
+  const localVideoRef = useRef<HTMLVideoElement>(null);
+  const remoteVideoRef = useRef<HTMLVideoElement>(null);
+  const pcRef = useRef<RTCPeerConnection | null>(null);
+  const localStreamRef = useRef<MediaStream | null>(null);
+  const pendingCandidatesRef = useRef<RTCIceCandidateInit[]>([]);
+  const callStartRef = useRef<number>(0);
 
   const api = useCallback(
     (path: string, opts?: RequestInit) =>
@@ -164,6 +185,224 @@ export default function MeetingRoom() {
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  // ── WebRTC Calling ──────────────────────────────────────────────────────────
+  const RTC_CONFIG: RTCConfiguration = {
+    iceServers: [
+      { urls: "stun:stun.l.google.com:19302" },
+      { urls: "stun:stun1.l.google.com:19302" },
+    ],
+  };
+
+  const sendSignal = useCallback(
+    (type: string, data: any) => {
+      if (!roomId) return;
+      api(`/api/meetings/${roomId}/signal`, {
+        method: "POST",
+        body: JSON.stringify({ type, data }),
+      }).catch(() => {});
+    },
+    [api, roomId]
+  );
+
+  const cleanupCall = useCallback(() => {
+    pcRef.current?.close();
+    pcRef.current = null;
+    localStreamRef.current?.getTracks().forEach((t) => t.stop());
+    localStreamRef.current = null;
+    if (localVideoRef.current) localVideoRef.current.srcObject = null;
+    if (remoteVideoRef.current) remoteVideoRef.current.srcObject = null;
+    pendingCandidatesRef.current = [];
+    setCallState("idle");
+    setCallMode(null);
+    setIsMuted(false);
+    setIsCameraOff(false);
+    setIncomingOffer(null);
+    setCallDuration(0);
+    callStartRef.current = 0;
+  }, []);
+
+  const createPC = useCallback(() => {
+    const pc = new RTCPeerConnection(RTC_CONFIG);
+    pc.onicecandidate = (e) => {
+      if (e.candidate) sendSignal("ice-candidate", e.candidate.toJSON());
+    };
+    pc.ontrack = (e) => {
+      if (remoteVideoRef.current && e.streams[0]) {
+        remoteVideoRef.current.srcObject = e.streams[0];
+      }
+    };
+    pc.oniceconnectionstatechange = () => {
+      if (pc.iceConnectionState === "connected") {
+        setCallState("connected");
+        callStartRef.current = Date.now();
+      }
+      if (["disconnected", "failed", "closed"].includes(pc.iceConnectionState)) {
+        cleanupCall();
+      }
+    };
+    pcRef.current = pc;
+    return pc;
+  }, [sendSignal, cleanupCall]);
+
+  const startCall = useCallback(
+    async (mode: "video" | "audio") => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          audio: true,
+          video: mode === "video",
+        });
+        localStreamRef.current = stream;
+        if (localVideoRef.current) localVideoRef.current.srcObject = stream;
+        const pc = createPC();
+        stream.getTracks().forEach((t) => pc.addTrack(t, stream));
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+        setCallState("calling");
+        setCallMode(mode);
+        sendSignal("offer", { sdp: offer.sdp, type: offer.type, mode });
+      } catch (err) {
+        console.error("Failed to start call:", err);
+        cleanupCall();
+      }
+    },
+    [createPC, sendSignal, cleanupCall]
+  );
+
+  const acceptCall = useCallback(async () => {
+    if (!incomingOffer) return;
+    try {
+      const mode = incomingOffer.mode;
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: true,
+        video: mode === "video",
+      });
+      localStreamRef.current = stream;
+      if (localVideoRef.current) localVideoRef.current.srcObject = stream;
+      const pc = createPC();
+      stream.getTracks().forEach((t) => pc.addTrack(t, stream));
+      await pc.setRemoteDescription(new RTCSessionDescription({ type: "offer", sdp: incomingOffer.sdp }));
+      for (const c of pendingCandidatesRef.current) {
+        await pc.addIceCandidate(new RTCIceCandidate(c)).catch(() => {});
+      }
+      pendingCandidatesRef.current = [];
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+      setCallState("connected");
+      setCallMode(mode);
+      setIncomingOffer(null);
+      callStartRef.current = Date.now();
+      sendSignal("answer", { sdp: answer.sdp, type: answer.type });
+    } catch (err) {
+      console.error("Failed to accept call:", err);
+      cleanupCall();
+    }
+  }, [incomingOffer, createPC, sendSignal, cleanupCall]);
+
+  const rejectCall = useCallback(() => {
+    sendSignal("hang-up", {});
+    setIncomingOffer(null);
+    setCallState("idle");
+  }, [sendSignal]);
+
+  const hangUp = useCallback(() => {
+    sendSignal("hang-up", {});
+    cleanupCall();
+  }, [sendSignal, cleanupCall]);
+
+  const toggleMute = () => {
+    const audioTrack = localStreamRef.current?.getAudioTracks()[0];
+    if (audioTrack) {
+      audioTrack.enabled = !audioTrack.enabled;
+      setIsMuted(!audioTrack.enabled);
+    }
+  };
+
+  const toggleCamera = () => {
+    const videoTrack = localStreamRef.current?.getVideoTracks()[0];
+    if (videoTrack) {
+      videoTrack.enabled = !videoTrack.enabled;
+      setIsCameraOff(!videoTrack.enabled);
+    }
+  };
+
+  // ── Signal polling ──
+  useEffect(() => {
+    if (!roomId || !meeting) return;
+    let alive = true;
+    const poll = async () => {
+      try {
+        const res = await api(`/api/meetings/${roomId}/signals`);
+        if (!res.ok || !alive) return;
+        const { signals } = await res.json();
+        for (const sig of signals || []) {
+          switch (sig.type) {
+            case "offer":
+              if (callState === "idle") {
+                setIncomingOffer({ sdp: sig.data.sdp, mode: sig.data.mode || "video" });
+                setCallState("ringing");
+              }
+              break;
+            case "answer": {
+              const pc = pcRef.current;
+              if (pc && pc.signalingState === "have-local-offer") {
+                await pc.setRemoteDescription(new RTCSessionDescription({ type: "answer", sdp: sig.data.sdp }));
+                for (const c of pendingCandidatesRef.current) {
+                  await pc.addIceCandidate(new RTCIceCandidate(c)).catch(() => {});
+                }
+                pendingCandidatesRef.current = [];
+              }
+              break;
+            }
+            case "ice-candidate": {
+              const pc = pcRef.current;
+              if (pc && pc.remoteDescription) {
+                await pc.addIceCandidate(new RTCIceCandidate(sig.data)).catch(() => {});
+              } else {
+                pendingCandidatesRef.current.push(sig.data);
+              }
+              break;
+            }
+            case "hang-up":
+              cleanupCall();
+              break;
+          }
+        }
+      } catch {}
+    };
+    const id = setInterval(poll, 1000);
+    return () => { alive = false; clearInterval(id); };
+  }, [roomId, api, meeting, callState, cleanupCall]);
+
+  // Call duration timer
+  useEffect(() => {
+    if (callState !== "connected" || !callStartRef.current) return;
+    const id = setInterval(() => setCallDuration(Math.floor((Date.now() - callStartRef.current) / 1000)), 1000);
+    return () => clearInterval(id);
+  }, [callState]);
+
+  // Auto hang-up if meeting is ended
+  useEffect(() => {
+    if (meeting?.status === "ended" && callState !== "idle") hangUp();
+  }, [meeting?.status, callState, hangUp]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (pcRef.current) {
+        sendSignal("hang-up", {});
+        pcRef.current.close();
+        pcRef.current = null;
+      }
+      localStreamRef.current?.getTracks().forEach((t) => t.stop());
+    };
+  }, [sendSignal]);
+
+  const formatDuration = (s: number) => {
+    const m = Math.floor(s / 60);
+    const sec = s % 60;
+    return `${m}:${sec.toString().padStart(2, "0")}`;
+  };
 
   const partnerName = meeting ? (user?.id === meeting.coach_id ? meeting.user_name : meeting.coach_name) : "";
   const partnerAvatar = meeting ? (user?.id === meeting.coach_id ? meeting.user_avatar : meeting.coach_avatar) : "";
@@ -302,31 +541,89 @@ export default function MeetingRoom() {
       </div>
 
       <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
-        <div style={{ flex: 1, padding: 20, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16 }}>
-          <img src={partnerAvatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${partnerName}`} alt="" style={{ width: 96, height: 96, borderRadius: "50%", border: "2px solid var(--accent)" }} />
-          <h2 style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 22, fontWeight: 700, textAlign: "center" }}>{meeting.title}</h2>
-          <p style={{ fontSize: 14, color: "var(--text-secondary)", textAlign: "center", maxWidth: 620 }}>
-            Internal meeting workspace powered by your own app backend only.
-            No external meeting integration, no WebRTC signaling, and no socket transport.
-          </p>
-          {meeting.scheduled_at && (
-            <p style={{ fontSize: 12, color: "var(--text-muted)", display: "flex", alignItems: "center", gap: 6 }}>
-              <Clock size={13} /> {new Date(meeting.scheduled_at).toLocaleString()}
-            </p>
+        <div style={{ flex: 1, position: "relative", backgroundColor: callState !== "idle" && callState !== "ringing" ? "#000" : "transparent", overflow: "hidden" }}>
+          {/* Remote video / audio playback */}
+          <video ref={remoteVideoRef} autoPlay playsInline style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain", display: callState !== "idle" && callState !== "ringing" ? "block" : "none" }} />
+          {/* Local video PIP */}
+          <video ref={localVideoRef} autoPlay playsInline muted style={{ position: "absolute", bottom: 80, right: 16, width: 160, height: 120, borderRadius: 12, objectFit: "cover", border: "2px solid rgba(255,255,255,0.2)", backgroundColor: "#111", display: callState !== "idle" && callState !== "ringing" && callMode === "video" ? "block" : "none", zIndex: 10 }} />
+
+          {/* Idle / Ringing: meeting info + call buttons */}
+          {(callState === "idle" || callState === "ringing") && (
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", padding: 20, gap: 16 }}>
+              <img src={partnerAvatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${partnerName}`} alt="" style={{ width: 96, height: 96, borderRadius: "50%", border: "2px solid var(--accent)" }} />
+              <h2 style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 22, fontWeight: 700, textAlign: "center" }}>{meeting.title}</h2>
+              <p style={{ fontSize: 14, color: "var(--text-secondary)", textAlign: "center", maxWidth: 620 }}>
+                Coaching session workspace with voice &amp; video calling.
+              </p>
+              {meeting.scheduled_at && (
+                <p style={{ fontSize: 12, color: "var(--text-muted)", display: "flex", alignItems: "center", gap: 6 }}>
+                  <Clock size={13} /> {new Date(meeting.scheduled_at).toLocaleString()}
+                </p>
+              )}
+              <div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "center" }}>
+                {meeting.status !== "active" && meeting.status !== "ended" && (
+                  <button onClick={startSession} style={{ padding: "12px 20px", borderRadius: 12, backgroundColor: "var(--accent)", color: "#0A0A0B", fontFamily: "'Chakra Petch', sans-serif", fontWeight: 700, border: "none", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 8 }}>
+                    <Play size={16} /> Start Session
+                  </button>
+                )}
+                {meeting.status === "active" && callState === "idle" && (
+                  <>
+                    <button onClick={() => startCall("audio")} style={{ padding: "12px 20px", borderRadius: 12, backgroundColor: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--accent)", fontFamily: "'Chakra Petch', sans-serif", fontWeight: 700, cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 8 }}>
+                      <Phone size={16} /> Voice Call
+                    </button>
+                    <button onClick={() => startCall("video")} style={{ padding: "12px 20px", borderRadius: 12, backgroundColor: "var(--accent)", color: "#0A0A0B", fontFamily: "'Chakra Petch', sans-serif", fontWeight: 700, border: "none", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 8 }}>
+                      <VideoIcon size={16} /> Video Call
+                    </button>
+                    <button onClick={() => setShowEndConfirm(true)} style={{ padding: "12px 20px", borderRadius: 12, backgroundColor: "#EF4444", color: "#fff", fontFamily: "'Chakra Petch', sans-serif", fontWeight: 700, border: "none", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 8 }}>
+                      <Square size={16} /> End Session
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
           )}
 
-          <div style={{ display: "flex", gap: 10, flexWrap: "wrap", justifyContent: "center" }}>
-            {meeting.status !== "active" && meeting.status !== "ended" && (
-              <button onClick={startSession} style={{ padding: "12px 20px", borderRadius: 12, backgroundColor: "var(--accent)", color: "#0A0A0B", fontFamily: "'Chakra Petch', sans-serif", fontWeight: 700, border: "none", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 8 }}>
-                <Play size={16} /> Start Session
+          {/* Calling: waiting for answer */}
+          {callState === "calling" && (
+            <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", zIndex: 5 }}>
+              <img src={partnerAvatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${partnerName}`} alt="" style={{ width: 96, height: 96, borderRadius: "50%", border: "2px solid var(--accent)", marginBottom: 16 }} />
+              <p style={{ fontSize: 18, fontWeight: 700, fontFamily: "'Chakra Petch', sans-serif", color: "#fff" }}>Calling {partnerName}...</p>
+              <p style={{ fontSize: 13, color: "rgba(255,255,255,0.5)", marginTop: 6 }}>Waiting for answer</p>
+            </div>
+          )}
+
+          {/* Connected audio-only: show avatar */}
+          {callState === "connected" && callMode === "audio" && (
+            <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", zIndex: 5 }}>
+              <img src={partnerAvatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${partnerName}`} alt="" style={{ width: 96, height: 96, borderRadius: "50%", border: "2px solid var(--accent)", marginBottom: 12 }} />
+              <p style={{ fontSize: 18, fontWeight: 700, fontFamily: "'Chakra Petch', sans-serif", color: "#fff" }}>{partnerName}</p>
+              <p style={{ fontSize: 13, color: "rgba(255,255,255,0.5)", marginTop: 4 }}>Voice Call</p>
+            </div>
+          )}
+
+          {/* Call duration */}
+          {callState === "connected" && (
+            <div style={{ position: "absolute", top: 16, left: "50%", transform: "translateX(-50%)", backgroundColor: "rgba(0,0,0,0.6)", padding: "4px 14px", borderRadius: 20, fontSize: 13, fontWeight: 600, color: "#fff", zIndex: 15 }}>
+              {formatDuration(callDuration)}
+            </div>
+          )}
+
+          {/* Call controls bar */}
+          {callState !== "idle" && callState !== "ringing" && (
+            <div style={{ position: "absolute", bottom: 20, left: "50%", transform: "translateX(-50%)", display: "flex", gap: 12, zIndex: 20 }}>
+              <button onClick={toggleMute} title={isMuted ? "Unmute" : "Mute"} style={{ width: 48, height: 48, borderRadius: "50%", backgroundColor: isMuted ? "#EF4444" : "rgba(255,255,255,0.15)", border: "none", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                {isMuted ? <MicOff size={20} /> : <Mic size={20} />}
               </button>
-            )}
-            {meeting.status === "active" && (
-              <button onClick={() => setShowEndConfirm(true)} style={{ padding: "12px 20px", borderRadius: 12, backgroundColor: "#EF4444", color: "#fff", fontFamily: "'Chakra Petch', sans-serif", fontWeight: 700, border: "none", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: 8 }}>
-                <Square size={16} /> End Session
+              {callMode === "video" && (
+                <button onClick={toggleCamera} title={isCameraOff ? "Turn camera on" : "Turn camera off"} style={{ width: 48, height: 48, borderRadius: "50%", backgroundColor: isCameraOff ? "#EF4444" : "rgba(255,255,255,0.15)", border: "none", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  {isCameraOff ? <VideoOff size={20} /> : <VideoIcon size={20} />}
+                </button>
+              )}
+              <button onClick={hangUp} title="End call" style={{ width: 48, height: 48, borderRadius: "50%", backgroundColor: "#EF4444", border: "none", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <PhoneOff size={20} />
               </button>
-            )}
-          </div>
+            </div>
+          )}
         </div>
 
         {sidePanel && (
@@ -417,6 +714,29 @@ export default function MeetingRoom() {
             <div style={{ display: "flex", gap: 10 }}>
               <button onClick={() => setShowEndConfirm(false)} style={{ flex: 1, padding: 11, borderRadius: 10, backgroundColor: "var(--bg-card)", border: "1px solid var(--border)", color: "var(--text-secondary)", cursor: "pointer", fontSize: 14 }}>Cancel</button>
               <button onClick={endSession} style={{ flex: 1, padding: 11, borderRadius: 10, backgroundColor: "#EF4444", border: "none", color: "#fff", fontFamily: "'Chakra Petch', sans-serif", fontWeight: 700, fontSize: 14, cursor: "pointer" }}>End</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Incoming call overlay */}
+      {incomingOffer && callState === "ringing" && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 400, display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: "rgba(0,0,0,0.85)", padding: 20 }}>
+          <div style={{ backgroundColor: "var(--bg-surface)", border: "1px solid var(--border)", borderRadius: 20, padding: 32, maxWidth: 340, width: "100%", textAlign: "center" }}>
+            <div style={{ width: 80, height: 80, borderRadius: "50%", border: "3px solid var(--accent)", overflow: "hidden", margin: "0 auto 16px" }}>
+              <img src={partnerAvatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${partnerName}`} alt="" style={{ width: "100%", height: "100%" }} />
+            </div>
+            <h3 style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 18, fontWeight: 700, marginBottom: 6 }}>{partnerName}</h3>
+            <p style={{ fontSize: 14, color: "var(--text-muted)", marginBottom: 24 }}>
+              Incoming {incomingOffer.mode === "video" ? "Video" : "Voice"} Call
+            </p>
+            <div style={{ display: "flex", gap: 20, justifyContent: "center" }}>
+              <button onClick={rejectCall} title="Decline" style={{ width: 56, height: 56, borderRadius: "50%", backgroundColor: "#EF4444", border: "none", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <PhoneOff size={24} />
+              </button>
+              <button onClick={acceptCall} title="Accept" style={{ width: 56, height: 56, borderRadius: "50%", backgroundColor: "#22C55E", border: "none", color: "#fff", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <Phone size={24} />
+              </button>
             </div>
           </div>
         </div>

@@ -292,4 +292,71 @@ router.post('/:roomId/messages', authenticateToken, async (req: any, res: Respon
   } catch { res.status(500).json({ message: 'Failed to send message' }); }
 });
 
+// ── WebRTC Signaling via REST (no external services) ────────────────────────
+interface SignalMessage {
+  from: number;
+  type: string;
+  data: any;
+  timestamp: number;
+}
+
+const signalingQueues = new Map<string, Map<number, SignalMessage[]>>();
+
+function pushSignal(roomId: string, toUserId: number, signal: SignalMessage) {
+  if (!signalingQueues.has(roomId)) signalingQueues.set(roomId, new Map());
+  const room = signalingQueues.get(roomId)!;
+  if (!room.has(toUserId)) room.set(toUserId, []);
+  const queue = room.get(toUserId)!;
+  queue.push(signal);
+  const now = Date.now();
+  while (queue.length > 0 && (queue.length > 200 || now - queue[0].timestamp > 60000)) {
+    queue.shift();
+  }
+}
+
+function drainSignals(roomId: string, userId: number): SignalMessage[] {
+  const room = signalingQueues.get(roomId);
+  if (!room) return [];
+  const msgs = room.get(userId) || [];
+  room.set(userId, []);
+  return msgs;
+}
+
+// Send a WebRTC signal to the other meeting participant
+router.post('/:roomId/signal', authenticateToken, async (req: any, res: Response) => {
+  try {
+    const meeting: any = await get('SELECT coach_id, user_id FROM coaching_meetings WHERE room_id = ?', [req.params.roomId]);
+    if (!meeting) return res.status(404).json({ message: 'Meeting not found' });
+    if (meeting.coach_id !== req.user.id && meeting.user_id !== req.user.id) {
+      return res.status(403).json({ message: 'Not authorized' });
+    }
+    const otherUserId = req.user.id === meeting.coach_id ? meeting.user_id : meeting.coach_id;
+    const { type, data } = req.body;
+    pushSignal(req.params.roomId, otherUserId, {
+      from: req.user.id,
+      type,
+      data,
+      timestamp: Date.now(),
+    });
+    res.json({ ok: true });
+  } catch {
+    res.status(500).json({ message: 'Failed to send signal' });
+  }
+});
+
+// Poll for WebRTC signals addressed to the current user
+router.get('/:roomId/signals', authenticateToken, async (req: any, res: Response) => {
+  try {
+    const meeting: any = await get('SELECT coach_id, user_id FROM coaching_meetings WHERE room_id = ?', [req.params.roomId]);
+    if (!meeting) return res.status(404).json({ message: 'Meeting not found' });
+    if (meeting.coach_id !== req.user.id && meeting.user_id !== req.user.id) {
+      return res.status(403).json({ message: 'Not authorized' });
+    }
+    const signals = drainSignals(req.params.roomId, req.user.id);
+    res.json({ signals });
+  } catch {
+    res.status(500).json({ message: 'Failed to fetch signals' });
+  }
+});
+
 export default router;
