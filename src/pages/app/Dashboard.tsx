@@ -1,6 +1,6 @@
 import { getApiBase } from "@/lib/api";
 import { StatCard } from "@/components/app/StatCard";
-import { Activity, Flame, Droplets, Footprints, PlayCircle, ArrowRight, Zap, Megaphone, ExternalLink, Target, Edit2, Check, X, ChevronDown, ChevronUp, Utensils, Dumbbell } from "lucide-react";
+import { Activity, Flame, Droplets, Footprints, PlayCircle, ArrowRight, Zap, Megaphone, ExternalLink, Target, Edit2, Check, X, ChevronDown, ChevronUp, Utensils, Dumbbell, Star, Crown, Play, Clock } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { useState, useEffect, useRef } from "react";
@@ -22,6 +22,8 @@ export default function Dashboard() {
   const [showAllExercises, setShowAllExercises] = useState(false);
   const [showAllMeals, setShowAllMeals] = useState(false);
   const [bannerIndex, setBannerIndex] = useState(0);
+  const [topCoaches, setTopCoaches] = useState<any[]>([]);
+  const [recentVideos, setRecentVideos] = useState<any[]>([]);
   const { t } = useI18n();
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
   useEffect(() => { const h = () => setIsMobile(window.innerWidth < 768); window.addEventListener("resize", h); return () => window.removeEventListener("resize", h); }, []);
@@ -70,6 +72,16 @@ export default function Dashboard() {
         .then((r) => r.json())
         .then((d) => setHasCoach(!!d?.coach))
         .catch(() => setHasCoach(false));
+      // Fetch top coaches
+      fetch(getApiBase() + "/api/coaching/coaches", { headers: { Authorization: `Bearer ${token}` } })
+        .then((r) => r.json())
+        .then((d) => setTopCoaches((d.coaches || []).slice(0, 6)))
+        .catch(() => {});
+      // Fetch recent training videos
+      fetch(getApiBase() + "/api/workouts/videos", { headers: { Authorization: `Bearer ${token}` } })
+        .then((r) => r.json())
+        .then((d) => setRecentVideos((d.videos || []).slice(0, 6)))
+        .catch(() => {});
     }
   }, [token]);
 
@@ -229,6 +241,182 @@ export default function Dashboard() {
           <span style={{ fontSize: 11, color: "var(--text-muted)" }}>Goal: {stepsGoal.toLocaleString()} · {(stepsGoal - steps > 0 ? stepsGoal - steps : 0).toLocaleString()} remaining</span>
         </div>
       </div>
+
+      {/* ── Home Banner Ad Carousel (2nd section) ── */}
+      {homeBannerAds.length > 0 && (() => {
+        const ad = homeBannerAds[bannerIndex % homeBannerAds.length];
+        const ctaLink = `/app/coaching?coach=${ad.coach_id}`;
+        return (
+          <div key={ad.id} className="fade-up-2" style={{ marginBottom: 16, borderRadius: 12, overflow: "hidden", border: "1px solid rgba(59,139,255,0.25)", backgroundColor: "var(--bg-card)", position: "relative" }}>
+            <div style={{ position: "absolute", top: 8, insetInlineStart: 10, zIndex: 2, backgroundColor: "rgba(59,139,255,0.85)", borderRadius: 20, padding: "2px 9px", fontSize: 9, fontWeight: 700, color: "#fff", fontFamily: "'Chakra Petch', sans-serif", letterSpacing: "0.06em" }}>SPONSORED</div>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 14px" }}>
+              {ad.image_url && (
+                <div style={{ width: 64, height: 48, borderRadius: 8, overflow: "hidden", flexShrink: 0 }}>
+                  <img src={ad.image_url} alt={ad.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                </div>
+              )}
+              {ad.video_url && ad.media_type === "video" && !ad.image_url && (
+                <div style={{ width: 64, height: 48, borderRadius: 8, overflow: "hidden", flexShrink: 0 }}>
+                  <video src={ad.video_url} style={{ width: "100%", height: "100%", objectFit: "cover" }} muted />
+                </div>
+              )}
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{ fontSize: 12, fontWeight: 700, fontFamily: "'Chakra Petch', sans-serif", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ad.title}</p>
+                <p style={{ fontSize: 11, color: "var(--text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ad.coach_name} · {ad.specialty}</p>
+              </div>
+              <Link to={ctaLink} onClick={() => fetch(getApiBase() + `/api/coach/ads/${ad.id}/click`, { method: "POST", headers: { Authorization: `Bearer ${token}` } }).catch(() => {})} style={{ padding: "6px 12px", borderRadius: 8, backgroundColor: "var(--blue)", color: "#fff", fontSize: 11, fontWeight: 700, fontFamily: "'Chakra Petch', sans-serif", textDecoration: "none", flexShrink: 0 }}>
+                {ad.cta || "Learn More"}
+              </Link>
+            </div>
+            {homeBannerAds.length > 1 && (
+              <div style={{ display: "flex", justifyContent: "center", gap: 5, paddingBottom: 8 }}>
+                {homeBannerAds.map((_: any, i: number) => (
+                  <button key={i} onClick={() => setBannerIndex(i)} style={{ width: i === bannerIndex % homeBannerAds.length ? 16 : 6, height: 6, borderRadius: 3, border: "none", cursor: "pointer", backgroundColor: i === bannerIndex % homeBannerAds.length ? "var(--blue)" : "var(--border)", transition: "all 0.2s", padding: 0 }} />
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })()}
+
+      {/* ── Featured Coach Ads (2nd section) ── */}
+      {ads.length > 0 && (
+        <div className="fade-up-2" style={{ marginBottom: 24 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <Megaphone size={15} color="var(--blue)" />
+              <h2 style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 15, fontWeight: 700 }}>Featured Coaches</h2>
+            </div>
+            <Link to="/app/coaching" style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: "var(--accent)", textDecoration: "none", fontWeight: 500 }}>
+              Find Coaches <ArrowRight size={13} />
+            </Link>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fill, minmax(260px, 1fr))", gap: 14 }}>
+            {ads.slice(0, 4).map((ad: any) => (
+              <div key={ad.id} style={{ backgroundColor: "var(--bg-card)", border: "1px solid rgba(59,139,255,0.2)", borderRadius: 16, overflow: "hidden", display: "flex", flexDirection: "column" }}>
+                {ad.image_url && (
+                  <div style={{ height: 120, overflow: "hidden", flexShrink: 0 }}>
+                    <img src={ad.image_url} alt={ad.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  </div>
+                )}
+                <div style={{ padding: "14px 16px", flex: 1, display: "flex", flexDirection: "column", gap: 8 }}>
+                  <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
+                    {ad.coach_avatar && <img src={ad.coach_avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${ad.coach_email}`} alt={ad.coach_name} style={{ width: 34, height: 34, borderRadius: "50%", flexShrink: 0, backgroundColor: "var(--bg-surface)" }} />}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 13, fontWeight: 700, lineHeight: 1.2 }}>{ad.title}</p>
+                      <p style={{ fontSize: 11, color: "var(--blue)", marginTop: 2 }}>{ad.coach_name}</p>
+                    </div>
+                  </div>
+                  {ad.highlight && <span style={{ alignSelf: "flex-start", fontSize: 11, padding: "2px 8px", borderRadius: 20, backgroundColor: "rgba(59,139,255,0.1)", color: "var(--blue)", border: "1px solid rgba(59,139,255,0.2)" }}>⭐ {ad.highlight}</span>}
+                  <p style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.5, flex: 1 }}>{ad.description.length > 90 ? ad.description.slice(0, 90) + "…" : ad.description}</p>
+                  <p style={{ fontSize: 11, color: "var(--text-muted)" }}>🎯 {ad.specialty}</p>
+                  <Link to={`/app/coaching?coach=${ad.coach_id}`} onClick={() => fetch(getApiBase() + `/api/coach/ads/${ad.id}/click`, { method: "POST", headers: { Authorization: `Bearer ${token}` } }).catch(() => {})} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "9px 14px", borderRadius: 9, backgroundColor: "var(--blue)", color: "#fff", fontSize: 12, fontWeight: 700, fontFamily: "'Chakra Petch', sans-serif", textDecoration: "none", marginTop: 4 }}>
+                    {ad.cta || "Book Now"} <ExternalLink size={12} />
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Top Coaches (2nd section) ── */}
+      {topCoaches.length > 0 && (
+        <div className="fade-up-2" style={{ marginBottom: 24 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <Crown size={15} color="var(--amber)" />
+              <h2 style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 15, fontWeight: 700 }}>Top Coaches</h2>
+            </div>
+            <Link to="/app/coaching" style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: "var(--accent)", textDecoration: "none", fontWeight: 500 }}>
+              View all <ArrowRight size={13} />
+            </Link>
+          </div>
+          <div style={{ display: "flex", gap: 14, overflowX: "auto", paddingBottom: 8, scrollSnapType: "x mandatory" }}>
+            {topCoaches.map((coach: any) => (
+              <Link
+                key={coach.id}
+                to={`/app/coaching?coach=${coach.id}`}
+                style={{ minWidth: isMobile ? 150 : 170, scrollSnapAlign: "start", backgroundColor: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 16, padding: "16px 14px", textDecoration: "none", display: "flex", flexDirection: "column", alignItems: "center", gap: 10, textAlign: "center", flexShrink: 0, transition: "border-color 0.15s" }}
+                onMouseOver={e => (e.currentTarget.style.borderColor = "var(--amber)")}
+                onMouseOut={e => (e.currentTarget.style.borderColor = "var(--border)")}
+              >
+                <img
+                  src={coach.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${coach.email}`}
+                  alt={coach.name}
+                  style={{ width: 52, height: 52, borderRadius: "50%", objectFit: "cover", border: "2px solid var(--border-light)" }}
+                />
+                <div>
+                  <p style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 13, fontWeight: 700, color: "var(--text-primary)", lineHeight: 1.2 }}>{coach.name}</p>
+                  <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 2 }}>{coach.specialty || "Fitness Coach"}</p>
+                </div>
+                {coach.rating > 0 && (
+                  <div style={{ display: "flex", alignItems: "center", gap: 3 }}>
+                    <Star size={12} color="var(--amber)" fill="var(--amber)" />
+                    <span style={{ fontSize: 12, fontWeight: 600, color: "var(--amber)" }}>{Number(coach.rating).toFixed(1)}</span>
+                    {coach.review_count > 0 && <span style={{ fontSize: 10, color: "var(--text-muted)" }}>({coach.review_count})</span>}
+                  </div>
+                )}
+                {coach.price > 0 && (
+                  <span style={{ fontSize: 11, color: "var(--accent)", fontFamily: "'Chakra Petch', sans-serif", fontWeight: 700 }}>${coach.price}/session</span>
+                )}
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Recent Training Videos ── */}
+      {recentVideos.length > 0 && (
+        <div className="fade-up-2" style={{ marginBottom: 24 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <Play size={15} color="var(--red)" />
+              <h2 style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 15, fontWeight: 700 }}>Training Videos</h2>
+            </div>
+            <Link to="/app/workouts" style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: "var(--accent)", textDecoration: "none", fontWeight: 500 }}>
+              View all <ArrowRight size={13} />
+            </Link>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fill, minmax(260px, 1fr))", gap: 14 }}>
+            {recentVideos.map((video: any) => {
+              const isYT = video.url?.includes("youtube.com") || video.url?.includes("youtu.be");
+              const ytId = isYT ? (video.url.match(/(?:v=|youtu\.be\/)([^&\s]+)/)?.[1] || "") : "";
+              const thumb = video.thumbnail || (isYT && ytId ? `https://img.youtube.com/vi/${ytId}/mqdefault.jpg` : "");
+              return (
+                <Link key={video.id} to="/app/workouts" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 16, overflow: "hidden", textDecoration: "none", display: "flex", flexDirection: "column", transition: "border-color 0.15s" }} onMouseOver={e => (e.currentTarget.style.borderColor = "var(--red)")} onMouseOut={e => (e.currentTarget.style.borderColor = "var(--border)")}>
+                  <div style={{ height: 140, background: "var(--bg-surface)", position: "relative", overflow: "hidden" }}>
+                    {thumb ? (
+                      <img src={thumb} alt={video.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                    ) : (
+                      <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <Play size={32} color="var(--text-muted)" />
+                      </div>
+                    )}
+                    <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.25)" }}>
+                      <div style={{ width: 40, height: 40, borderRadius: "50%", background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <Play size={18} color="#fff" fill="#fff" />
+                      </div>
+                    </div>
+                    {video.is_premium === 1 && (
+                      <div style={{ position: "absolute", top: 8, right: 8, backgroundColor: "var(--amber)", borderRadius: 20, padding: "2px 8px", fontSize: 9, fontWeight: 700, color: "#000", fontFamily: "'Chakra Petch', sans-serif" }}>PREMIUM</div>
+                    )}
+                    {video.duration && (
+                      <div style={{ position: "absolute", bottom: 8, right: 8, backgroundColor: "rgba(0,0,0,0.7)", borderRadius: 4, padding: "2px 6px", fontSize: 10, color: "#fff", fontFamily: "'Chakra Petch', sans-serif" }}>
+                        {video.duration}
+                      </div>
+                    )}
+                  </div>
+                  <div style={{ padding: "12px 14px" }}>
+                    <p style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 13, fontWeight: 700, color: "var(--text-primary)", lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{video.title}</p>
+                    {video.category && <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 4 }}>{video.category}</p>}
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* ── Today's plan ── */}
       <div className="fade-up-3" style={{ marginBottom: 24 }}>
@@ -401,88 +589,6 @@ export default function Dashboard() {
           ))}
         </div>
       </div>
-
-      {/* ── Home Banner Ad Carousel ── */}
-      {homeBannerAds.length > 0 && (() => {
-        const ad = homeBannerAds[bannerIndex % homeBannerAds.length];
-        const ctaLink = ad.objective === "coaching"
-          ? `/app/coaching?coach=${ad.coach_id}`
-          : `/app/coaching?coach=${ad.coach_id}`;
-        return (
-          <div key={ad.id} className="fade-up-4" style={{ marginTop: 16, borderRadius: 12, overflow: "hidden", border: "1px solid rgba(59,139,255,0.25)", backgroundColor: "var(--bg-card)", position: "relative" }}>
-            {/* Sponsored badge */}
-            <div style={{ position: "absolute", top: 8, insetInlineStart: 10, zIndex: 2, backgroundColor: "rgba(59,139,255,0.85)", borderRadius: 20, padding: "2px 9px", fontSize: 9, fontWeight: 700, color: "#fff", fontFamily: "'Chakra Petch', sans-serif", letterSpacing: "0.06em" }}>SPONSORED</div>
-            <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 14px" }}>
-              {ad.image_url && (
-                <div style={{ width: 64, height: 48, borderRadius: 8, overflow: "hidden", flexShrink: 0 }}>
-                  <img src={ad.image_url} alt={ad.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                </div>
-              )}
-              {ad.video_url && ad.media_type === "video" && !ad.image_url && (
-                <div style={{ width: 64, height: 48, borderRadius: 8, overflow: "hidden", flexShrink: 0 }}>
-                  <video src={ad.video_url} style={{ width: "100%", height: "100%", objectFit: "cover" }} muted />
-                </div>
-              )}
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <p style={{ fontSize: 12, fontWeight: 700, fontFamily: "'Chakra Petch', sans-serif", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ad.title}</p>
-                <p style={{ fontSize: 11, color: "var(--text-muted)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{ad.coach_name} · {ad.specialty}</p>
-              </div>
-              <Link to={ctaLink} onClick={() => fetch(getApiBase() + `/api/coach/ads/${ad.id}/click`, { method: "POST", headers: { Authorization: `Bearer ${token}` } }).catch(() => {})} style={{ padding: "6px 12px", borderRadius: 8, backgroundColor: "var(--blue)", color: "#fff", fontSize: 11, fontWeight: 700, fontFamily: "'Chakra Petch', sans-serif", textDecoration: "none", flexShrink: 0 }}>
-                {ad.cta || "Learn More"}
-              </Link>
-            </div>
-            {/* Carousel dots */}
-            {homeBannerAds.length > 1 && (
-              <div style={{ display: "flex", justifyContent: "center", gap: 5, paddingBottom: 8 }}>
-                {homeBannerAds.map((_: any, i: number) => (
-                  <button key={i} onClick={() => setBannerIndex(i)} style={{ width: i === bannerIndex % homeBannerAds.length ? 16 : 6, height: 6, borderRadius: 3, border: "none", cursor: "pointer", backgroundColor: i === bannerIndex % homeBannerAds.length ? "var(--blue)" : "var(--border)", transition: "all 0.2s", padding: 0 }} />
-                ))}
-              </div>
-            )}
-          </div>
-        );
-      })()}
-
-      {/* ── Featured Coach Ads ── */}
-      {ads.length > 0 && (
-        <div className="fade-up-4" style={{ marginTop: 24 }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <Megaphone size={15} color="var(--blue)" />
-              <h2 style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 15, fontWeight: 700 }}>Featured Coaches</h2>
-            </div>
-            <a href="/app/coaching" style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: "var(--accent)", textDecoration: "none", fontWeight: 500 }}>
-              Find Coaches <ArrowRight size={13} />
-            </a>
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fill, minmax(260px, 1fr))", gap: 14 }}>
-            {ads.slice(0, 4).map((ad: any) => (
-              <div key={ad.id} style={{ backgroundColor: "var(--bg-card)", border: "1px solid rgba(59,139,255,0.2)", borderRadius: 16, overflow: "hidden", display: "flex", flexDirection: "column" }}>
-                {ad.image_url && (
-                  <div style={{ height: 120, overflow: "hidden", flexShrink: 0 }}>
-                    <img src={ad.image_url} alt={ad.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                  </div>
-                )}
-                <div style={{ padding: "14px 16px", flex: 1, display: "flex", flexDirection: "column", gap: 8 }}>
-                  <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
-                    {ad.coach_avatar && <img src={ad.coach_avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${ad.coach_email}`} alt={ad.coach_name} style={{ width: 34, height: 34, borderRadius: "50%", flexShrink: 0, backgroundColor: "var(--bg-surface)" }} />}
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 13, fontWeight: 700, lineHeight: 1.2 }}>{ad.title}</p>
-                      <p style={{ fontSize: 11, color: "var(--blue)", marginTop: 2 }}>{ad.coach_name}</p>
-                    </div>
-                  </div>
-                  {ad.highlight && <span style={{ alignSelf: "flex-start", fontSize: 11, padding: "2px 8px", borderRadius: 20, backgroundColor: "rgba(59,139,255,0.1)", color: "var(--blue)", border: "1px solid rgba(59,139,255,0.2)" }}>⭐ {ad.highlight}</span>}
-                  <p style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.5, flex: 1 }}>{ad.description.length > 90 ? ad.description.slice(0, 90) + "…" : ad.description}</p>
-                  <p style={{ fontSize: 11, color: "var(--text-muted)" }}>🎯 {ad.specialty}</p>
-                  <Link to={`/app/coaching?coach=${ad.coach_id}`} onClick={() => fetch(getApiBase() + `/api/coach/ads/${ad.id}/click`, { method: "POST", headers: { Authorization: `Bearer ${token}` } }).catch(() => {})} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "9px 14px", borderRadius: 9, backgroundColor: "var(--blue)", color: "#fff", fontSize: 12, fontWeight: 700, fontFamily: "'Chakra Petch', sans-serif", textDecoration: "none", marginTop: 4 }}>
-                    {ad.cta || "Book Now"} <ExternalLink size={12} />
-                  </Link>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* ── AI Analysis ── */}
       {aiAnalysis && (
