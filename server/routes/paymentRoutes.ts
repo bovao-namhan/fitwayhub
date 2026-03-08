@@ -158,7 +158,11 @@ router.post('/paypal/capture-order', authenticateToken, async (req: any, res: Re
     if (capture.status === 'COMPLETED') {
       // ── Coach subscription via PayPal (user subscribes to a coach) ──
       if (coachId) {
-        const coach = await get('SELECT cp.monthly_price, cp.yearly_price, cp.plan_types FROM coach_profiles cp WHERE cp.user_id = ?', [coachId]) as any;
+        const coach = await get(
+          `SELECT u.id, COALESCE(cp.monthly_price, 0) as monthly_price, COALESCE(cp.yearly_price, 0) as yearly_price, COALESCE(cp.plan_types, 'complete') as plan_types
+           FROM users u LEFT JOIN coach_profiles cp ON cp.user_id = u.id
+           WHERE u.id = ? AND u.role = 'coach'`, [coachId]
+        ) as any;
         if (!coach) return res.status(404).json({ message: 'Coach not found' });
 
         const planCycle = plan === 'annual' ? 'yearly' : 'monthly';
@@ -251,7 +255,11 @@ router.post('/ewallet', authenticateToken, uploadPaymentProof, async (req: any, 
   try {
     // Coach subscription payment flow (user pays for a specific coach)
     if (coachId) {
-      const coach = await get('SELECT cp.monthly_price, cp.yearly_price, cp.plan_types FROM coach_profiles cp WHERE cp.user_id = ?', [coachId]) as any;
+      const coach = await get(
+        `SELECT u.id, COALESCE(cp.monthly_price, 0) as monthly_price, COALESCE(cp.yearly_price, 0) as yearly_price, COALESCE(cp.plan_types, 'complete') as plan_types
+         FROM users u LEFT JOIN coach_profiles cp ON cp.user_id = u.id
+         WHERE u.id = ? AND u.role = 'coach'`, [coachId]
+      ) as any;
       if (!coach) return res.status(404).json({ message: 'Coach not found' });
 
       const planCycle = plan === 'annual' ? 'yearly' : 'monthly';
@@ -441,7 +449,11 @@ router.post('/coach-subscribe', authenticateToken, upload.single('proof'), async
 
   try {
     // Get coach's pricing
-    const coach = await get('SELECT cp.monthly_price, cp.yearly_price, cp.plan_types FROM coach_profiles cp WHERE cp.user_id = ?', [coachId]) as any;
+    const coach = await get(
+      `SELECT u.id, COALESCE(cp.monthly_price, 0) as monthly_price, COALESCE(cp.yearly_price, 0) as yearly_price, COALESCE(cp.plan_types, 'complete') as plan_types
+       FROM users u LEFT JOIN coach_profiles cp ON cp.user_id = u.id
+       WHERE u.id = ? AND u.role = 'coach'`, [coachId]
+    ) as any;
     if (!coach) return res.status(404).json({ message: 'Coach not found' });
 
     const amount = planCycle === 'yearly' ? (coach.yearly_price || 0) : (coach.monthly_price || 0);
