@@ -6,6 +6,37 @@ import crypto from 'crypto';
 
 const router = Router();
 
+const MEETING_PRESENCE_TTL_MS = 30000;
+const meetingPresence = new Map<string, Map<number, number>>();
+
+function touchMeetingPresence(roomId: string, userId: number) {
+  const room = meetingPresence.get(roomId) || new Map<number, number>();
+  room.set(userId, Date.now());
+  meetingPresence.set(roomId, room);
+}
+
+function getMeetingPresence(roomId: string, coachId: number, userId: number) {
+  const now = Date.now();
+  const room = meetingPresence.get(roomId) || new Map<number, number>();
+
+  for (const [uid, ts] of room.entries()) {
+    if (now - ts > MEETING_PRESENCE_TTL_MS) {
+      room.delete(uid);
+    }
+  }
+
+  const coachLastSeen = room.get(coachId) || null;
+  const userLastSeen = room.get(userId) || null;
+
+  return {
+    coach_online: !!coachLastSeen,
+    user_online: !!userLastSeen,
+    coach_last_seen: coachLastSeen,
+    user_last_seen: userLastSeen,
+    ttl_ms: MEETING_PRESENCE_TTL_MS,
+  };
+}
+
 // ── Create a meeting (coach or user can create, but both must share a subscription) ──
 router.post('/', authenticateToken, async (req: any, res: Response) => {
   const { participantId, title, scheduledAt } = req.body;
@@ -88,6 +119,9 @@ router.get('/:roomId', authenticateToken, async (req: any, res: Response) => {
       return res.status(403).json({ message: 'Not authorized to access this meeting' });
     }
 
+    touchMeetingPresence(req.params.roomId, req.user.id);
+    const presence = getMeetingPresence(req.params.roomId, Number(meeting.coach_id), Number(meeting.user_id));
+
     const files = await query(
       `SELECT mf.*, u.name as uploader_name FROM meeting_files mf LEFT JOIN users u ON mf.uploaded_by = u.id WHERE mf.meeting_id = ? ORDER BY mf.created_at DESC`,
       [meeting.id]
@@ -98,8 +132,25 @@ router.get('/:roomId', authenticateToken, async (req: any, res: Response) => {
       [meeting.id]
     );
 
-    res.json({ meeting, files, messages });
+    res.json({ meeting: { ...meeting, presence }, files, messages });
   } catch { res.status(500).json({ message: 'Failed to fetch meeting' }); }
+});
+
+// ── Heartbeat for REST-based presence (no sockets) ─────────────────────────
+router.post('/:roomId/heartbeat', authenticateToken, async (req: any, res: Response) => {
+  try {
+    const meeting: any = await get('SELECT coach_id, user_id FROM coaching_meetings WHERE room_id = ?', [req.params.roomId]);
+    if (!meeting) return res.status(404).json({ message: 'Meeting not found' });
+    if (meeting.coach_id !== req.user.id && meeting.user_id !== req.user.id) {
+      return res.status(403).json({ message: 'Not authorized' });
+    }
+
+    touchMeetingPresence(req.params.roomId, req.user.id);
+    const presence = getMeetingPresence(req.params.roomId, Number(meeting.coach_id), Number(meeting.user_id));
+    res.json({ presence });
+  } catch {
+    res.status(500).json({ message: 'Failed to update heartbeat' });
+  }
 });
 
 // ── Start a meeting ─────────────────────────────────────────────────────────

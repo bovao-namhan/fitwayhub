@@ -55,18 +55,3 @@ export function setApiBase(url: string): void {
   }
 }
 
-/** Returns a best-effort Socket.IO base URL for realtime features. */
-export function getSocketBase(): string {
-  try {
-    const stored = (localStorage.getItem(LS_KEY) || '').trim().replace(/\/+$/, '');
-    if (stored) return stored;
-  } catch {
-    // ignore
-  }
-
-  const envBase = String((import.meta as any)?.env?.VITE_API_BASE || '').trim().replace(/\/+$/, '');
-  if (envBase) return envBase;
-
-  if (typeof window !== 'undefined') return window.location.origin;
-  return '';
-}

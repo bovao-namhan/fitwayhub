@@ -1,8 +1,6 @@
 import { getApiBase } from "@/lib/api";
-import { getSocketBase } from "@/lib/api";
 import { useState, useEffect, useRef, useMemo } from "react";
 import React from "react";
-import { io, Socket } from "socket.io-client";
 import {
   Search, Send, Paperclip, X, Users, Image as ImageIcon,
   ArrowLeft, Phone, Video, SmilePlus, CheckCheck, Hash
@@ -82,7 +80,6 @@ export default function Chat() {
   const [subscriptionError, setSubscriptionError] = useState("");
   const [onlineUserIds, setOnlineUserIds] = useState<number[]>([]);
   const onlineSetRef = useRef<Set<number>>(new Set());
-  const socketRef = useRef<Socket | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -104,23 +101,6 @@ export default function Chat() {
   useEffect(() => {
     if (!token) return;
 
-    const socket = io(getSocketBase(), {
-      transports: ["websocket", "polling"],
-      auth: { token },
-      reconnection: true,
-    });
-    socketRef.current = socket;
-
-    socket.on("presence:update", (payload: any) => {
-      const ids = Array.isArray(payload?.onlineUserIds) ? payload.onlineUserIds.map((x: any) => Number(x)) : [];
-      setOnlineUserIds(ids);
-      onlineSetRef.current = new Set(ids);
-    });
-
-    socket.on("connect", () => {
-      socket.emit("presence:ping");
-    });
-
     const syncPresence = async () => {
       try {
         await fetch(getApiBase() + "/api/chat/presence/ping", {
@@ -141,8 +121,6 @@ export default function Chat() {
     const id = setInterval(syncPresence, 10000);
     return () => {
       clearInterval(id);
-      socket.disconnect();
-      socketRef.current = null;
     };
   }, [token]);
 

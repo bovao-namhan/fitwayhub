@@ -1,10 +1,8 @@
 import { getApiBase } from "@/lib/api";
-import { getSocketBase } from "@/lib/api";
 import { useState, useRef, useEffect } from "react";
 import { Send, Search } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useI18n } from "@/context/I18nContext";
-import { io, Socket } from "socket.io-client";
 
 interface Message { id: number; sender_id: number; receiver_id: number; content: string; created_at: string; }
 interface ChatUser { id: number; name: string; email: string; avatar: string; role: string; online?: boolean; }
@@ -20,7 +18,6 @@ export default function CoachChat() {
   const [loading, setLoading] = useState(true);
   const [onlineUserIds, setOnlineUserIds] = useState<number[]>([]);
   const onlineSetRef = useRef<Set<number>>(new Set());
-  const socketRef = useRef<Socket | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -40,23 +37,6 @@ export default function CoachChat() {
 
   useEffect(() => {
     if (!token) return;
-
-    const socket = io(getSocketBase(), {
-      transports: ["websocket", "polling"],
-      auth: { token },
-      reconnection: true,
-    });
-    socketRef.current = socket;
-
-    socket.on("presence:update", (payload: any) => {
-      const ids = Array.isArray(payload?.onlineUserIds) ? payload.onlineUserIds.map((x: any) => Number(x)) : [];
-      setOnlineUserIds(ids);
-      onlineSetRef.current = new Set(ids);
-    });
-
-    socket.on("connect", () => {
-      socket.emit("presence:ping");
-    });
 
     const syncPresence = async () => {
       try {
@@ -78,8 +58,6 @@ export default function CoachChat() {
     const id = setInterval(syncPresence, 10000);
     return () => {
       clearInterval(id);
-      socket.disconnect();
-      socketRef.current = null;
     };
   }, [token]);
 
