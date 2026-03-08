@@ -37,6 +37,7 @@ export default defineConfig(({mode}) => {
       allowedHosts: [
         'localhost',
         'peter-adel.taila6a2b4.ts.net',
+        'fitwayhub.ddns.net',
         '.ngrok-free.dev',
       ],
       proxy: {

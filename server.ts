@@ -38,6 +38,8 @@ const ALLOWED_ORIGINS = [
   'http://localhost:5173',
   'http://127.0.0.1:3000',
   'http://127.0.0.1:5173',
+  'http://fitwayhub.ddns.net',
+  'https://fitwayhub.ddns.net',
   'https://peter-adel.taila6a2b4.ts.net',
   'http://peter-adel.taila6a2b4.ts.net',
   'http://peter-adel.taila6a2b4.ts.net',
