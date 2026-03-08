@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import DOMPurify from "dompurify";
 import { ArrowRight, CheckCircle2, Target, Eye, Shield, Globe, Users, BookOpen, Heart, Dumbbell, Brain, BarChart, Zap, Star, Award, Activity, HelpCircle, ChevronDown, ChevronUp, Mail, MessageCircle, Phone, Send, Smartphone, Calendar, User } from "lucide-react";
 import { useState, useEffect, type CSSProperties } from "react";
 import { CalorieCalculator } from "@/components/website/CalorieCalculator";
@@ -440,7 +441,7 @@ function ContactInfoSection({ c, lang }: { c: any; lang: RenderLang }) {
 function HtmlSection({ c, lang }: { c: any; lang: RenderLang }) {
   const html = lang === "ar" ? c.html_ar || c.html || "" : c.html || c.html_ar || "";
   return (
-    <section style={{ maxWidth: 1100, margin: "0 auto", padding: "40px 24px" }} dangerouslySetInnerHTML={{ __html: html }} />
+    <section style={{ maxWidth: 1100, margin: "0 auto", padding: "40px 24px" }} dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(html) }} />
   );
 }
 

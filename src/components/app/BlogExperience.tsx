@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import DOMPurify from "dompurify";
 import {
   Bold,
   Heading2,
@@ -487,7 +488,7 @@ export default function BlogExperience({ mode, heading, subheading, allowWriting
 
               <div
                 style={{ color: "var(--text-primary)", lineHeight: 1.8, fontSize: 16 }}
-                dangerouslySetInnerHTML={{ __html: markdownToHtml(selectedPost.content) }}
+                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(markdownToHtml(selectedPost.content)) }}
               />
             </div>
           ) : (
@@ -550,7 +551,7 @@ export default function BlogExperience({ mode, heading, subheading, allowWriting
                   />
                 ) : (
                   <div style={{ minHeight: 340, border: "1px solid var(--border)", borderRadius: 10, padding: 14, background: "var(--bg-surface)" }}>
-                    <div dangerouslySetInnerHTML={{ __html: markdownToHtml(draft.content) }} />
+                    <div dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(markdownToHtml(draft.content)) }} />
                   </div>
                 )}
 

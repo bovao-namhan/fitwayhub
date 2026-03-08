@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
+import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -56,7 +57,18 @@ async function startServer() {
   const PORT = process.env.PORT || 3000;
 
   app.use(helmet({
-    contentSecurityPolicy: false,
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'", "https://apis.google.com"],
+        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+        fontSrc: ["'self'", "https://fonts.gstatic.com", "data:"],
+        imgSrc: ["'self'", "data:", "https:", "blob:"],
+        connectSrc: ["'self'", "https:", "wss:"],
+        mediaSrc: ["'self'", "https:", "blob:"],
+        frameSrc: ["'self'", "https:"],
+      },
+    },
     crossOriginResourcePolicy: { policy: "cross-origin" }
   }));
 
@@ -67,7 +79,10 @@ async function startServer() {
       if (ALLOWED_ORIGINS.includes(origin) || origin.endsWith('.taila6a2b4.ts.net') || origin.endsWith('.ngrok-free.dev')) {
         return callback(null, true);
       }
-      return callback(null, true); // Allow all in dev — tighten in prod
+      if (process.env.NODE_ENV !== 'production') {
+        return callback(null, true); // Allow all in dev only
+      }
+      return callback(new Error('CORS not allowed'), false);
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
@@ -75,7 +90,18 @@ async function startServer() {
   }));
 
   app.use(morgan('dev'));
-  app.use(express.json());
+  app.use(express.json({ limit: '1mb' }));
+  app.use(express.urlencoded({ extended: false, limit: '1mb' }));
+
+  // Global API rate limiter
+  app.use('/api/', rateLimit({
+    windowMs: 1 * 60 * 1000, // 1 minute
+    max: 100,
+    message: { message: 'Too many requests, please slow down' },
+    standardHeaders: true,
+    legacyHeaders: false,
+  }));
+
   app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
   console.log('Registering API routes...');
@@ -118,9 +144,7 @@ async function startServer() {
   app.listen(Number(PORT), '0.0.0.0', () => {
     console.log(`\n🏋️  FitWay Hub Server running on port ${PORT}`);
     console.log(`📱  Local:    http://localhost:${PORT}`);
-    console.log(`🌐  Network: https://peter-adel.taila6a2b4.ts.net`);
-    console.log(`🔑  Admin:   peteradmin@example.com / peterishere`);
-    console.log(`🏅  Coach:   petercoach@example.com / peterishere`);
+    console.log(`🌐  Network: ${process.env.APP_BASE_URL || 'http://localhost:' + PORT}`);
     if (process.env.NODE_ENV !== 'production') {
       console.log(`\n📦  Run frontend: npx vite --host 0.0.0.0`);
     }

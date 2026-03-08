@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import rateLimit from 'express-rate-limit';
 import {
   register,
   login,
@@ -17,15 +18,32 @@ import { get } from '../config/database';
 
 const router = Router();
 
-router.post('/register', register);
-router.post('/login', login);
+// Rate limiters
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10,
+  message: { message: 'Too many attempts, please try again after 15 minutes' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const strictLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  message: { message: 'Too many attempts, please try again after 15 minutes' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+router.post('/register', authLimiter, register);
+router.post('/login', authLimiter, login);
 router.post('/logout', authenticateToken, logout);
 router.get('/oauth/google', oauthGoogleStart);
 router.get('/oauth/google/callback', oauthGoogleCallback);
-router.post('/forgot-password/question', forgotPasswordGetQuestion);
-router.post('/forgot-password/verify', forgotPasswordVerify);
+router.post('/forgot-password/question', strictLimiter, forgotPasswordGetQuestion);
+router.post('/forgot-password/verify', strictLimiter, forgotPasswordVerify);
 router.post('/change-password', authenticateToken, changePassword);
-router.post('/login-remember', loginWithRememberToken);
+router.post('/login-remember', authLimiter, loginWithRememberToken);
 router.post('/offline-steps', authenticateToken, addOfflineSteps);
 router.post('/update-profile', authenticateToken, updateProfile);
 

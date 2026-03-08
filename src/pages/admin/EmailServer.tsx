@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import type { CSSProperties, FormEvent } from "react";
+import DOMPurify from "dompurify";
 import { Mail, Plus, Trash2, Send, Inbox, ArrowLeft, RefreshCw, Eye, Settings, CheckCircle, XCircle, Zap } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
@@ -642,7 +643,7 @@ export default function EmailServer() {
           {selectedEmail.html_body ? (
             <div
               style={{ fontSize: 14, lineHeight: 1.7, color: "var(--text-primary)", overflowX: "auto" }}
-              dangerouslySetInnerHTML={{ __html: selectedEmail.html_body }}
+              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(selectedEmail.html_body) }}
             />
           ) : (
             <pre style={{

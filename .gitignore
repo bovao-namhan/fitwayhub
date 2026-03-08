@@ -1,1 +1,9 @@
 node_modules
+dist
+.env
+.env.*
+env.txt
+*.pem
+*.key
+uploads/
+*.log

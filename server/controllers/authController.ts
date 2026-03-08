@@ -17,7 +17,9 @@ const DISPOSABLE_OR_FAKE_DOMAINS = new Set([
 ]);
 
 function getJwtSecret() {
-  return process.env.JWT_SECRET || 'your-secret-key';
+  const secret = process.env.JWT_SECRET;
+  if (!secret) throw new Error('JWT_SECRET environment variable is required');
+  return secret;
 }
 
 function normalizeEmail(input: string) {
@@ -112,7 +114,7 @@ async function createOrGetSocialUser(params: { email: string; name?: string; ava
     return existing;
   }
 
-  const generatedPasswordHash = await bcrypt.hash(`social-${params.provider}-${randomUUID()}`, 10);
+  const generatedPasswordHash = await bcrypt.hash(`social-${params.provider}-${randomUUID()}`, 12);
   const user = await UserModel.create(email, generatedPasswordHash);
   await run(
     'UPDATE users SET name = ?, role = ?, avatar = ?, is_premium = 0, membership_paid = 0 WHERE id = ?',
@@ -148,12 +150,15 @@ export const register = async (req: Request, res: Response) => {
     const hasValidDomain = await hasMailCapableDomain(email);
     if (!hasValidDomain) return res.status(400).json({ message: 'Email domain is not valid for receiving mail' });
     
-    // Password strength: min 8 chars
+    // Password strength: min 8 chars, 1 uppercase, 1 number, 1 special
     if (password.length < 8) return res.status(400).json({ message: 'Password must be at least 8 characters long' });
+    if (!/[A-Z]/.test(password)) return res.status(400).json({ message: 'Password must contain at least one uppercase letter' });
+    if (!/[0-9]/.test(password)) return res.status(400).json({ message: 'Password must contain at least one number' });
+    if (!/[^A-Za-z0-9]/.test(password)) return res.status(400).json({ message: 'Password must contain at least one special character' });
     
     const existing = await UserModel.findByEmail(email);
     if (existing) return res.status(409).json({ message: 'An account with this email already exists' });
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 12);
     const user = await UserModel.create(email, hashedPassword);
     
     // Set name and role (default to user if not specified, but allow coach)
@@ -162,7 +167,7 @@ export const register = async (req: Request, res: Response) => {
     else await run('UPDATE users SET role = ?, is_premium = 0, membership_paid = 0 WHERE id = ?', [userRole, user.id]);
     
     // Save security question & hashed answer
-    const hashedAnswer = await bcrypt.hash(securityAnswer.trim().toLowerCase(), 10);
+    const hashedAnswer = await bcrypt.hash(securityAnswer.trim().toLowerCase(), 12);
     await UserModel.setSecurityQuestion(user.id, securityQuestion, hashedAnswer);
     
     // Gift system: 200 points on registration
@@ -214,7 +219,8 @@ export const forgotPasswordGetQuestion = async (req: Request, res: Response) => 
     const email = normalizeEmail(req.body?.email);
     if (!email) return res.status(400).json({ message: 'Email is required' });
     const user = await UserModel.findByEmail(email) || await UserModel.findByUsername(email);
-    if (!user || !user.security_question) return res.status(404).json({ message: 'Account not found or no security question set' });
+    // Don't reveal whether account exists — always return a generic response
+    if (!user || !user.security_question) return res.json({ question: 'Please answer your security question' });
     return res.json({ question: user.security_question });
   } catch (error) {
     res.status(500).json({ message: 'Server error' });
@@ -231,7 +237,7 @@ export const forgotPasswordVerify = async (req: Request, res: Response) => {
     if (!user || !user.security_answer) return res.status(404).json({ message: 'Account not found' });
     const answerMatch = await bcrypt.compare(securityAnswer.trim().toLowerCase(), user.security_answer);
     if (!answerMatch) return res.status(401).json({ message: 'Incorrect security answer' });
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    const hashedPassword = await bcrypt.hash(newPassword, 12);
     await UserModel.updatePassword(user.id, hashedPassword);
     return res.json({ message: 'Password reset successfully' });
   } catch (error) {
@@ -261,7 +267,7 @@ export const changePassword = async (req: any, res: Response) => {
     if (!user || !user.password) return res.status(404).json({ message: 'User not found' });
     const isMatch = await bcrypt.compare(currentPassword, user.password);
     if (!isMatch) return res.status(401).json({ message: 'Current password is incorrect' });
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    const hashedPassword = await bcrypt.hash(newPassword, 12);
     await UserModel.updatePassword(userId, hashedPassword);
     return res.json({ message: 'Password changed successfully' });
   } catch (error) {
