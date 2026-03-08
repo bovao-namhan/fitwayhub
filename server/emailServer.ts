@@ -89,8 +89,11 @@ export async function sendMail(opts: {
   html?: string;
 }) {
   const settings = await getSmtpSettings();
-  if (!settings || !settings.enabled || !settings.smtp_host) {
+  if (!settings || !settings.smtp_host) {
     throw new Error('Email sending is not configured. Go to Admin → Email Server → SMTP Settings to set up your SMTP relay.');
+  }
+  if (!settings.enabled) {
+    throw new Error('Email sending is disabled. Enable it in Admin → Email Server → SMTP Settings.');
   }
 
   const account = await get<any>('SELECT * FROM email_accounts WHERE id = ?', [opts.fromAccountId]);
@@ -98,8 +101,14 @@ export async function sendMail(opts: {
 
   const transporter = createTransporter(settings);
 
+  // Use the SMTP-authenticated from address as the envelope sender
+  // (most SMTP relays reject sending from non-authenticated addresses)
+  const envelopeFrom = settings.from_email || settings.smtp_user;
+  const envelopeName = settings.from_name || account.display_name || 'FitWay Hub';
+
   const info = await transporter.sendMail({
-    from: `${account.display_name} <${account.email}>`,
+    from: `${envelopeName} <${envelopeFrom}>`,
+    replyTo: `${account.display_name} <${account.email}>`,
     to: opts.to,
     subject: opts.subject,
     text: opts.text,
