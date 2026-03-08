@@ -316,7 +316,7 @@ export default function Dashboard() {
                 </div>
               </div>
             )) : topCoaches.slice(0, 4).map((coach: any) => (
-              <Link key={coach.id} to={`/app/coaching?coach=${coach.id}`} style={{ backgroundColor: "var(--bg-card)", border: "1px solid rgba(59,139,255,0.2)", borderRadius: 16, overflow: "hidden", display: "flex", flexDirection: "column", textDecoration: "none", transition: "border-color 0.15s" }} onMouseOver={e => (e.currentTarget.style.borderColor = "var(--blue)")} onMouseOut={e => (e.currentTarget.style.borderColor = "rgba(59,139,255,0.2)")}>
+              <Link key={coach.id} to={`/app/coaching?coach=${coach.id}`} style={{ backgroundColor: "var(--bg-card)", borderRadius: 16, overflow: "hidden", display: "flex", flexDirection: "column", textDecoration: "none", transition: "box-shadow 0.15s" }} onMouseOver={e => (e.currentTarget.style.boxShadow = "0 4px 16px rgba(59,139,255,0.15)")} onMouseOut={e => (e.currentTarget.style.boxShadow = "none")}>
                 <div style={{ padding: "18px 16px", flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 10, textAlign: "center" }}>
                   <img src={coach.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${coach.email}`} alt={coach.name} style={{ width: 56, height: 56, borderRadius: "50%", objectFit: "cover", border: "2px solid var(--border-light)" }} />
                   <div>
@@ -356,9 +356,9 @@ export default function Dashboard() {
               <Link
                 key={coach.id}
                 to={`/app/coaching?coach=${coach.id}`}
-                style={{ minWidth: isMobile ? 150 : 170, scrollSnapAlign: "start", backgroundColor: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 16, padding: "16px 14px", textDecoration: "none", display: "flex", flexDirection: "column", alignItems: "center", gap: 10, textAlign: "center", flexShrink: 0, transition: "border-color 0.15s" }}
-                onMouseOver={e => (e.currentTarget.style.borderColor = "var(--amber)")}
-                onMouseOut={e => (e.currentTarget.style.borderColor = "var(--border)")}
+                style={{ minWidth: isMobile ? 150 : 170, scrollSnapAlign: "start", backgroundColor: "var(--bg-card)", borderRadius: 16, padding: "16px 14px", textDecoration: "none", display: "flex", flexDirection: "column", alignItems: "center", gap: 10, textAlign: "center", flexShrink: 0, transition: "box-shadow 0.15s" }}
+                onMouseOver={e => (e.currentTarget.style.boxShadow = "0 4px 16px rgba(255,179,64,0.15)")}
+                onMouseOut={e => (e.currentTarget.style.boxShadow = "none")}
               >
                 <img
                   src={coach.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${coach.email}`}
@@ -403,7 +403,7 @@ export default function Dashboard() {
               const ytId = isYT ? (video.url.match(/(?:v=|youtu\.be\/)([^&\s]+)/)?.[1] || "") : "";
               const thumb = video.thumbnail || (isYT && ytId ? `https://img.youtube.com/vi/${ytId}/mqdefault.jpg` : "");
               return (
-                <Link key={video.id} to="/app/workouts" style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 16, overflow: "hidden", textDecoration: "none", display: "flex", flexDirection: "column", transition: "border-color 0.15s" }} onMouseOver={e => (e.currentTarget.style.borderColor = "var(--red)")} onMouseOut={e => (e.currentTarget.style.borderColor = "var(--border)")}>
+                <Link key={video.id} to="/app/workouts" style={{ backgroundColor: "var(--bg-card)", borderRadius: 16, overflow: "hidden", textDecoration: "none", display: "flex", flexDirection: "column", transition: "box-shadow 0.15s" }} onMouseOver={e => (e.currentTarget.style.boxShadow = "0 4px 16px rgba(255,68,68,0.12)")} onMouseOut={e => (e.currentTarget.style.boxShadow = "none")}>
                   <div style={{ height: 140, background: "var(--bg-surface)", position: "relative", overflow: "hidden" }}>
                     {thumb ? (
                       <img src={thumb} alt={video.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
@@ -587,16 +587,15 @@ export default function Dashboard() {
                 padding: "16px",
                 borderRadius: 14,
                 backgroundColor: "var(--bg-card)",
-                border: "1px solid var(--border)",
                 textDecoration: "none",
-                transition: "border-color 0.15s, transform 0.15s",
+                transition: "box-shadow 0.15s, transform 0.15s",
               }}
               onMouseOver={(e) => {
-                (e.currentTarget as HTMLAnchorElement).style.borderColor = tool.color;
+                (e.currentTarget as HTMLAnchorElement).style.boxShadow = `0 4px 16px ${tool.color}25`;
                 (e.currentTarget as HTMLAnchorElement).style.transform = "translateY(-2px)";
               }}
               onMouseOut={(e) => {
-                (e.currentTarget as HTMLAnchorElement).style.borderColor = "var(--border)";
+                (e.currentTarget as HTMLAnchorElement).style.boxShadow = "none";
                 (e.currentTarget as HTMLAnchorElement).style.transform = "translateY(0)";
               }}
             >

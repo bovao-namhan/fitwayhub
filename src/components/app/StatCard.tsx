@@ -37,14 +37,14 @@ export function StatCard({ title, value, unit, icon: Icon, color, trend, subtitl
         flexDirection: "column",
         gap: 12,
         cursor: "default",
-        transition: "border-color 0.2s, transform 0.2s",
+        transition: "box-shadow 0.2s, transform 0.2s",
       }}
       onMouseOver={(e) => {
-        (e.currentTarget as HTMLDivElement).style.borderColor = c.icon;
+        (e.currentTarget as HTMLDivElement).style.boxShadow = `0 4px 16px ${c.icon}25`;
         (e.currentTarget as HTMLDivElement).style.transform = "translateY(-2px)";
       }}
       onMouseOut={(e) => {
-        (e.currentTarget as HTMLDivElement).style.borderColor = "var(--border)";
+        (e.currentTarget as HTMLDivElement).style.boxShadow = "none";
         (e.currentTarget as HTMLDivElement).style.transform = "translateY(0)";
       }}
     >

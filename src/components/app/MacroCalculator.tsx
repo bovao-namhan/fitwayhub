@@ -471,12 +471,12 @@ export function MacroCalculator() {
                     onClick={() => selectItem(p)}
                     style={{
                       display: "flex", alignItems: "center", gap: 10, padding: "8px 12px",
-                      borderRadius: 10, background: "var(--bg-surface)", border: "1px solid var(--border)",
+                      borderRadius: 10, background: "var(--bg-surface)",
                       cursor: "pointer", textAlign: "start", width: "100%",
-                      transition: "border-color 0.15s", color: "var(--text-primary)", fontSize: 12,
+                      transition: "box-shadow 0.15s", color: "var(--text-primary)", fontSize: 12,
                     }}
-                    onMouseOver={e => (e.currentTarget.style.borderColor = "var(--accent)")}
-                    onMouseOut={e => (e.currentTarget.style.borderColor = "var(--border)")}
+                    onMouseOver={e => (e.currentTarget.style.boxShadow = "0 2px 12px rgba(200,255,0,0.10)")}
+                    onMouseOut={e => (e.currentTarget.style.boxShadow = "none")}
                   >
                     <span style={{ fontSize: 18 }}>{p.emoji}</span>
                     <div style={{ flex: 1, minWidth: 0 }}>

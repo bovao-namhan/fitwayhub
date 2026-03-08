@@ -204,9 +204,9 @@ function FeaturesSection({ c, lang }: { c: any; lang: RenderLang }) {
         {items.map((f, i) => {
           const Icon = f.icon ? ICONS[f.icon] : null;
           return (
-            <div key={i} style={{ padding: "24px", backgroundColor: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 16, transition: "border-color 0.2s, transform 0.2s" }}
-              onMouseOver={e => { (e.currentTarget as HTMLDivElement).style.borderColor = "var(--accent)"; (e.currentTarget as HTMLDivElement).style.transform = "translateY(-3px)"; }}
-              onMouseOut={e => { (e.currentTarget as HTMLDivElement).style.borderColor = "var(--border)"; (e.currentTarget as HTMLDivElement).style.transform = "translateY(0)"; }}>
+            <div key={i} style={{ padding: "24px", backgroundColor: "var(--bg-card)", borderRadius: 16, transition: "box-shadow 0.2s, transform 0.2s" }}
+              onMouseOver={e => { (e.currentTarget as HTMLDivElement).style.boxShadow = "0 4px 16px rgba(200,255,0,0.12)"; (e.currentTarget as HTMLDivElement).style.transform = "translateY(-3px)"; }}
+              onMouseOut={e => { (e.currentTarget as HTMLDivElement).style.boxShadow = "none"; (e.currentTarget as HTMLDivElement).style.transform = "translateY(0)"; }}>
               {Icon && (
                 <div style={{ width: 44, height: 44, borderRadius: 11, backgroundColor: "var(--accent-dim)", border: "1px solid rgba(200,255,0,0.2)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 16 }}>
                   <Icon size={20} color="var(--accent)" />
@@ -494,9 +494,9 @@ export function LatestBlogsSection({ c, lang }: { c?: any; lang: RenderLang }) {
             <Link
               key={blog.id}
               to="/blogs"
-              style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 16, overflow: "hidden", textDecoration: "none", display: "flex", flexDirection: "column", transition: "border-color 0.2s, transform 0.2s" }}
-              onMouseOver={e => { e.currentTarget.style.borderColor = "var(--accent)"; e.currentTarget.style.transform = "translateY(-4px)"; }}
-              onMouseOut={e => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.transform = "translateY(0)"; }}
+              style={{ backgroundColor: "var(--bg-card)", borderRadius: 16, overflow: "hidden", textDecoration: "none", display: "flex", flexDirection: "column", transition: "box-shadow 0.2s, transform 0.2s" }}
+              onMouseOver={e => { e.currentTarget.style.boxShadow = "0 4px 16px rgba(200,255,0,0.12)"; e.currentTarget.style.transform = "translateY(-4px)"; }}
+              onMouseOut={e => { e.currentTarget.style.boxShadow = "none"; e.currentTarget.style.transform = "translateY(0)"; }}
             >
               <div style={{ height: 180, overflow: "hidden", backgroundColor: "var(--bg-surface)", position: "relative" }}>
                 {img ? (

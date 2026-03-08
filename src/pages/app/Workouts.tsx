@@ -270,9 +270,9 @@ export default function Workouts() {
           ) : (
             <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fill, minmax(280px, 1fr))", gap: 16 }}>
               {playlists.map(pl => (
-                <div key={pl.id} onClick={() => loadPlaylistVideos(pl)} style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 16, overflow: "hidden", cursor: "pointer", transition: "border-color 0.2s, transform 0.2s" }}
-                  onMouseOver={e => { e.currentTarget.style.borderColor = "var(--accent)"; e.currentTarget.style.transform = "translateY(-3px)"; }}
-                  onMouseOut={e => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.transform = "translateY(0)"; }}>
+                <div key={pl.id} onClick={() => loadPlaylistVideos(pl)} style={{ backgroundColor: "var(--bg-card)", borderRadius: 16, overflow: "hidden", cursor: "pointer", transition: "box-shadow 0.2s, transform 0.2s" }}
+                  onMouseOver={e => { e.currentTarget.style.boxShadow = "0 4px 16px rgba(200,255,0,0.12)"; e.currentTarget.style.transform = "translateY(-3px)"; }}
+                  onMouseOut={e => { e.currentTarget.style.boxShadow = "none"; e.currentTarget.style.transform = "translateY(0)"; }}>
                   <div style={{ height: 140, backgroundColor: "var(--bg-surface)", display: "flex", alignItems: "center", justifyContent: "center", position: "relative" }}>
                     {pl.thumbnail ? (
                       <img src={pl.thumbnail} alt={pl.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />

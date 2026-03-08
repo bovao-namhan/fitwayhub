@@ -830,9 +830,9 @@ export default function WebsiteCMS({ token, showMsg }: Props) {
 
           {/* Add Section Button */}
           <button onClick={() => { setAddLabel(typeLabel(addType)); setShowAddModal(true); }}
-            style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "14px", borderRadius: 14, border: "2px dashed var(--border)", backgroundColor: "transparent", color: "var(--text-muted)", fontSize: 14, cursor: "pointer", fontFamily: "'Chakra Petch', sans-serif", fontWeight: 600, transition: "border-color 0.15s, color 0.15s" }}
-            onMouseOver={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--accent)"; (e.currentTarget as HTMLButtonElement).style.color = "var(--accent)"; }}
-            onMouseOut={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--border)"; (e.currentTarget as HTMLButtonElement).style.color = "var(--text-muted)"; }}>
+            style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "14px", borderRadius: 14, backgroundColor: "transparent", color: "var(--text-muted)", fontSize: 14, cursor: "pointer", fontFamily: "'Chakra Petch', sans-serif", fontWeight: 600, transition: "box-shadow 0.15s, color 0.15s" }}
+            onMouseOver={e => { (e.currentTarget as HTMLButtonElement).style.boxShadow = "0 2px 12px rgba(200,255,0,0.12)"; (e.currentTarget as HTMLButtonElement).style.color = "var(--accent)"; }}
+            onMouseOut={e => { (e.currentTarget as HTMLButtonElement).style.boxShadow = "none"; (e.currentTarget as HTMLButtonElement).style.color = "var(--text-muted)"; }}>
             <Plus size={18} /> {t("cms_add_new_section")}
           </button>
         </div>
