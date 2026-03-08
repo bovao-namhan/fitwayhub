@@ -2011,12 +2011,7 @@ const egyptianWordMap: Array<[string, string]> = [
   ["البحث", "الدوران"],
   ["بحث", "دور"],
   ["المدفوعات", "الدفع"],
-  ["المدرب", "الكابتن"],
-  ["مدرب", "كابتن"],
-  ["المدربين", "الكباتن"],
-  ["المستخدم", "اليوزر"],
-  ["المستخدمين", "اليوزرز"],
-  ["الصفحة الرئيسية", "الهوم"],
+
   ["لوحة التحكم", "الداشبورد"],
   ["الملف الشخصي", "البروفايل"],
   ["الخطوات", "الستيبس"],
@@ -2207,25 +2202,32 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
     // translate existing DOM
     requestAnimationFrame(() => translateAll());
 
-    // observe new/changed DOM nodes for dynamic content
+    // observe new/changed DOM nodes for dynamic content (debounced to avoid lag)
     if (observerRef.current) observerRef.current.disconnect();
+    let mutationTimer: ReturnType<typeof setTimeout> | null = null;
+    const pendingNodes: Node[] = [];
     const observer = new MutationObserver((mutations) => {
       for (const m of mutations) {
         if (m.type === 'childList') {
-          m.addedNodes.forEach(n => {
-            if (n.nodeType === Node.TEXT_NODE) {
-              translateNode(n);
-            } else if (n.nodeType === Node.ELEMENT_NODE) {
-              const walker = document.createTreeWalker(n, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT, null);
-              translateNode(n);
-              let child: Node | null;
-              while ((child = walker.nextNode())) translateNode(child);
-            }
-          });
+          m.addedNodes.forEach(n => pendingNodes.push(n));
         } else if (m.type === 'characterData' && m.target) {
-          translateNode(m.target);
+          pendingNodes.push(m.target);
         }
       }
+      if (mutationTimer) clearTimeout(mutationTimer);
+      mutationTimer = setTimeout(() => {
+        const nodes = pendingNodes.splice(0, pendingNodes.length);
+        for (const n of nodes) {
+          if (n.nodeType === Node.TEXT_NODE) {
+            translateNode(n);
+          } else if (n.nodeType === Node.ELEMENT_NODE) {
+            const walker = document.createTreeWalker(n, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT, null);
+            translateNode(n);
+            let child: Node | null;
+            while ((child = walker.nextNode())) translateNode(child);
+          }
+        }
+      }, 100);
     });
     observer.observe(document.body, { childList: true, subtree: true, characterData: true });
     observerRef.current = observer;
