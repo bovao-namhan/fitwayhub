@@ -10,7 +10,7 @@ export default function CmsPage({ page: pageProp }: { page?: string }) {
   const page = pageProp || pageParam || "home";
   const [sections, setSections] = useState<CmsSection[]>([]);
   const [loading, setLoading] = useState(true);
-  const { lang } = useI18n();
+  const { lang, t } = useI18n();
   const hasBlogSection = sections.some(s => s.type === "latest_blogs");
 
   useEffect(() => {
@@ -33,7 +33,7 @@ export default function CmsPage({ page: pageProp }: { page?: string }) {
   if (sections.length === 0) {
     return (
       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "60vh", color: "var(--text-muted)", fontSize: 15 }}>
-        No content yet.
+        {t("no_content_yet")}
       </div>
     );
   }

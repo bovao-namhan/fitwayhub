@@ -106,7 +106,7 @@ export default function CoachRequests() {
       const endpoint = action === "accept" ? `/api/payments/coach-subscriptions/${id}/coach-accept` : `/api/payments/coach-subscriptions/${id}/coach-decline`;
       const r = await api(endpoint, {
         method: "PATCH",
-        body: action === "decline" ? JSON.stringify({ reason: "Declined by coach" }) : undefined,
+        body: action === "decline" ? JSON.stringify({ reason: t('declined_by_coach') }) : undefined,
       });
       const d = await r.json().catch(() => ({}));
       if (r.ok) {
@@ -288,7 +288,7 @@ export default function CoachRequests() {
                     <img src={sub.user_avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${sub.user_email}`} alt={sub.user_name} style={{ width: 36, height: 36, borderRadius: "50%", backgroundColor: "var(--bg-card)" }} />
                     <div>
                       <p style={{ fontSize: 13, fontWeight: 700 }}>{sub.user_name}</p>
-                      <p style={{ fontSize: 11, color: "var(--text-muted)" }}>{sub.plan_cycle} · {sub.plan_type} · {sub.amount} EGP</p>
+                      <p style={{ fontSize: 11, color: "var(--text-muted)" }}>{sub.plan_cycle} · {sub.plan_type} · {sub.amount} {t('currency_egp')}</p>
                     </div>
                   </div>
                   <span style={{ fontSize: 11, color: "var(--amber)", fontWeight: 700 }}>{new Date(sub.created_at).toLocaleDateString()}</span>
@@ -297,7 +297,7 @@ export default function CoachRequests() {
                   <div style={{ marginBottom: 10 }}>
                     <img
                       src={sub.payment_proof.startsWith("http") ? sub.payment_proof : getApiBase() + sub.payment_proof}
-                      alt="payment proof"
+                      alt={t('payment_proof')}
                       style={{ maxHeight: 130, borderRadius: 8, border: "1px solid var(--border)" }}
                     />
                   </div>
@@ -362,7 +362,7 @@ export default function CoachRequests() {
       {/* Lightbox */}
       {lightboxSrc && (
         <div style={{ position: "fixed", inset: 0, zIndex: 200, backgroundColor: "rgba(0,0,0,0.9)", display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }} onClick={() => setLightboxSrc(null)}>
-          <img src={lightboxSrc} alt="Body photo" style={{ maxWidth: "100%", maxHeight: "90vh", borderRadius: 12, objectFit: "contain" }} />
+          <img src={lightboxSrc} alt={t('body_photo')} style={{ maxWidth: "100%", maxHeight: "90vh", borderRadius: 12, objectFit: "contain" }} />
           <button style={{ position: "absolute", top: 20, insetInlineEnd: 20, width: 40, height: 40, borderRadius: "50%", backgroundColor: "rgba(255,255,255,0.15)", border: "none", cursor: "pointer", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <X size={20} />
           </button>

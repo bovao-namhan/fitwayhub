@@ -1,6 +1,6 @@
 import { getApiBase } from "@/lib/api";
 import { useState, useEffect, useRef, type CSSProperties, type ChangeEvent } from "react";
-import { Plus, Trash2, Eye, EyeOff, ChevronUp, ChevronDown, Edit3, Save, X, Upload, Image, Globe, Layout, Type, AlignLeft, Grid, Layers, ExternalLink } from "lucide-react";
+import { Plus, Trash2, Eye, EyeOff, ChevronUp, ChevronDown, Edit3, Save, X, Upload, Image, Globe, Layout, Type, AlignLeft, Grid, Layers, ExternalLink, Languages, Search } from "lucide-react";
 import { useI18n } from "@/context/I18nContext";
 
 interface Section {
@@ -72,6 +72,13 @@ export default function WebsiteCMS({ token, showMsg }: Props) {
   const [settingsSaving, setSettingsSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploadingFor, setUploadingFor] = useState<string | null>(null);
+  const [translations, setTranslations] = useState<Record<string, string>>({});
+  const [translationsForm, setTranslationsForm] = useState<Record<string, string>>({});
+  const [translationsLoading, setTranslationsLoading] = useState(false);
+  const [translationsSaving, setTranslationsSaving] = useState(false);
+  const [translationSearch, setTranslationSearch] = useState("");
+  const [newTransKey, setNewTransKey] = useState("");
+  const [newTransVal, setNewTransVal] = useState("");
 
   const api = (path: string, opts?: RequestInit & { rawBody?: boolean }) => {
     const hdrs: Record<string, string> = { Authorization: `Bearer ${token}` };
@@ -185,6 +192,39 @@ export default function WebsiteCMS({ token, showMsg }: Props) {
       all.forEach((s: any) => form[s.setting_key] = s.setting_value);
       setAppSettingsForm(form);
     } catch {}
+  };
+
+  const loadTranslations = async () => {
+    setTranslationsLoading(true);
+    try {
+      const r = await api("/api/admin/website-translations");
+      const d = await r.json();
+      const t = d.translations || {};
+      setTranslations(t);
+      setTranslationsForm({ ...t });
+    } catch {} finally { setTranslationsLoading(false); }
+  };
+
+  const saveTranslations = async () => {
+    setTranslationsSaving(true);
+    try {
+      const r = await api("/api/admin/website-translations", { method: "PUT", body: JSON.stringify({ translations: translationsForm }) });
+      if (!r.ok) throw new Error();
+      showMsg("✅ Translations saved!");
+      setTranslations({ ...translationsForm });
+    } catch { showMsg("❌ Failed to save translations"); }
+    finally { setTranslationsSaving(false); }
+  };
+
+  const addTranslation = () => {
+    if (!newTransKey.trim()) return;
+    setTranslationsForm(prev => ({ ...prev, [newTransKey.trim()]: newTransVal.trim() }));
+    setNewTransKey("");
+    setNewTransVal("");
+  };
+
+  const removeTranslation = (key: string) => {
+    setTranslationsForm(prev => { const n = { ...prev }; delete n[key]; return n; });
   };
 
   const load = async () => {
@@ -844,6 +884,65 @@ export default function WebsiteCMS({ token, showMsg }: Props) {
       )}
 
       {/* APP CONFIGURATION */}
+      {/* Website Translations Manager */}
+      <div style={{ display: "flex", flexDirection: "column", gap: 16, marginTop: 24 }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
+          <div>
+            <p style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 16, fontWeight: 700, display: "flex", alignItems: "center", gap: 8 }}>
+              <Languages size={18} color="var(--accent)" /> Website Translations
+            </p>
+            <p style={{ fontSize: 13, color: "var(--text-muted)" }}>Manage Arabic fallback translations for website text</p>
+          </div>
+          <div style={{ display: "flex", gap: 8 }}>
+            {Object.keys(translationsForm).length > 0 && (
+              <button onClick={saveTranslations} disabled={translationsSaving} style={{ padding: "8px 20px", borderRadius: 9, background: translationsSaving ? "var(--bg-surface)" : "var(--accent)", color: translationsSaving ? "var(--text-muted)" : "#0A0A0B", border: "none", cursor: "pointer", fontFamily: "'Chakra Petch', sans-serif", fontWeight: 700, fontSize: 13 }}>
+                {translationsSaving ? "Saving…" : "💾 Save Translations"}
+              </button>
+            )}
+          </div>
+        </div>
+
+        {Object.keys(translationsForm).length === 0 && !translationsLoading ? (
+          <div style={{ padding: 40, textAlign: "center", color: "var(--text-muted)" }}>
+            <button onClick={loadTranslations} style={{ padding: "10px 24px", borderRadius: 10, background: "var(--accent)", color: "#0A0A0B", border: "none", cursor: "pointer", fontWeight: 700 }}>Load Translations</button>
+          </div>
+        ) : translationsLoading ? (
+          <div style={{ padding: 30, textAlign: "center", color: "var(--text-muted)" }}>Loading translations...</div>
+        ) : (
+          <div style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 14, padding: "18px 20px" }}>
+            {/* Search + Add */}
+            <div style={{ display: "flex", gap: 10, marginBottom: 14, flexWrap: "wrap" }}>
+              <div style={{ position: "relative", flex: 1, minWidth: 200 }}>
+                <Search size={14} style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} />
+                <input value={translationSearch} onChange={e => setTranslationSearch(e.target.value)} placeholder="Search translations..." style={{ ...iS, paddingLeft: 36 }} />
+              </div>
+            </div>
+
+            {/* Add new translation */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr auto", gap: 8, marginBottom: 14, padding: "10px 12px", backgroundColor: "var(--bg-surface)", borderRadius: 10, border: "1px solid var(--border)" }}>
+              <input style={iS} value={newTransKey} onChange={e => setNewTransKey(e.target.value)} placeholder="English text (key)" />
+              <input style={iS} value={newTransVal} onChange={e => setNewTransVal(e.target.value)} placeholder="Arabic translation" dir="rtl" />
+              <button onClick={addTranslation} style={{ padding: "9px 14px", borderRadius: 8, backgroundColor: "var(--accent-dim)", border: "1px solid var(--accent)", color: "var(--accent)", cursor: "pointer", fontSize: 12, fontWeight: 700 }}>+ Add</button>
+            </div>
+
+            {/* Translations list */}
+            <div style={{ maxHeight: 400, overflowY: "auto", display: "flex", flexDirection: "column", gap: 6 }}>
+              {Object.entries(translationsForm)
+                .filter(([k, v]) => !translationSearch || k.toLowerCase().includes(translationSearch.toLowerCase()) || v.toLowerCase().includes(translationSearch.toLowerCase()))
+                .map(([key, val]) => (
+                  <div key={key} style={{ display: "grid", gridTemplateColumns: "1fr 1fr auto", gap: 8, alignItems: "center" }}>
+                    <div style={{ fontSize: 12, color: "var(--text-secondary)", padding: "6px 8px", backgroundColor: "var(--bg-primary)", borderRadius: 6, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={key}>{key}</div>
+                    <input style={{ ...iS, fontSize: 12 }} value={val} onChange={e => setTranslationsForm(prev => ({ ...prev, [key]: e.target.value }))} dir="rtl" />
+                    <button onClick={() => removeTranslation(key)} style={{ padding: "6px", borderRadius: 6, background: "rgba(255,68,68,0.1)", border: "1px solid var(--red)", color: "var(--red)", cursor: "pointer" }}><Trash2 size={12} /></button>
+                  </div>
+                ))}
+            </div>
+            <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 10 }}>{Object.keys(translationsForm).length} translation(s)</p>
+          </div>
+        )}
+      </div>
+
+      {/* APP SETTINGS */}
       <div style={{ display: "flex", flexDirection: "column", gap: 16, marginTop: 24 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
           <div>

@@ -70,10 +70,10 @@ function markdownToHtml(markdown: string): string {
     .replace(/\n/g, "<br/>");
 }
 
-function toDate(value: string | null): string {
-  if (!value) return "Unpublished";
+function toDate(value: string | null, lang: "en" | "ar"): string {
+  if (!value) return lang === "ar" ? "غير منشور" : "Unpublished";
   const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? "Unpublished" : date.toLocaleDateString();
+  return Number.isNaN(date.getTime()) ? (lang === "ar" ? "غير منشور" : "Unpublished") : date.toLocaleDateString(lang === "ar" ? "ar-EG" : "en-US");
 }
 
 function estimateReadMinutes(content: string): number {
@@ -83,8 +83,47 @@ function estimateReadMinutes(content: string): number {
 
 export default function BlogExperience({ mode, heading, subheading, allowWriting = false }: BlogExperienceProps) {
   const { token, user } = useAuth();
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const canWrite = allowWriting && !!token && (user?.role === "coach" || user?.role === "admin");
+  const blogText = {
+    loadFailed: lang === "ar" ? "فشل تحميل المقالات" : "Failed to load blog posts",
+    signinNeeded: lang === "ar" ? "لازم تكون مسجل دخول." : "You need to be signed in.",
+    titleContentRequired: lang === "ar" ? "العنوان والمحتوى مطلوبين." : "Title and content are required.",
+    saveFailed: lang === "ar" ? "فشل حفظ المقال" : "Failed to save post",
+    deleteConfirm: lang === "ar" ? "تحذف المقال ده؟" : "Delete this post?",
+    deleteFailed: lang === "ar" ? "فشل حذف المقال" : "Failed to delete post",
+    readerView: lang === "ar" ? "وضع القراءة" : "Reader View",
+    writerStudio: lang === "ar" ? "استوديو الكتابة" : "Writer Studio",
+    newPost: lang === "ar" ? "مقال جديد" : "New Post",
+    loadingPosts: lang === "ar" ? "جارٍ تحميل المقالات..." : "Loading posts...",
+    noPosts: lang === "ar" ? "مفيش مقالات." : "No posts found.",
+    noExcerpt: lang === "ar" ? "مفيش ملخص" : "No excerpt",
+    unknown: lang === "ar" ? "غير معروف" : "Unknown",
+    by: lang === "ar" ? "بواسطة" : "By",
+    minRead: lang === "ar" ? "دقايق قراءة" : "min read",
+    selectPost: lang === "ar" ? "اختار مقال عشان تبدأ تقرأ." : "Select a post to start reading.",
+    editPost: lang === "ar" ? "تعديل المقال" : "Edit Blog Post",
+    writePost: lang === "ar" ? "اكتب مقال جديد" : "Write New Blog Post",
+    editor: lang === "ar" ? "المحرر" : "Editor",
+    close: lang === "ar" ? "قفل" : "Close",
+    postTitle: lang === "ar" ? "عنوان المقال" : "Post title",
+    postExcerpt: lang === "ar" ? "ملخص قصير للكروت ومعاينات السوشيال" : "Short excerpt for cards and social previews",
+    writeArticle: lang === "ar" ? "اكتب مقالك..." : "Write your article...",
+    words: lang === "ar" ? "كلمة" : "words",
+    autosave: lang === "ar" ? "حفظ تلقائي شغال" : "Autosave enabled",
+    tipSave: lang === "ar" ? "نصيحة: اضغط Ctrl/Cmd + S لحفظ المسودة" : "Tip: press Ctrl/Cmd + S to save draft",
+    headerImage: lang === "ar" ? "صورة الغلاف" : "Header Image",
+    uploadHeader: lang === "ar" ? "ارفع صورة الغلاف" : "Upload header image",
+    headerHint: lang === "ar" ? "مقاس 16:9 يطلع أنضف في الواجهة." : "Use 16:9 for clean hero visuals.",
+    videoUpload: lang === "ar" ? "رفع فيديو" : "Video Upload",
+    uploadVideo: lang === "ar" ? "ارفع فيديو للمقال" : "Upload article video",
+    videoHint: lang === "ar" ? "يفضل MP4 عشان يشتغل كويس على المتصفح." : "MP4 recommended for browser compatibility.",
+    removeHeader: lang === "ar" ? "امسح صورة الغلاف الحالية" : "Remove current header image",
+    removeVideo: lang === "ar" ? "امسح الفيديو الحالي" : "Remove current video",
+    saveDraft: lang === "ar" ? "احفظ مسودة" : "Save Draft",
+    saving: lang === "ar" ? "جارٍ الحفظ..." : "Saving...",
+    publish: lang === "ar" ? "انشر" : "Publish",
+  };
 
   const [activeTab, setActiveTab] = useState<"feed" | "manage">(canWrite ? "manage" : "feed");
   const [query, setQuery] = useState("");
@@ -134,7 +173,7 @@ export default function BlogExperience({ mode, heading, subheading, allowWriting
       setPosts(nextPosts);
       setSelectedId((prev) => prev || nextPosts[0]?.id || null);
     } catch (err: any) {
-      setError(err.message || "Failed to load blog posts");
+      setError(err.message || blogText.loadFailed);
       setPosts([]);
       setSelectedId(null);
     } finally {
@@ -234,12 +273,12 @@ export default function BlogExperience({ mode, heading, subheading, allowWriting
 
   async function onSave(status: BlogStatus) {
     if (!token) {
-      setError("You need to be signed in.");
+      setError(blogText.signinNeeded);
       return;
     }
 
     if (!draft.title.trim() || !draft.content.trim()) {
-      setError("Title and content are required.");
+      setError(blogText.titleContentRequired);
       return;
     }
 
@@ -265,7 +304,7 @@ export default function BlogExperience({ mode, heading, subheading, allowWriting
       await loadPosts();
       setSelectedId(saved.id);
     } catch (err: any) {
-      setError(err.message || "Failed to save post");
+      setError(err.message || blogText.saveFailed);
     } finally {
       setSaving(false);
     }
@@ -273,13 +312,13 @@ export default function BlogExperience({ mode, heading, subheading, allowWriting
 
   async function onDelete(postId: number) {
     if (!token) return;
-    if (!window.confirm("Delete this post?")) return;
+    if (!window.confirm(blogText.deleteConfirm)) return;
 
     try {
       await removeBlog(token, postId);
       await loadPosts();
     } catch (err: any) {
-      setError(err.message || "Failed to delete post");
+      setError(err.message || blogText.deleteFailed);
     }
   }
 
@@ -309,7 +348,7 @@ export default function BlogExperience({ mode, heading, subheading, allowWriting
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder={t("search") || "Search blogs"}
+            placeholder={t("search_placeholder") || (lang === "ar" ? "ابحث في المقالات" : "Search blogs")}
             style={{ border: "none", background: "transparent", color: "var(--text-primary)", width: "100%", outline: "none" }}
           />
         </div>
@@ -327,7 +366,7 @@ export default function BlogExperience({ mode, heading, subheading, allowWriting
                 cursor: "pointer",
               }}
             >
-              Reader View
+              {blogText.readerView}
             </button>
             <button
               onClick={() => setActiveTab("manage")}
@@ -340,7 +379,7 @@ export default function BlogExperience({ mode, heading, subheading, allowWriting
                 cursor: "pointer",
               }}
             >
-              Writer Studio
+              {blogText.writerStudio}
             </button>
             <button
               onClick={openNewEditor}
@@ -357,7 +396,7 @@ export default function BlogExperience({ mode, heading, subheading, allowWriting
                 gap: 6,
               }}
             >
-              <PenSquare size={16} /> New Post
+              <PenSquare size={16} /> {blogText.newPost}
             </button>
           </div>
         )}
@@ -373,11 +412,11 @@ export default function BlogExperience({ mode, heading, subheading, allowWriting
         <aside style={{ display: "grid", gap: 10, alignContent: "start" }}>
           {loading ? (
             <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 14, padding: 24, color: "var(--text-secondary)" }}>
-              Loading posts...
+              {blogText.loadingPosts}
             </div>
           ) : posts.length === 0 ? (
             <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 14, padding: 24, color: "var(--text-secondary)" }}>
-              No posts found.
+              {blogText.noPosts}
             </div>
           ) : (
             posts.map((post) => {
@@ -405,9 +444,9 @@ export default function BlogExperience({ mode, heading, subheading, allowWriting
                     </small>
                   </div>
                   <p style={{ margin: 0, color: "var(--text-secondary)", fontSize: 13 }}>
-                    {(post.excerpt || "No excerpt").slice(0, 95)}
+                    {(post.excerpt || blogText.noExcerpt).slice(0, 95)}
                   </p>
-                  <small style={{ color: "var(--text-muted)" }}>{toDate(post.published_at || post.created_at)} • {post.author_name || "Unknown"}</small>
+                  <small style={{ color: "var(--text-muted)" }}>{toDate(post.published_at || post.created_at, lang)} • {post.author_name || blogText.unknown}</small>
                 </button>
               );
             })
@@ -421,12 +460,12 @@ export default function BlogExperience({ mode, heading, subheading, allowWriting
                 <div>
                   <h2 style={{ margin: 0, fontSize: "clamp(22px,2.5vw,30px)" }}>{selectedPost.title}</h2>
                   <p style={{ margin: "6px 0 0", color: "var(--text-secondary)" }}>
-                    By {selectedPost.author_name || "Unknown"} • {toDate(selectedPost.published_at || selectedPost.created_at)} • {estimateReadMinutes(selectedPost.content)} min read
+                    {blogText.by} {selectedPost.author_name || blogText.unknown} • {toDate(selectedPost.published_at || selectedPost.created_at, lang)} • {estimateReadMinutes(selectedPost.content)} {blogText.minRead}
                   </p>
                 </div>
                 {canWrite && activeTab === "manage" && (
                   <div style={{ display: "flex", gap: 8 }}>
-                    <button onClick={() => openEditEditor(selectedPost)} style={{ border: "1px solid var(--border)", background: "var(--bg-surface)", color: "var(--text-primary)", borderRadius: 10, padding: "8px 10px", cursor: "pointer" }}>Edit</button>
+                    <button onClick={() => openEditEditor(selectedPost)} style={{ border: "1px solid var(--border)", background: "var(--bg-surface)", color: "var(--text-primary)", borderRadius: 10, padding: "8px 10px", cursor: "pointer" }}>{t("edit")}</button>
                     <button onClick={() => onDelete(selectedPost.id)} style={{ border: "1px solid rgba(255,68,68,0.4)", background: "rgba(255,68,68,0.1)", color: "#ff9a9a", borderRadius: 10, padding: "8px 10px", cursor: "pointer" }}>
                       <Trash2 size={14} />
                     </button>
@@ -435,7 +474,7 @@ export default function BlogExperience({ mode, heading, subheading, allowWriting
               </div>
 
               {selectedPost.header_image_url && (
-                <img src={resolveMediaUrl(selectedPost.header_image_url)} alt="Header" style={{ width: "100%", maxHeight: 360, objectFit: "cover", borderRadius: 14, border: "1px solid var(--border)" }} />
+                <img src={resolveMediaUrl(selectedPost.header_image_url)} alt={blogText.headerImage} style={{ width: "100%", maxHeight: 360, objectFit: "cover", borderRadius: 14, border: "1px solid var(--border)" }} />
               )}
 
               {selectedPost.video_url && (
@@ -452,7 +491,7 @@ export default function BlogExperience({ mode, heading, subheading, allowWriting
               />
             </div>
           ) : (
-            <div style={{ color: "var(--text-secondary)" }}>Select a post to start reading.</div>
+            <div style={{ color: "var(--text-secondary)" }}>{blogText.selectPost}</div>
           )}
         </article>
       </div>
@@ -461,13 +500,13 @@ export default function BlogExperience({ mode, heading, subheading, allowWriting
         <div style={{ position: "fixed", inset: 0, zIndex: 90, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(3px)", padding: 16, overflowY: "auto" }}>
           <div style={{ maxWidth: 1160, margin: "0 auto", background: "var(--bg-primary)", border: "1px solid var(--border)", borderRadius: 20, padding: 16, display: "grid", gap: 12 }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 10 }}>
-              <h3 style={{ margin: 0, fontSize: 22 }}>{editingPost ? "Edit Blog Post" : "Write New Blog Post"}</h3>
+              <h3 style={{ margin: 0, fontSize: 22 }}>{editingPost ? blogText.editPost : blogText.writePost}</h3>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <button onClick={() => setPreviewMode((prev) => !prev)} style={{ border: "1px solid var(--border)", background: "var(--bg-card)", color: "var(--text-primary)", borderRadius: 10, padding: "8px 10px", cursor: "pointer" }}>
-                  <Sparkles size={14} /> {previewMode ? "Editor" : "Preview"}
+                  <Sparkles size={14} /> {previewMode ? blogText.editor : t("preview")}
                 </button>
                 <button onClick={closeEditor} style={{ border: "1px solid var(--border)", background: "transparent", color: "var(--text-secondary)", borderRadius: 10, padding: "8px 10px", cursor: "pointer" }}>
-                  Close
+                  {blogText.close}
                 </button>
               </div>
             </div>
@@ -477,14 +516,14 @@ export default function BlogExperience({ mode, heading, subheading, allowWriting
                 <input
                   value={draft.title}
                   onChange={(e) => setDraft((prev) => ({ ...prev, title: e.target.value }))}
-                  placeholder="Post title"
+                  placeholder={blogText.postTitle}
                   className="input-base"
                   style={{ fontSize: 18, fontWeight: 700 }}
                 />
                 <textarea
                   value={draft.excerpt}
                   onChange={(e) => setDraft((prev) => ({ ...prev, excerpt: e.target.value }))}
-                  placeholder="Short excerpt for cards and social previews"
+                  placeholder={blogText.postExcerpt}
                   className="input-base"
                   style={{ minHeight: 84, resize: "vertical" }}
                 />
@@ -505,7 +544,7 @@ export default function BlogExperience({ mode, heading, subheading, allowWriting
                     ref={editorRef}
                     value={draft.content}
                     onChange={(e) => setDraft((prev) => ({ ...prev, content: e.target.value }))}
-                    placeholder="Write your article..."
+                    placeholder={blogText.writeArticle}
                     className="input-base"
                     style={{ minHeight: 340, resize: "vertical", lineHeight: 1.7 }}
                   />
@@ -516,38 +555,38 @@ export default function BlogExperience({ mode, heading, subheading, allowWriting
                 )}
 
                 <div style={{ display: "flex", justifyContent: "space-between", flexWrap: "wrap", gap: 10 }}>
-                  <small style={{ color: "var(--text-muted)" }}>{words} words • {readMinutes} min read • Autosave enabled</small>
-                  <small style={{ color: "var(--text-muted)" }}>Tip: press Ctrl/Cmd + S to save draft</small>
+                  <small style={{ color: "var(--text-muted)" }}>{words} {blogText.words} • {readMinutes} {blogText.minRead} • {blogText.autosave}</small>
+                  <small style={{ color: "var(--text-muted)" }}>{blogText.tipSave}</small>
                 </div>
               </section>
 
               <aside style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 14, padding: 14, display: "grid", gap: 12, alignContent: "start" }}>
                 <label style={{ display: "grid", gap: 6 }}>
-                  <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>Header Image</span>
+                  <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>{blogText.headerImage}</span>
                   <label style={{ border: "1px dashed var(--border-light)", borderRadius: 12, padding: 12, cursor: "pointer", background: "var(--bg-surface)", display: "grid", gap: 6 }}>
                     <input type="file" accept="image/*" onChange={(e) => setHeaderFile(e.target.files?.[0] || null)} style={{ display: "none" }} />
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, color: "var(--text-secondary)" }}><ImageIcon size={14} /> {headerFile ? headerFile.name : "Upload header image"}</div>
-                    <small style={{ color: "var(--text-muted)" }}>Use 16:9 for clean hero visuals.</small>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, color: "var(--text-secondary)" }}><ImageIcon size={14} /> {headerFile ? headerFile.name : blogText.uploadHeader}</div>
+                    <small style={{ color: "var(--text-muted)" }}>{blogText.headerHint}</small>
                   </label>
                 </label>
 
                 <label style={{ display: "grid", gap: 6 }}>
-                  <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>Video Upload</span>
+                  <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>{blogText.videoUpload}</span>
                   <label style={{ border: "1px dashed var(--border-light)", borderRadius: 12, padding: 12, cursor: "pointer", background: "var(--bg-surface)", display: "grid", gap: 6 }}>
                     <input type="file" accept="video/*" onChange={(e) => setVideoFile(e.target.files?.[0] || null)} style={{ display: "none" }} />
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, color: "var(--text-secondary)" }}><PlayCircle size={14} /> {videoFile ? videoFile.name : "Upload article video"}</div>
-                    <small style={{ color: "var(--text-muted)" }}>MP4 recommended for browser compatibility.</small>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, color: "var(--text-secondary)" }}><PlayCircle size={14} /> {videoFile ? videoFile.name : blogText.uploadVideo}</div>
+                    <small style={{ color: "var(--text-muted)" }}>{blogText.videoHint}</small>
                   </label>
                 </label>
 
                 {editingPost?.header_image_url && (
                   <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "var(--text-secondary)" }}>
-                    <input type="checkbox" checked={removeHeaderImage} onChange={(e) => setRemoveHeaderImage(e.target.checked)} /> Remove current header image
+                    <input type="checkbox" checked={removeHeaderImage} onChange={(e) => setRemoveHeaderImage(e.target.checked)} /> {blogText.removeHeader}
                   </label>
                 )}
                 {editingPost?.video_url && (
                   <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13, color: "var(--text-secondary)" }}>
-                    <input type="checkbox" checked={removeVideo} onChange={(e) => setRemoveVideo(e.target.checked)} /> Remove current video
+                    <input type="checkbox" checked={removeVideo} onChange={(e) => setRemoveVideo(e.target.checked)} /> {blogText.removeVideo}
                   </label>
                 )}
 
@@ -557,14 +596,14 @@ export default function BlogExperience({ mode, heading, subheading, allowWriting
                     disabled={saving}
                     style={{ borderRadius: 10, border: "1px solid var(--border)", background: "var(--bg-surface)", color: "var(--text-primary)", padding: "10px 12px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
                   >
-                    <Save size={15} /> Save Draft
+                    <Save size={15} /> {blogText.saveDraft}
                   </button>
                   <button
                     onClick={() => onSave("published")}
                     disabled={saving}
                     style={{ borderRadius: 10, border: "none", background: "var(--accent)", color: "#111", padding: "10px 12px", cursor: "pointer", fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
                   >
-                    <Upload size={15} /> {saving ? "Saving..." : "Publish"}
+                    <Upload size={15} /> {saving ? blogText.saving : blogText.publish}
                   </button>
                 </div>
               </aside>

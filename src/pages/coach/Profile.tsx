@@ -153,8 +153,8 @@ export default function CoachProfile() {
       <div style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 16, padding: "20px 22px" }}>
         <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
           {[
-            { label: t("monthly_plan"), value: profile.monthlyPrice > 0 ? `${profile.monthlyPrice} EGP` : t("not_set"), color: "var(--blue)" },
-            { label: t("yearly_plan"), value: profile.yearlyPrice > 0 ? `${profile.yearlyPrice} EGP` : t("not_set"), color: "var(--cyan)" },
+            { label: t("monthly_plan"), value: profile.monthlyPrice > 0 ? `${profile.monthlyPrice} ${t('currency_egp')}` : t("not_set"), color: "var(--blue)" },
+            { label: t("yearly_plan"), value: profile.yearlyPrice > 0 ? `${profile.yearlyPrice} ${t('currency_egp')}` : t("not_set"), color: "var(--cyan)" },
             { label: t("plan_type"), value: planTypeLabels[profile.planTypes] || profile.planTypes, color: "var(--amber)" },
           ].map(s => (
             <div key={s.label} style={{ flex: 1, minWidth: 100, backgroundColor: "var(--bg-surface)", border: "1px solid var(--border)", borderRadius: 12, padding: "14px 16px", textAlign: "center" }}>
@@ -180,7 +180,7 @@ export default function CoachProfile() {
         <div style={{ display: "flex", gap: 12, marginBottom: 16, flexWrap: "wrap" }}>
           <div style={{ flex: 1, minWidth: 120, background: "linear-gradient(135deg, rgba(200,255,0,0.08), rgba(200,255,0,0.02))", border: "1px solid rgba(200,255,0,0.2)", borderRadius: 14, padding: "18px 16px", textAlign: "center" }}>
             <p style={{ fontSize: 10, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>{t("available_credit")}</p>
-            <p style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 28, fontWeight: 700, color: "var(--accent)" }}>{credit.toFixed(0)} <span style={{ fontSize: 14 }}>EGP</span></p>
+            <p style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 28, fontWeight: 700, color: "var(--accent)" }}>{credit.toFixed(0)} <span style={{ fontSize: 14 }}>{t('currency_egp')}</span></p>
           </div>
         </div>
 
@@ -191,10 +191,10 @@ export default function CoachProfile() {
           {/* Method type selector */}
           <div style={{ display: "flex", gap: 6, marginBottom: 12, flexWrap: "wrap" }}>
             {([
-              { id: "ewallet", label: "📱 E-Wallet", color: "#E60000" },
-              { id: "paypal", label: "🅿️ PayPal", color: "#003087" },
-              { id: "credit_card", label: "💳 Card", color: "#1A73E8" },
-              { id: "instapay", label: "⚡ InstaPay", color: "#FF6900" },
+              { id: "ewallet", label: `📱 ${t('ewallet_method')}`, color: "#E60000" },
+              { id: "paypal", label: `🅿️ ${t('paypal_method')}`, color: "#003087" },
+              { id: "credit_card", label: `💳 ${t('card_method')}`, color: "#1A73E8" },
+              { id: "instapay", label: `⚡ ${t('instapay_method')}`, color: "#FF6900" },
             ] as const).map(m => (
               <button key={m.id} onClick={() => setPaymentMethodType(m.id)} style={{ flex: 1, minWidth: 70, padding: "8px 6px", borderRadius: 8, border: `1px solid ${paymentMethodType === m.id ? m.color : "var(--border)"}`, background: paymentMethodType === m.id ? `${m.color}12` : "transparent", color: paymentMethodType === m.id ? m.color : "var(--text-muted)", cursor: "pointer", fontSize: 11, fontWeight: 600, transition: "all 0.2s" }}>
                 {m.label}
@@ -261,7 +261,7 @@ export default function CoachProfile() {
               {withdrawals.map((w: any) => (
                 <div key={w.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 12px", backgroundColor: "var(--bg-surface)", borderRadius: 8, border: "1px solid var(--border)" }}>
                   <div>
-                    <span style={{ fontSize: 13, fontWeight: 600 }}>{w.amount} EGP</span>
+                    <span style={{ fontSize: 13, fontWeight: 600 }}>{w.amount} {t('currency_egp')}</span>
                     <span style={{ fontSize: 11, color: "var(--text-muted)", marginInlineStart: 8 }}>{new Date(w.created_at).toLocaleDateString()}</span>
                   </div>
                   <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 12, fontWeight: 600, background: w.status === 'approved' ? "rgba(200,255,0,0.1)" : w.status === 'rejected' ? "rgba(255,68,68,0.1)" : "rgba(255,179,64,0.1)", color: w.status === 'approved' ? "var(--accent)" : w.status === 'rejected' ? "var(--red)" : "var(--amber)", border: `1px solid ${w.status === 'approved' ? "rgba(200,255,0,0.25)" : w.status === 'rejected' ? "rgba(255,68,68,0.25)" : "rgba(255,179,64,0.25)"}` }}>
@@ -278,11 +278,11 @@ export default function CoachProfile() {
           <div style={{ marginTop: 12 }}>
             <p style={{ fontSize: 11, fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>{t("recent_transactions")}</p>
             <div style={{ display: "flex", flexDirection: "column", gap: 6, maxHeight: 200, overflowY: "auto" }}>
-              {creditTransactions.slice(0, 10).map((t: any) => (
-                <div key={t.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 12px", backgroundColor: "var(--bg-surface)", borderRadius: 8, border: "1px solid var(--border)" }}>
-                  <span style={{ fontSize: 12, color: "var(--text-secondary)", flex: 1 }}>{t.description || t.type}</span>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: t.amount > 0 ? "var(--accent)" : "var(--red)" }}>
-                    {t.amount > 0 ? "+" : ""}{t.amount} EGP
+              {creditTransactions.slice(0, 10).map((tx: any) => (
+                <div key={tx.id} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "8px 12px", backgroundColor: "var(--bg-surface)", borderRadius: 8, border: "1px solid var(--border)" }}>
+                  <span style={{ fontSize: 12, color: "var(--text-secondary)", flex: 1 }}>{tx.description || tx.type}</span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: tx.amount > 0 ? "var(--accent)" : "var(--red)" }}>
+                    {tx.amount > 0 ? "+" : ""}{tx.amount} {t('currency_egp')}
                   </span>
                 </div>
               ))}
@@ -373,7 +373,7 @@ export default function CoachProfile() {
               </div>
 
               <div>
-                <label style={{ fontSize: 11, color: "var(--text-muted)", display: "block", marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.07em" }}>Bio</label>
+                <label style={{ fontSize: 11, color: "var(--text-muted)", display: "block", marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.07em" }}>{t('bio_label')}</label>
                 <textarea className="input-base" value={editProfile.bio} onChange={e => setEditProfile(p => ({ ...p, bio: e.target.value }))} placeholder={t("bio_placeholder")} rows={4} style={{ resize: "none" }} />
               </div>
               <div>

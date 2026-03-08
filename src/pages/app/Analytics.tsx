@@ -65,7 +65,7 @@ export default function Analytics() {
         <h1 style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: "clamp(20px, 4vw, 28px)", fontWeight: 700 }}>{t("advanced_analytics") || "Analytics"}</h1>
         <div style={{ display: "flex", gap: 10 }}>
           <select style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 9, padding: "8px 14px", fontSize: 13, color: "var(--text-primary)", cursor: "pointer" }}>
-            <option>Last 6 Months</option><option>Last 30 Days</option><option>This Year</option>
+            <option>{t('last_6_months')}</option><option>{t('last_30_days')}</option><option>{t('this_year')}</option>
           </select>
           <button onClick={async () => {
             try { const r = await fetch(getApiBase() + "/api/ai/analytics", { method: "POST", headers: { Authorization: `Bearer ${localStorage.getItem("token")}`, "Content-Type": "application/json" }, body: "{}" }); if (r.ok) { const j = await r.json(); alert(j.insights || "No insights."); return; } } catch {}
@@ -95,7 +95,7 @@ export default function Analytics() {
       <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fit, minmax(280px, 1fr))", gap: 16, marginBottom: 20 }}>
         {/* Weekly steps */}
         <div style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 14, padding: "20px 16px" }}>
-          <p style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 14, fontWeight: 700, marginBottom: 16 }}>Weekly Steps</p>
+          <p style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 14, fontWeight: 700, marginBottom: 16 }}>{t('weekly_steps')}</p>
           <ResponsiveContainer width="100%" height={180}>
             <BarChart data={weekly.length ? weekly : Array.from({length:7},(_,i)=>({day:['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][i],steps:0,calories:0}))}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
@@ -108,7 +108,7 @@ export default function Analytics() {
         </div>
         {/* Calories area */}
         <div style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 14, padding: "20px 16px" }}>
-          <p style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 14, fontWeight: 700, marginBottom: 16 }}>Calories Trend</p>
+          <p style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 14, fontWeight: 700, marginBottom: 16 }}>{t('calories_trend')}</p>
           <ResponsiveContainer width="100%" height={180}>
             <AreaChart data={weekly.length ? weekly : Array.from({length:7},(_,i)=>({day:['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][i],steps:0,calories:0}))}>
               <defs><linearGradient id="calGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#FF4444" stopOpacity={0.3} /><stop offset="95%" stopColor="#FF4444" stopOpacity={0} /></linearGradient></defs>
@@ -126,7 +126,7 @@ export default function Analytics() {
       <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fit, minmax(260px, 1fr))", gap: 16 }}>
         <div style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 14, padding: "20px 20px" }}>
           <p style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 14, fontWeight: 700, marginBottom: 16 }}>{t("summary") || "Summary"}</p>
-          {loading ? <p style={{ color: "var(--text-muted)" }}>Loading…</p> : (
+          {loading ? <p style={{ color: "var(--text-muted)" }}>{t('loading_text')}</p> : (
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {[
                 { label: t("total_steps") || "Total Steps", val: metrics?.totalSteps?.toLocaleString() || 0 },
@@ -145,7 +145,7 @@ export default function Analytics() {
 
         <div style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 14, padding: "20px 20px" }}>
           <p style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 14, fontWeight: 700, marginBottom: 16 }}>{t("recent_sessions") || "Recent Sessions"}</p>
-          {loading ? <p style={{ color: "var(--text-muted)" }}>Loading…</p> : (
+          {loading ? <p style={{ color: "var(--text-muted)" }}>{t('loading_text')}</p> : (
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
               {(metrics?.recentSessions || []).slice(0, 5).map((s: RecentSession) => (
                 <div key={s.id} style={{ padding: "10px 12px", backgroundColor: "var(--bg-surface)", borderRadius: 10, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -159,7 +159,7 @@ export default function Analytics() {
                   </div>
                 </div>
               ))}
-              {(metrics?.recentSessions || []).length === 0 && <p style={{ fontSize: 13, color: "var(--text-muted)" }}>No sessions yet.</p>}
+              {(metrics?.recentSessions || []).length === 0 && <p style={{ fontSize: 13, color: "var(--text-muted)" }}>{t('no_sessions_yet')}</p>}
             </div>
           )}
         </div>

@@ -1,5 +1,5 @@
 import { getApiBase } from "@/lib/api";
-import { User, Camera, Ruler, Weight, Crown, Sun, Moon, Bell, Globe, LogOut, Gift, Star, Upload, FileText, X } from "lucide-react";
+import { User, Camera, Ruler, Weight, Crown, Sun, Moon, Bell, Globe, LogOut, Gift, Star, Upload, FileText, X, Lock, Eye, EyeOff } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useTheme } from "@/context/ThemeContext";
 import { useState, useRef, useEffect } from "react";
@@ -27,6 +27,13 @@ export default function Profile() {
   const [notifications, setNotifications] = useState(() => JSON.parse(localStorage.getItem("fithub_notifications") || "true"));
   const [showPointsHistory, setShowPointsHistory] = useState(false);
   const [pointsHistory, setPointsHistory] = useState<any[]>([]);
+  const [showChangePassword, setShowChangePassword] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [showCurrentPw, setShowCurrentPw] = useState(false);
+  const [showNewPw, setShowNewPw] = useState(false);
+  const [pwMsg, setPwMsg] = useState("");
+  const [pwLoading, setPwLoading] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -76,6 +83,30 @@ export default function Profile() {
   };
 
   const handleSave = () => { updateUser({ name, height, weight, gender }); setIsEditing(false); };
+
+  const handleChangePassword = async () => {
+    setPwMsg("");
+    if (!currentPassword || !newPassword) { setPwMsg("⚠ Both fields are required"); return; }
+    if (newPassword.length < 8) { setPwMsg("⚠ New password must be at least 8 characters"); return; }
+    setPwLoading(true);
+    try {
+      const res = await fetch(getApiBase() + "/api/auth/change-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ currentPassword, newPassword }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Failed to change password");
+      setPwMsg("✅ " + (data.message || "Password changed successfully"));
+      setCurrentPassword("");
+      setNewPassword("");
+      setTimeout(() => { setPwMsg(""); setShowChangePassword(false); }, 2000);
+    } catch (err: any) {
+      setPwMsg("⚠ " + (err.message || "Failed to change password"));
+    } finally {
+      setPwLoading(false);
+    }
+  };
 
   const card = { backgroundColor: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 16, padding: "20px 22px" };
 
@@ -281,6 +312,39 @@ export default function Profile() {
               style={{ width: 44, height: 24, borderRadius: 12, backgroundColor: notifications ? "var(--accent)" : "var(--bg-surface)", border: `1px solid ${notifications ? "transparent" : "var(--border)"}`, cursor: "pointer", position: "relative", transition: "background 0.2s" }}>
               <div style={{ position: "absolute", top: 3, insetInlineStart: notifications ? 22 : 3, width: 16, height: 16, borderRadius: "50%", backgroundColor: notifications ? "#0A0A0B" : "var(--text-muted)", transition: "left 0.2s" }} />
             </button>
+          </div>
+          {/* Change Password */}
+          <div style={{ borderBottom: "1px solid var(--border)" }}>
+            <button onClick={() => { setShowChangePassword(v => !v); setPwMsg(""); }} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", padding: "12px 0", background: "none", border: "none", cursor: "pointer", color: "var(--text-primary)", fontSize: 14 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <Lock size={16} color="var(--text-secondary)" />
+                <span>{t("change_password")}</span>
+              </div>
+              <span style={{ fontSize: 12, color: "var(--text-muted)" }}>{showChangePassword ? "▲" : "▼"}</span>
+            </button>
+            {showChangePassword && (
+              <div style={{ paddingBottom: 14, display: "flex", flexDirection: "column", gap: 10 }}>
+                <div style={{ position: "relative" }}>
+                  <input type={showCurrentPw ? "text" : "password"} value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} className="input-base" style={{ paddingInlineEnd: 40 }} placeholder={t("current_password")} />
+                  <button type="button" onClick={() => setShowCurrentPw(!showCurrentPw)} style={{ position: "absolute", insetInlineEnd: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)", padding: 4 }}>
+                    {showCurrentPw ? <EyeOff size={14} /> : <Eye size={14} />}
+                  </button>
+                </div>
+                <div style={{ position: "relative" }}>
+                  <input type={showNewPw ? "text" : "password"} value={newPassword} onChange={e => setNewPassword(e.target.value)} className="input-base" style={{ paddingInlineEnd: 40 }} placeholder={t("new_password")} />
+                  <button type="button" onClick={() => setShowNewPw(!showNewPw)} style={{ position: "absolute", insetInlineEnd: 10, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)", padding: 4 }}>
+                    {showNewPw ? <EyeOff size={14} /> : <Eye size={14} />}
+                  </button>
+                </div>
+                {newPassword.length > 0 && newPassword.length < 8 && (
+                  <p style={{ fontSize: 11, color: "var(--red)" }}>⚠ {8 - newPassword.length} more character{8 - newPassword.length !== 1 ? "s" : ""} needed</p>
+                )}
+                {pwMsg && <p style={{ fontSize: 12, color: pwMsg.startsWith("✅") ? "var(--accent)" : "var(--red)" }}>{pwMsg}</p>}
+                <button onClick={handleChangePassword} disabled={pwLoading} style={{ padding: "9px 20px", borderRadius: 10, backgroundColor: pwLoading ? "var(--bg-surface)" : "var(--accent)", border: "none", color: pwLoading ? "var(--text-muted)" : "#0A0A0B", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "'Chakra Petch', sans-serif", alignSelf: "flex-start" }}>
+                  {pwLoading ? t("saving") : t("change_password")}
+                </button>
+              </div>
+            )}
           </div>
           {/* Sign out */}
           <button onClick={() => { logout(); navigate("/auth/login"); }} style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 0", background: "none", border: "none", cursor: "pointer", color: "var(--red)", fontSize: 14, textAlign: "start" }}>

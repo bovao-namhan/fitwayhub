@@ -9,43 +9,43 @@ import { useI18n } from "@/context/I18nContext";
 import { useTheme } from "@/context/ThemeContext";
 import { SharedSidebar, NavItem } from "@/components/layout/SharedSidebar";
 
-const allNavItems: NavItem[] = [
-  { path: "/app/dashboard",  icon: Home,          label: "Dashboard" },
-  { path: "/app/workouts",   icon: Dumbbell,      label: "Workouts" },
-  { path: "/app/steps",      icon: Activity,      label: "Steps" },
-  { path: "/app/analytics",  icon: TrendingUp,    label: "Analytics" },
-  { path: "/app/coaching",   icon: UserCheck,     label: "Coaching" },
-  { path: "/app/blogs",      icon: FileText,      label: "No Pain No Shawerma" },
-  { path: "/app/community",  icon: Users,         label: "Community" },
-  { path: "/app/chat",       icon: MessageSquare, label: "Chat" },
-  { path: "/app/tools",      icon: Wrench,        label: "Tools" },
-  { path: "/app/profile",    icon: User,          label: "Profile" },
-];
-
-const bottomNavItems: NavItem[] = [
-  { path: "/app/dashboard",  icon: Home,          label: "Home" },
-  { path: "/app/workouts",   icon: Dumbbell,      label: "Workouts" },
-  { path: "/app/steps",      icon: Activity,      label: "Steps" },
-  { path: "/app/community",  icon: Users,         label: "Community" },
-  { path: "/app/profile",    icon: User,          label: "Profile" },
-];
-
-const moreDrawerItems: NavItem[] = [
-  { path: "/app/analytics",  icon: TrendingUp,    label: "Analytics" },
-  { path: "/app/coaching",   icon: UserCheck,     label: "Coaching" },
-  { path: "/app/blogs",      icon: FileText,      label: "No Pain No Shawerma" },
-  { path: "/app/chat",       icon: MessageSquare, label: "Chat" },
-  { path: "/app/plans",      icon: ClipboardList, label: "My Plans" },
-  { path: "/app/tools",      icon: Wrench,        label: "Tools" },
-];
-
 export function AppLayout() {
   const { user } = useAuth();
   const { branding } = useBranding();
-  const { lang } = useI18n();
+  const { lang, t } = useI18n();
   const { isDark } = useTheme();
   const isRtl = lang === "ar";
   const brandLogo = getBrandLogoForLang(branding, lang, isDark);
+
+  const allNavItems: NavItem[] = [
+    { path: "/app/dashboard",  icon: Home,          label: t("dashboard") },
+    { path: "/app/workouts",   icon: Dumbbell,      label: t("nav_workouts") },
+    { path: "/app/steps",      icon: Activity,      label: t("nav_steps") },
+    { path: "/app/analytics",  icon: TrendingUp,    label: t("nav_analytics") },
+    { path: "/app/coaching",   icon: UserCheck,     label: t("nav_coaching") },
+    { path: "/app/blogs",      icon: FileText,      label: t("blog_title") },
+    { path: "/app/community",  icon: Users,         label: t("nav_community") },
+    { path: "/app/chat",       icon: MessageSquare, label: t("nav_chat") },
+    { path: "/app/tools",      icon: Wrench,        label: t("nav_tools") },
+    { path: "/app/profile",    icon: User,          label: t("nav_profile") },
+  ];
+
+  const bottomNavItems: NavItem[] = [
+    { path: "/app/dashboard",  icon: Home,          label: t("nav_home") },
+    { path: "/app/workouts",   icon: Dumbbell,      label: t("nav_workouts") },
+    { path: "/app/steps",      icon: Activity,      label: t("nav_steps") },
+    { path: "/app/community",  icon: Users,         label: t("nav_community") },
+    { path: "/app/profile",    icon: User,          label: t("nav_profile") },
+  ];
+
+  const moreDrawerItems: NavItem[] = [
+    { path: "/app/analytics",  icon: TrendingUp,    label: t("nav_analytics") },
+    { path: "/app/coaching",   icon: UserCheck,     label: t("nav_coaching") },
+    { path: "/app/blogs",      icon: FileText,      label: t("blog_title") },
+    { path: "/app/chat",       icon: MessageSquare, label: t("nav_chat") },
+    { path: "/app/plans",      icon: ClipboardList, label: t("nav_plans") },
+    { path: "/app/tools",      icon: Wrench,        label: t("nav_tools") },
+  ];
 
   const pointsFooter = (
     <div style={{
@@ -54,7 +54,7 @@ export function AppLayout() {
       border: "1px solid rgba(200,255,0,0.2)",
       borderRadius: 12,
     }}>
-      <p style={{ fontSize: 11, color: "var(--text-secondary)", marginBottom: 2 }}>Total Points</p>
+      <p style={{ fontSize: 11, color: "var(--text-secondary)", marginBottom: 2 }}>{t("total_points")}</p>
       <p style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 22, fontWeight: 700, color: "var(--accent)", lineHeight: 1 }}>
         {user?.points?.toLocaleString() ?? 0}
       </p>
@@ -71,7 +71,7 @@ export function AppLayout() {
     logoIconColor: "var(--accent)",
     logoLabel: branding.app_name || "FITWAY HUB",
     logoUrl: brandLogo || undefined,
-    roleLabel: user?.isPremium ? "⚡ Premium" : "Free Plan",
+    roleLabel: user?.isPremium ? `⚡ ${t("premium_member")}` : t("free_plan"),
     roleLabelColor: "var(--accent)",
     extraFooter: pointsFooter,
   });

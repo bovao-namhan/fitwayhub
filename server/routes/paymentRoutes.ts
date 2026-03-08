@@ -48,6 +48,56 @@ async function getPayPalHostname(): Promise<string> {
   return mode === 'live' ? 'api-m.paypal.com' : 'api-m.sandbox.paypal.com';
 }
 
+// ── EGP → USD conversion ─────────────────────────────────────────────────────
+let cachedRate: { rate: number; ts: number } | null = null;
+const RATE_TTL = 6 * 3600_000; // cache 6 hours
+
+async function egpToUsd(egpAmount: number): Promise<number> {
+  // 1) try admin-configured fixed rate
+  const fixedRate = await getSetting('egp_usd_rate');
+  if (fixedRate && Number(fixedRate) > 0) {
+    return Math.round((egpAmount / Number(fixedRate)) * 100) / 100;
+  }
+
+  // 2) use cached live rate if fresh
+  if (cachedRate && Date.now() - cachedRate.ts < RATE_TTL) {
+    return Math.round((egpAmount / cachedRate.rate) * 100) / 100;
+  }
+
+  // 3) fetch live rate
+  try {
+    const rate: number = await new Promise((resolve, reject) => {
+      const req = https.request({
+        hostname: 'open.er-api.com',
+        path: '/v6/latest/USD',
+        method: 'GET',
+        timeout: 5000,
+      }, (res) => {
+        let data = '';
+        res.on('data', (c: string) => data += c);
+        res.on('end', () => {
+          try {
+            const json = JSON.parse(data);
+            if (json?.result === 'success' && json.rates?.EGP) {
+              resolve(Number(json.rates.EGP));
+            } else {
+              reject(new Error('bad response'));
+            }
+          } catch (e) { reject(e); }
+        });
+      });
+      req.on('error', reject);
+      req.on('timeout', () => { req.destroy(); reject(new Error('timeout')); });
+      req.end();
+    });
+    cachedRate = { rate, ts: Date.now() };
+    return Math.round((egpAmount / rate) * 100) / 100;
+  } catch {
+    // 4) fallback ~50.5 EGP per USD
+    return Math.round((egpAmount / 50.5) * 100) / 100;
+  }
+}
+
 async function getPayPalToken(clientId: string, secret: string): Promise<string> {
   const hostname = await getPayPalHostname();
   return new Promise((resolve, reject) => {
@@ -98,7 +148,7 @@ router.get('/public-settings', async (_req: Request, res: Response) => {
     const rows = await query('SELECT setting_key, setting_value FROM payment_settings') as any[];
     const settings: Record<string, string> = {};
     for (const row of rows) {
-      if (['paypal_user_link', 'paypal_coach_link', 'ewallet_phone', 'ewallet_phone_vodafone', 'ewallet_phone_orange', 'ewallet_phone_we', 'paypal_user_client_id', 'paypal_coach_client_id'].includes(row.setting_key)) {
+      if (['paypal_user_link', 'paypal_coach_link', 'ewallet_phone', 'ewallet_phone_vodafone', 'ewallet_phone_orange', 'ewallet_phone_we', 'paypal_user_client_id', 'paypal_coach_client_id', 'pm_orange_cash', 'pm_vodafone_cash', 'pm_we_pay', 'pm_paypal', 'pm_credit_card', 'pm_google_pay', 'pm_apple_pay'].includes(row.setting_key)) {
         settings[row.setting_key] = row.setting_value;
       }
     }
@@ -120,11 +170,12 @@ router.post('/paypal/create-order', authenticateToken, async (req: any, res: Res
     const description = coachId
       ? `FitWay Coach Subscription - ${coachName || 'Coach'} (${plan})`
       : `FitWay ${type === 'coach' ? 'Coach Membership' : 'Premium'} - ${plan}`;
+    const usdAmount = await egpToUsd(parseFloat(amount));
     const origin = req.headers.origin || 'https://peter-adel.taila6a2b4.ts.net';
     const order = await paypalRequest(clientId, secret, 'POST', '/v2/checkout/orders', {
       intent: 'CAPTURE',
       purchase_units: [{
-        amount: { currency_code: 'USD', value: String(parseFloat(amount).toFixed(2)) },
+        amount: { currency_code: 'USD', value: String(usdAmount.toFixed(2)) },
         description
       }],
       application_context: {
@@ -363,11 +414,12 @@ router.post('/booking/paypal/create-order', authenticateToken, async (req: any, 
     const clientId = await getSetting('paypal_user_client_id');
     const secret = await getSetting('paypal_user_secret');
     if (!clientId || !secret) return res.status(503).json({ message: 'PayPal not configured' });
+    const bookingUsd = await egpToUsd(parseFloat(amount));
     const origin = req.headers.origin || 'https://peter-adel.taila6a2b4.ts.net';
     const order = await paypalRequest(clientId, secret, 'POST', '/v2/checkout/orders', {
       intent: 'CAPTURE',
       purchase_units: [{
-        amount: { currency_code: 'USD', value: String(parseFloat(amount).toFixed(2)) },
+        amount: { currency_code: 'USD', value: String(bookingUsd.toFixed(2)) },
         description: `FitWay Coaching - ${coachName}`
       }],
       application_context: {

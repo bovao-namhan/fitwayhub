@@ -3,6 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Calculator, ArrowRight } from "lucide-react";
+import { useI18n } from "@/context/I18nContext";
 
 const schema = z.object({
   weight: z.number().min(20, "Weight must be at least 20kg").max(300, "Weight must be less than 300kg"),
@@ -16,9 +17,18 @@ type FormData = z.infer<typeof schema>;
 
 export function CalorieCalculator() {
   const [result, setResult] = useState<number | null>(null);
+  const { t, lang } = useI18n();
   const { register, handleSubmit, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
   });
+
+  const activityOptions = [
+    { value: "sedentary", label: lang === "ar" ? "قليل الحركة" : "Sedentary" },
+    { value: "light", label: lang === "ar" ? "خفيف (1-3 مرات/أسبوع)" : "Light (1-3x/week)" },
+    { value: "moderate", label: lang === "ar" ? "متوسط (4-5 مرات/أسبوع)" : "Moderate (4-5x/week)" },
+    { value: "active", label: lang === "ar" ? "نشيط يوميًا" : "Active (daily)" },
+    { value: "very_active", label: lang === "ar" ? "نشيط جدًا" : "Very Active" },
+  ];
 
   const onSubmit = (data: FormData) => {
     // Mifflin-St Jeor Equation
@@ -49,46 +59,44 @@ export function CalorieCalculator() {
       <form onSubmit={handleSubmit(onSubmit)} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
           <div>
-            <label style={lS}>Gender</label>
+            <label style={lS}>{t("gender")}</label>
             <select {...register("gender")} style={{ ...iS, cursor: "pointer" }}>
-              <option value="male">Male</option><option value="female">Female</option>
+              <option value="male">{lang === "ar" ? "ذكر" : "Male"}</option><option value="female">{lang === "ar" ? "أنثى" : "Female"}</option>
             </select>
           </div>
           <div>
-            <label style={lS}>Age</label>
+            <label style={lS}>{lang === "ar" ? "العمر" : "Age"}</label>
             <input type="number" {...register("age", { valueAsNumber: true })} style={iS} placeholder="25" />
             {errors.age && <p style={{ fontSize: 11, color: "var(--red)", marginTop: 3 }}>{errors.age.message}</p>}
           </div>
         </div>
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
           <div>
-            <label style={lS}>Weight (kg)</label>
+            <label style={lS}>{t("weight_kg")}</label>
             <input type="number" {...register("weight", { valueAsNumber: true })} style={iS} placeholder="70" />
             {errors.weight && <p style={{ fontSize: 11, color: "var(--red)", marginTop: 3 }}>{errors.weight.message}</p>}
           </div>
           <div>
-            <label style={lS}>Height (cm)</label>
+            <label style={lS}>{t("height_cm")}</label>
             <input type="number" {...register("height", { valueAsNumber: true })} style={iS} placeholder="175" />
             {errors.height && <p style={{ fontSize: 11, color: "var(--red)", marginTop: 3 }}>{errors.height.message}</p>}
           </div>
         </div>
         <div>
-          <label style={lS}>Activity Level</label>
+          <label style={lS}>{t("activity_level")}</label>
           <select {...register("activity")} style={{ ...iS, cursor: "pointer" }}>
-            <option value="sedentary">Sedentary</option>
-            <option value="light">Light (1–3x/week)</option>
-            <option value="moderate">Moderate (4–5x/week)</option>
-            <option value="active">Active (daily)</option>
-            <option value="very_active">Very Active</option>
+            {activityOptions.map((option) => (
+              <option key={option.value} value={option.value}>{option.label}</option>
+            ))}
           </select>
         </div>
         <button type="submit" style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "11px", borderRadius: 9, backgroundColor: "var(--accent)", color: "#0A0A0B", fontFamily: "'Chakra Petch', sans-serif", fontWeight: 700, fontSize: 13, border: "none", cursor: "pointer" }}>
-          Calculate <ArrowRight size={14} />
+          {lang === "ar" ? "احسب" : "Calculate"} <ArrowRight size={14} />
         </button>
       </form>
       {result && (
         <div style={{ marginTop: 14, padding: "14px", backgroundColor: "var(--accent-dim)", border: "1px solid rgba(200,255,0,0.25)", borderRadius: 12, textAlign: "center" }}>
-          <p style={{ fontSize: 11, color: "var(--text-secondary)", marginBottom: 4 }}>Estimated daily needs</p>
+          <p style={{ fontSize: 11, color: "var(--text-secondary)", marginBottom: 4 }}>{t("estimated_daily_needs")}</p>
           <p style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 32, fontWeight: 700, color: "var(--accent)", lineHeight: 1 }}>{result} <span style={{ fontSize: 14, fontWeight: 400 }}>kcal/day</span></p>
         </div>
       )}

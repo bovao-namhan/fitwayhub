@@ -6,6 +6,7 @@ export default function AppBlogs() {
       mode="app"
       heading="No Pain No Shawerma"
       subheading="Read focused fitness content without leaving your training workspace."
+      allowWriting
     />
   );
 }

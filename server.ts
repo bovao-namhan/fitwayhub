@@ -31,6 +31,8 @@ import plansRoutes from './server/routes/plansRoutes.js';
 import paymentRoutes from './server/routes/paymentRoutes.js';
 import cmsRoutes from './server/routes/cmsRoutes.js';
 import blogRoutes from './server/routes/blogRoutes.js';
+import emailRoutes from './server/routes/emailRoutes.js';
+import { startSmtpServer } from './server/emailServer.js';
 import { errorHandler } from './server/middleware/error.js';
 
 const ALLOWED_ORIGINS = [
@@ -97,7 +99,11 @@ async function startServer() {
   app.use('/api/plans', plansRoutes);
   app.use('/api/cms', cmsRoutes);
   app.use('/api/blogs', blogRoutes);
+  app.use('/api/email', emailRoutes);
   console.log('API routes registered');
+
+  // Start SMTP receive server
+  try { startSmtpServer(Number(process.env.SMTP_PORT || 2525)); } catch (e) { console.warn('SMTP server failed to start:', e); }
 
   // In production serve the built frontend; in dev, run `npx vite` separately
   if (process.env.NODE_ENV === 'production') {

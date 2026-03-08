@@ -232,6 +232,7 @@ router.post('/videos', authenticateToken, adminOnly, uploadVideo.fields([
   try {
     const { title, description, duration, category, is_premium } = req.body;
     if (!title) return res.status(400).json({ message: 'Title is required' });
+    const isShort = req.body.is_short === '1' || req.body.is_short === true ? 1 : 0;
 
     const files = req.files as { [fieldname: string]: Express.Multer.File[] };
     const videoFile = files?.video?.[0];
@@ -244,8 +245,8 @@ router.post('/videos', authenticateToken, adminOnly, uploadVideo.fields([
     const durationSeconds = videoFile.size > 0 ? Math.ceil(videoFile.size / (1024 * 1024)) : parseInt(duration || '0');
 
     const { insertId } = await run(
-      'INSERT INTO workout_videos (title, description, url, duration, duration_seconds, category, is_premium, thumbnail) VALUES (?,?,?,?,?,?,?,?)',
-      [title, description || '', videoUrl, duration || '', durationSeconds, category || 'General', is_premium === '1' || is_premium === true ? 1 : 0, thumbnailUrl || '']
+      'INSERT INTO workout_videos (title, description, url, duration, duration_seconds, category, is_premium, thumbnail, is_short) VALUES (?,?,?,?,?,?,?,?,?)',
+      [title, description || '', videoUrl, duration || '', durationSeconds, category || 'General', is_premium === '1' || is_premium === true ? 1 : 0, thumbnailUrl || '', isShort]
     );
     const video = await get('SELECT * FROM workout_videos WHERE id = ?', [insertId]);
     res.json({ video, message: 'Video uploaded successfully' });
@@ -271,11 +272,12 @@ router.patch('/videos/:id', authenticateToken, adminOnly, uploadVideo.fields([
     const videoUrl = videoFile ? `/uploads/${videoFile.filename}` : existing.url;
     const thumbnailUrl = thumbnailFile ? `/uploads/${thumbnailFile.filename}` : existing.thumbnail;
     const { title, description, duration, category, is_premium } = req.body;
+    const isShort = req.body.is_short === '1' || req.body.is_short === true ? 1 : (req.body.is_short === '0' || req.body.is_short === false ? 0 : existing.is_short || 0);
 
     await run(
-      'UPDATE workout_videos SET title=?, description=?, url=?, duration=?, category=?, is_premium=?, thumbnail=?, updated_at=NOW() WHERE id=?',
+      'UPDATE workout_videos SET title=?, description=?, url=?, duration=?, category=?, is_premium=?, thumbnail=?, is_short=?, updated_at=NOW() WHERE id=?',
       [title || existing.title, description ?? existing.description, videoUrl, duration || existing.duration,
-       category || existing.category, is_premium === '1' || is_premium === true ? 1 : 0, thumbnailUrl, id]
+       category || existing.category, is_premium === '1' || is_premium === true ? 1 : 0, thumbnailUrl, isShort, id]
     );
     res.json({ message: 'Video updated' });
   } catch (err) {
@@ -288,6 +290,115 @@ router.delete('/videos/:id', authenticateToken, adminOnly, async (req: any, res:
     await run('DELETE FROM workout_videos WHERE id = ?', [req.params.id]);
     res.json({ message: 'Video deleted' });
   } catch { res.status(500).json({ message: 'Failed to delete video' }); }
+});
+
+// ── Playlists ──────────────────────────────────────────────────────────────────
+router.get('/playlists', authenticateToken, adminOnly, async (_req: any, res: Response) => {
+  try {
+    const playlists = await query(`
+      SELECT p.*, u.name as creator_name,
+             (SELECT COUNT(*) FROM playlist_videos WHERE playlist_id = p.id) as video_count
+      FROM video_playlists p
+      LEFT JOIN users u ON p.created_by = u.id
+      ORDER BY p.sort_order, p.created_at DESC`);
+    res.json({ playlists });
+  } catch { res.status(500).json({ message: 'Failed to fetch playlists' }); }
+});
+
+router.post('/playlists', authenticateToken, adminOnly, async (req: any, res: Response) => {
+  try {
+    const { title, description, thumbnail, is_public } = req.body;
+    if (!title) return res.status(400).json({ message: 'Title is required' });
+    const { insertId } = await run(
+      'INSERT INTO video_playlists (title, description, thumbnail, created_by, is_public) VALUES (?,?,?,?,?)',
+      [title, description || '', thumbnail || '', req.user.id, is_public !== false ? 1 : 0]
+    );
+    const playlist = await get('SELECT * FROM video_playlists WHERE id = ?', [insertId]);
+    res.json({ playlist, message: 'Playlist created' });
+  } catch { res.status(500).json({ message: 'Failed to create playlist' }); }
+});
+
+router.patch('/playlists/:id', authenticateToken, adminOnly, async (req: any, res: Response) => {
+  try {
+    const { title, description, thumbnail, is_public } = req.body;
+    await run(
+      'UPDATE video_playlists SET title=?, description=?, thumbnail=?, is_public=?, updated_at=NOW() WHERE id=?',
+      [title, description || '', thumbnail || '', is_public ? 1 : 0, req.params.id]
+    );
+    res.json({ message: 'Playlist updated' });
+  } catch { res.status(500).json({ message: 'Failed to update playlist' }); }
+});
+
+router.delete('/playlists/:id', authenticateToken, adminOnly, async (req: any, res: Response) => {
+  try {
+    await run('DELETE FROM video_playlists WHERE id = ?', [req.params.id]);
+    res.json({ message: 'Playlist deleted' });
+  } catch { res.status(500).json({ message: 'Failed to delete playlist' }); }
+});
+
+router.get('/playlists/:id/videos', authenticateToken, adminOnly, async (req: any, res: Response) => {
+  try {
+    const videos = await query(
+      `SELECT v.*, pv.sort_order as playlist_order FROM playlist_videos pv
+       JOIN workout_videos v ON v.id = pv.video_id
+       WHERE pv.playlist_id = ?
+       ORDER BY pv.sort_order`, [req.params.id]);
+    res.json({ videos });
+  } catch { res.status(500).json({ message: 'Failed to fetch playlist videos' }); }
+});
+
+router.post('/playlists/:id/videos', authenticateToken, adminOnly, async (req: any, res: Response) => {
+  try {
+    const { video_id } = req.body;
+    const maxOrder = await get<any>('SELECT MAX(sort_order) as m FROM playlist_videos WHERE playlist_id = ?', [req.params.id]);
+    await run(
+      'INSERT INTO playlist_videos (playlist_id, video_id, sort_order) VALUES (?,?,?)',
+      [req.params.id, video_id, (maxOrder?.m || 0) + 1]
+    );
+    res.json({ message: 'Video added to playlist' });
+  } catch { res.status(500).json({ message: 'Failed to add video to playlist' }); }
+});
+
+router.delete('/playlists/:id/videos/:videoId', authenticateToken, adminOnly, async (req: any, res: Response) => {
+  try {
+    await run('DELETE FROM playlist_videos WHERE playlist_id = ? AND video_id = ?', [req.params.id, req.params.videoId]);
+    res.json({ message: 'Video removed from playlist' });
+  } catch { res.status(500).json({ message: 'Failed to remove video' }); }
+});
+
+// ── Website Translations ───────────────────────────────────────────────────────
+router.get('/website-translations', authenticateToken, adminOnly, async (_req: any, res: Response) => {
+  try {
+    const rows = await query('SELECT text_key, text_ar FROM website_translations ORDER BY text_key');
+    const translations: Record<string, string> = {};
+    for (const r of rows as any[]) translations[r.text_key] = r.text_ar;
+    res.json({ translations });
+  } catch { res.status(500).json({ message: 'Failed to fetch translations' }); }
+});
+
+router.put('/website-translations', authenticateToken, adminOnly, async (req: any, res: Response) => {
+  try {
+    const entries = req.body?.translations as Record<string, string>;
+    if (!entries || typeof entries !== 'object') return res.status(400).json({ message: 'Invalid data' });
+    for (const [key, value] of Object.entries(entries)) {
+      if (typeof key !== 'string' || typeof value !== 'string') continue;
+      await run(
+        'INSERT INTO website_translations (text_key, text_ar) VALUES (?,?) ON DUPLICATE KEY UPDATE text_ar=VALUES(text_ar), updated_at=NOW()',
+        [key.slice(0, 500), value]
+      );
+    }
+    res.json({ message: 'Translations saved' });
+  } catch { res.status(500).json({ message: 'Failed to save translations' }); }
+});
+
+// Public endpoint for website translations (no auth required)
+router.get('/website-translations/public', async (_req: any, res: Response) => {
+  try {
+    const rows = await query('SELECT text_key, text_ar FROM website_translations ORDER BY text_key');
+    const translations: Record<string, string> = {};
+    for (const r of rows as any[]) translations[r.text_key] = r.text_ar;
+    res.json({ translations });
+  } catch { res.status(500).json({ message: 'Failed to fetch translations' }); }
 });
 
 // ── Ads (full admin management) ────────────────────────────────────────────────
@@ -422,6 +533,8 @@ router.put('/payment-settings', authenticateToken, adminOnly, async (req: any, r
     'paypal_user_client_id', 'paypal_coach_client_id',
     'paypal_user_secret', 'paypal_coach_secret',
     'paypal_mode', 'coach_cut_percentage',
+    'pm_orange_cash', 'pm_vodafone_cash', 'pm_we_pay', 'pm_paypal', 'pm_credit_card', 'pm_google_pay', 'pm_apple_pay',
+    'egp_usd_rate',
   ];
   try {
     const body = req.body as Record<string, string>;
@@ -460,6 +573,79 @@ router.put('/server-url', authenticateToken, adminOnly, async (req: any, res: Re
 // ── Test Connection ─────────────────────────────────────────────────────────────
 router.get('/ping', (_req: any, res: Response) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// ── Fake Accounts Generator ──────────────────────────────────────────────────
+router.post('/generate-fake-accounts', authenticateToken, adminOnly, async (req: any, res: Response) => {
+  try {
+    const count = 20;
+    const firstNames = ['Ahmed', 'Mohamed', 'Omar', 'Ali', 'Hassan', 'Youssef', 'Kareem', 'Tarek', 'Khaled', 'Amr', 'Sara', 'Nour', 'Mona', 'Hana', 'Layla', 'Fatma', 'Dina', 'Rana', 'Mariam', 'Yasmin', 'Mostafa', 'Ibrahim', 'Mahmoud', 'Ayman', 'Ramy', 'Salma', 'Reem', 'Mai', 'Doaa', 'Heba'];
+    const lastNames = ['El-Sayed', 'Hassan', 'Ibrahim', 'Ahmed', 'Ali', 'Mohamed', 'Mansour', 'Farouk', 'Nabil', 'Kamal', 'Adel', 'Fathy', 'Gamal', 'Saeed', 'Othman', 'Youssef', 'Lotfy', 'Rizk', 'Hamdy', 'Tawfik'];
+    const genders = ['male', 'female'];
+    const specialties = ['Weight Loss', 'Muscle Building', 'CrossFit', 'Yoga', 'Cardio', 'Strength Training', 'Calisthenics', 'Swimming', 'Boxing', 'Martial Arts'];
+    const hashed = await bcrypt.hash('FakeUser123!', 10);
+    const created: string[] = [];
+    for (let i = 0; i < count; i++) {
+      const fn = firstNames[Math.floor(Math.random() * firstNames.length)];
+      const ln = lastNames[Math.floor(Math.random() * lastNames.length)];
+      const name = `${fn} ${ln}`;
+      const gender = fn === 'Sara' || fn === 'Nour' || fn === 'Mona' || fn === 'Hana' || fn === 'Layla' || fn === 'Fatma' || fn === 'Dina' || fn === 'Rana' || fn === 'Mariam' || fn === 'Yasmin' || fn === 'Salma' || fn === 'Reem' || fn === 'Mai' || fn === 'Doaa' || fn === 'Heba' ? 'female' : 'male';
+      const ts = Date.now();
+      const email = `fake_${fn.toLowerCase()}${ts}${i}@fitway.test`;
+      const avatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${fn}${ts}${i}`;
+      const height = 155 + Math.floor(Math.random() * 35);
+      const weight = 50 + Math.floor(Math.random() * 50);
+      const steps = Math.floor(Math.random() * 15000);
+      const points = Math.floor(Math.random() * 500);
+      const isPremium = Math.random() > 0.7 ? 1 : 0;
+      try {
+        await run(
+          `INSERT INTO users (email, password, name, role, avatar, is_premium, points, steps, height, weight, gender, step_goal)
+           VALUES (?, ?, ?, 'user', ?, ?, ?, ?, ?, ?, ?, ?)`,
+          [email, hashed, name, avatar, isPremium, points, steps, height, weight, gender, 10000]
+        );
+        created.push(name);
+      } catch { /* skip duplicate */ }
+    }
+    res.json({ message: `Created ${created.length} fake accounts`, accounts: created });
+  } catch (err: any) { res.status(500).json({ message: 'Failed to generate fake accounts', error: err.message }); }
+});
+
+// ── Fake Challenges Generator ────────────────────────────────────────────────
+router.post('/generate-fake-challenges', authenticateToken, adminOnly, async (req: any, res: Response) => {
+  try {
+    const challenges = [
+      { title: '10K Steps Daily Challenge', description: 'Walk at least 10,000 steps every day for 30 days. Track your progress and compete with others!', days: 30 },
+      { title: '30-Day Push-Up Challenge', description: 'Start with 10 push-ups on day 1 and increase by 5 each day. Can you complete all 30 days?', days: 30 },
+      { title: 'Morning Run Streak', description: 'Run at least 2km every morning before 8 AM for 14 consecutive days. Early bird gets the gains!', days: 14 },
+      { title: 'Hydration Hero', description: 'Drink at least 3 liters of water every day for 21 days. Stay hydrated, stay healthy!', days: 21 },
+      { title: 'Plank Master Challenge', description: 'Hold a plank for increasing durations each day - start at 30s and work up to 5 minutes!', days: 21 },
+      { title: 'No Sugar Week', description: 'Eliminate added sugar from your diet for 7 days. Improve your health and energy levels!', days: 7 },
+      { title: 'Squat Challenge', description: 'Do 50 squats every day for 30 days. Build stronger legs and glutes!', days: 30 },
+      { title: 'Flexibility Focus', description: 'Stretch for at least 15 minutes every day for 14 days. Improve your range of motion!', days: 14 },
+      { title: '5K Running Goal', description: 'Train to run 5 kilometers without stopping within 21 days. Start with intervals and progress!', days: 21 },
+      { title: 'Calorie Burn Battle', description: 'Burn at least 500 calories through exercise every day for 7 days. Who can burn the most?', days: 7 },
+    ];
+    const shuffled = challenges.sort(() => Math.random() - 0.5).slice(0, 5);
+    const admin = await get('SELECT id FROM users WHERE role = "admin" LIMIT 1') as any;
+    const creatorId = admin?.id || req.user.id;
+    const created: string[] = [];
+    for (const ch of shuffled) {
+      const start = new Date();
+      start.setDate(start.getDate() + Math.floor(Math.random() * 3));
+      const end = new Date(start);
+      end.setDate(end.getDate() + ch.days);
+      try {
+        await run(
+          `INSERT INTO challenges (creator_id, title, description, start_date, end_date, participant_count)
+           VALUES (?, ?, ?, ?, ?, ?)`,
+          [creatorId, ch.title, ch.description, start.toISOString().split('T')[0], end.toISOString().split('T')[0], Math.floor(Math.random() * 50)]
+        );
+        created.push(ch.title);
+      } catch { /* skip */ }
+    }
+    res.json({ message: `Created ${created.length} challenges`, challenges: created });
+  } catch (err: any) { res.status(500).json({ message: 'Failed to generate challenges', error: err.message }); }
 });
 
 export default router;

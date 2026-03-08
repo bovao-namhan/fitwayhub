@@ -58,6 +58,8 @@ async function initTables() {
       reset_token TEXT,
       reset_token_expires BIGINT,
       remember_token TEXT,
+      security_question VARCHAR(255),
+      security_answer VARCHAR(255),
       offline_steps INT DEFAULT 0,
       last_sync DATETIME,
       coach_membership_active TINYINT(1) DEFAULT 0,
@@ -399,6 +401,16 @@ async function initTables() {
   for (const stmt of stmts) {
     await pool.execute(stmt);
   }
+
+  // Add security question columns if missing (migration for existing DBs)
+  try {
+    await pool.execute('ALTER TABLE users ADD COLUMN security_question VARCHAR(255) AFTER remember_token');
+    await pool.execute('ALTER TABLE users ADD COLUMN security_answer VARCHAR(255) AFTER security_question');
+  } catch (e: any) {
+    // columns already exist — ignore
+    if (!e.message?.includes('Duplicate column')) throw e;
+  }
+
   console.log('✅ All MySQL tables ready');
 }
 
@@ -757,6 +769,112 @@ export async function initDatabase() {
 
   // Migrate old theme/fonts categories into branding
   try { await pool.execute("UPDATE app_settings SET category = 'branding' WHERE category IN ('theme', 'fonts')"); } catch {}
+
+  // ── Video playlists ─────────────────────────────────────────
+  try {
+    await pool.execute(`CREATE TABLE IF NOT EXISTS video_playlists (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      title VARCHAR(255) NOT NULL,
+      description TEXT,
+      thumbnail TEXT,
+      created_by INT NOT NULL,
+      is_public TINYINT(1) DEFAULT 1,
+      sort_order INT DEFAULT 0,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
+  } catch {}
+
+  try {
+    await pool.execute(`CREATE TABLE IF NOT EXISTS playlist_videos (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      playlist_id INT NOT NULL,
+      video_id INT NOT NULL,
+      sort_order INT DEFAULT 0,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (playlist_id) REFERENCES video_playlists(id) ON DELETE CASCADE,
+      FOREIGN KEY (video_id) REFERENCES workout_videos(id) ON DELETE CASCADE,
+      UNIQUE KEY unique_playlist_video (playlist_id, video_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
+  } catch {}
+
+  // ── Shorties flag on workout_videos ─────────────────────────
+  try { await pool.execute("ALTER TABLE workout_videos ADD COLUMN is_short TINYINT(1) DEFAULT 0"); } catch {}
+  try { await pool.execute("ALTER TABLE workout_videos ADD COLUMN width INT DEFAULT 0"); } catch {}
+  try { await pool.execute("ALTER TABLE workout_videos ADD COLUMN height INT DEFAULT 0"); } catch {}
+
+  // ── Active sessions for IP-based single-account enforcement ─
+  try {
+    await pool.execute(`CREATE TABLE IF NOT EXISTS active_sessions (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      user_id INT NOT NULL,
+      ip_address VARCHAR(45) NOT NULL,
+      token_hash VARCHAR(64) NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      expires_at DATETIME NOT NULL,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+      INDEX idx_active_sessions_ip (ip_address),
+      INDEX idx_active_sessions_user (user_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
+  } catch {}
+
+  // ── Website translations overrides ──────────────────────────
+  try {
+    await pool.execute(`CREATE TABLE IF NOT EXISTS website_translations (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      text_key VARCHAR(500) NOT NULL UNIQUE,
+      text_ar TEXT NOT NULL,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
+  } catch {}
+
+  // ── Email server ────────────────────────────────────────────
+  try {
+    await pool.execute(`CREATE TABLE IF NOT EXISTS email_settings (
+      id INT PRIMARY KEY DEFAULT 1,
+      smtp_host VARCHAR(255) NOT NULL DEFAULT '',
+      smtp_port INT NOT NULL DEFAULT 587,
+      smtp_user VARCHAR(255) NOT NULL DEFAULT '',
+      smtp_pass VARCHAR(255) NOT NULL DEFAULT '',
+      smtp_secure ENUM('none','tls','starttls') NOT NULL DEFAULT 'starttls',
+      from_name VARCHAR(255) NOT NULL DEFAULT '',
+      from_email VARCHAR(255) NOT NULL DEFAULT '',
+      enabled TINYINT(1) NOT NULL DEFAULT 0,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
+  } catch {}
+  try {
+    await pool.execute(`INSERT IGNORE INTO email_settings (id) VALUES (1)`);
+  } catch {}
+
+  try {
+    await pool.execute(`CREATE TABLE IF NOT EXISTS email_accounts (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      email VARCHAR(255) NOT NULL UNIQUE,
+      display_name VARCHAR(255) NOT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
+  } catch {}
+
+  try {
+    await pool.execute(`CREATE TABLE IF NOT EXISTS emails (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      account_id INT NOT NULL,
+      sender VARCHAR(500) NOT NULL,
+      recipient VARCHAR(500) NOT NULL,
+      subject VARCHAR(1000) NOT NULL DEFAULT '',
+      text_body LONGTEXT,
+      html_body LONGTEXT,
+      direction ENUM('inbound','outbound') NOT NULL DEFAULT 'inbound',
+      is_read TINYINT(1) NOT NULL DEFAULT 0,
+      message_id VARCHAR(500) DEFAULT NULL,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (account_id) REFERENCES email_accounts(id) ON DELETE CASCADE,
+      INDEX idx_emails_account_dir (account_id, direction),
+      INDEX idx_emails_created (created_at)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
+  } catch {}
 
   await seedDefaultAccounts();
 }

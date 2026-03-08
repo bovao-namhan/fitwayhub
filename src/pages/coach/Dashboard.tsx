@@ -129,7 +129,7 @@ export default function CoachHome() {
           { label: t("my_athletes"), value: stats?.athletes ?? 0, icon: Users, color: "var(--blue)", link: "/coach/athletes" },
           { label: t("pending_requests"), value: stats?.pendingRequests ?? 0, icon: ClipboardList, color: "var(--amber)", link: "/coach/requests" },
           { label: t("sessions_per_week"), value: stats?.sessionsThisWeek ?? 0, icon: Activity, color: "var(--accent)", link: "/coach/athletes" },
-          { label: t("monthly_revenue"), value: `${(stats?.monthlyRevenue ?? 0).toFixed(0)} EGP`, icon: DollarSign, color: "var(--cyan)", link: "/coach/ads" },
+          { label: t("monthly_revenue"), value: `${(stats?.monthlyRevenue ?? 0).toFixed(0)} ${t('currency_egp')}`, icon: DollarSign, color: "var(--cyan)", link: "/coach/ads" },
           { label: t("avg_rating"), value: `${stats?.avgRating ?? "—"}★`, icon: Star, color: "var(--amber)", link: "/coach/profile" },
           { label: t("completion_rate"), value: `${stats?.completionRate ?? 0}%`, icon: TrendingUp, color: "var(--accent)", link: "/coach/athletes" },
         ].map((s) => (

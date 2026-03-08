@@ -1,9 +1,11 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
+import { useI18n } from "@/context/I18nContext";
 import { Eye, EyeOff, Mail, Lock, Activity, ArrowLeft } from "lucide-react";
 
 export default function Login() {
+  const { t } = useI18n();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -45,9 +47,9 @@ export default function Login() {
       else navigate("/app/dashboard");
     } catch (err: any) {
       if (err.message?.includes('COACH_MEMBERSHIP_REQUIRED') || err.message?.includes('membership required') || err.message?.includes('membership')) {
-        setError("Coach membership payment required. Contact admin at support@fitwayhub.com");
+        setError(t("coach_membership_msg"));
       } else {
-        setError(err.message || "Failed to login");
+        setError(err.message || t("failed_login"));
       }
     } finally {
       setIsLoading(false);
@@ -58,9 +60,9 @@ export default function Login() {
     return (
       <div style={{ minHeight: "100vh", backgroundColor: "var(--bg-primary)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
         <div style={{ width: "100%", maxWidth: 460, backgroundColor: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 16, padding: 28 }}>
-          <h1 style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 24, fontWeight: 700, marginBottom: 10 }}>You are already logged in</h1>
+          <h1 style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 24, fontWeight: 700, marginBottom: 10 }}>{t("already_logged_in")}</h1>
           <p style={{ fontSize: 14, color: "var(--text-secondary)", marginBottom: 22 }}>
-            Signed in as <strong>{user.email}</strong>. Continue to your account.
+            {t("signed_in_as")} <strong>{user.email}</strong>. {t("continue_to_account")}
           </p>
           <button
             type="button"
@@ -68,7 +70,7 @@ export default function Login() {
             style={{ width: "100%", padding: "12px 14px", fontSize: 14 }}
             onClick={() => navigate(appRoute)}
           >
-            Open My Account
+            {t("open_my_account")}
           </button>
         </div>
       </div>
@@ -110,23 +112,23 @@ export default function Login() {
           <div style={{ backgroundColor: "var(--accent)", width: 32, height: 32, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center" }}>
             <Activity size={18} color="#0A0A0B" />
           </div>
-          <span style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 20, fontWeight: 700, letterSpacing: "0.04em" }}>FITWAY HUB</span>
+          <span style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 20, fontWeight: 700, letterSpacing: "0.04em" }}>{t("fitway_hub")}</span>
         </div>
 
         {/* Quote block */}
         <div>
           <p style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 36, fontWeight: 700, lineHeight: 1.2, color: "var(--text-primary)", marginBottom: 20 }}>
-            Transform your body.<br />
-            <span style={{ color: "var(--accent)" }}>Empower your mind.</span>
+            {t("transform_body")}<br />
+            <span style={{ color: "var(--accent)" }}>{t("empower_mind")}</span>
           </p>
           <p style={{ fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.7, maxWidth: 340 }}>
-            Egypt's #1 digital fitness ecosystem. Certified programs, smart tracking, and a community that keeps you accountable.
+            {t("egypt_fitness")}
           </p>
         </div>
 
         {/* Stats row */}
         <div style={{ display: "flex", gap: 32 }}>
-          {[{ v: "12K+", l: "Members" }, { v: "50+", l: "Programs" }, { v: "4.9★", l: "Rating" }].map((s) => (
+          {[{ v: "12K+", l: t("members") }, { v: "50+", l: t("programs") }, { v: "4.9★", l: t("rating") }].map((s) => (
             <div key={s.l}>
               <p style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 22, fontWeight: 700, color: "var(--accent)" }}>{s.v}</p>
               <p style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 2 }}>{s.l}</p>
@@ -143,7 +145,7 @@ export default function Login() {
             onClick={() => navigate(-1)}
             style={{ display: "inline-flex", alignItems: "center", gap: 6, marginBottom: 16, background: "none", border: "none", color: "var(--text-secondary)", cursor: "pointer", fontSize: 13, padding: 0 }}
           >
-            <ArrowLeft size={14} /> Back
+            <ArrowLeft size={14} /> {t("back")}
           </button>
 
           {/* Mobile logo */}
@@ -151,16 +153,16 @@ export default function Login() {
             <div style={{ backgroundColor: "var(--accent)", width: 28, height: 28, borderRadius: 7, display: "flex", alignItems: "center", justifyContent: "center" }}>
               <Activity size={15} color="#0A0A0B" />
             </div>
-            <span style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 18, fontWeight: 700 }}>FITWAY HUB</span>
+            <span style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 18, fontWeight: 700 }}>{t("fitway_hub")}</span>
           </div>
 
-          <h1 style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 28, fontWeight: 700, marginBottom: 6 }}>Welcome back</h1>
-          <p style={{ fontSize: 14, color: "var(--text-secondary)", marginBottom: 32 }}>Sign in to continue your journey</p>
+          <h1 style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 28, fontWeight: 700, marginBottom: 6 }}>{t("welcome_back")}</h1>
+          <p style={{ fontSize: 14, color: "var(--text-secondary)", marginBottom: 32 }}>{t("sign_in_continue")}</p>
 
           {coachMembershipRequired && (
             <div style={{ padding: "14px 16px", backgroundColor: "rgba(255,179,64,0.1)", border: "1px solid rgba(255,179,64,0.3)", borderRadius: 12, marginBottom: 16 }}>
-              <p style={{ fontSize: 13, fontWeight: 700, color: "var(--amber)", marginBottom: 4 }}>🔒 Coach Membership Required</p>
-              <p style={{ fontSize: 12, color: "var(--text-secondary)" }}>Coach accounts require an active paid membership to log in. Please contact admin or complete your membership payment.</p>
+              <p style={{ fontSize: 13, fontWeight: 700, color: "var(--amber)", marginBottom: 4 }}>{t("coach_membership_required")}</p>
+              <p style={{ fontSize: 12, color: "var(--text-secondary)" }}>{t("coach_membership_msg")}</p>
             </div>
           )}
           {error && (
@@ -172,7 +174,7 @@ export default function Login() {
           <form onSubmit={handleLogin} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             {/* Email */}
             <div>
-              <label style={{ fontSize: 12, fontWeight: 600, color: "var(--text-secondary)", letterSpacing: "0.05em", textTransform: "uppercase", display: "block", marginBottom: 6 }}>Email</label>
+              <label style={{ fontSize: 12, fontWeight: 600, color: "var(--text-secondary)", letterSpacing: "0.05em", textTransform: "uppercase", display: "block", marginBottom: 6 }}>{t("email_label")}</label>
               <div style={{ position: "relative" }}>
                 <Mail size={15} style={{ position: "absolute", insetInlineStart: 14, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} />
                 <input
@@ -189,7 +191,7 @@ export default function Login() {
 
             {/* Password */}
             <div>
-              <label style={{ fontSize: 12, fontWeight: 600, color: "var(--text-secondary)", letterSpacing: "0.05em", textTransform: "uppercase", display: "block", marginBottom: 6 }}>Password</label>
+              <label style={{ fontSize: 12, fontWeight: 600, color: "var(--text-secondary)", letterSpacing: "0.05em", textTransform: "uppercase", display: "block", marginBottom: 6 }}>{t("password_label")}</label>
               <div style={{ position: "relative" }}>
                 <Lock size={15} style={{ position: "absolute", insetInlineStart: 14, top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)" }} />
                 <input
@@ -220,9 +222,9 @@ export default function Login() {
                   onChange={(e) => setRememberMe(e.target.checked)}
                   style={{ accentColor: "var(--accent)", width: 15, height: 15 }}
                 />
-                Remember me
+                {t("remember_me")}
               </label>
-              <Link to="#" style={{ fontSize: 13, color: "var(--accent)", textDecoration: "none", fontWeight: 500 }}>Forgot password?</Link>
+              <Link to="/auth/forgot-password" style={{ fontSize: 13, color: "var(--accent)", textDecoration: "none", fontWeight: 500 }}>{t("forgot_password")}</Link>
             </div>
 
             {/* Submit */}
@@ -232,12 +234,12 @@ export default function Login() {
               className="btn-accent"
               style={{ marginTop: 4, padding: "13px", fontSize: 14 }}
             >
-              {isLoading ? "Signing in..." : "Sign In"}
+              {isLoading ? t("signing_in") : t("sign_in")}
             </button>
 
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 4 }}>
               <div style={{ flex: 1, height: 1, backgroundColor: "var(--border)" }} />
-              <span style={{ fontSize: 12, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.08em" }}>or</span>
+              <span style={{ fontSize: 12, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.08em" }}>{t("or")}</span>
               <div style={{ flex: 1, height: 1, backgroundColor: "var(--border)" }} />
             </div>
 
@@ -247,14 +249,14 @@ export default function Login() {
               onClick={() => startSocialLogin("google")}
               style={{ padding: "12px", fontSize: 14, fontWeight: 600, cursor: "pointer", backgroundColor: "var(--bg-card)" }}
             >
-              Continue with Google
+              {t("continue_google")}
             </button>
           </form>
 
           <p style={{ marginTop: 28, textAlign: "center", fontSize: 14, color: "var(--text-secondary)" }}>
-            Don't have an account?{" "}
+            {t("no_account")}{" "}
             <Link to="/auth/register" style={{ color: "var(--accent)", fontWeight: 600, textDecoration: "none" }}>
-              Sign up free
+              {t("sign_up_free")}
             </Link>
           </p>
         </div>

@@ -10,6 +10,16 @@ const adminOnly = (req: any, res: Response, next: any) => {
   next();
 };
 
+// ── Public: get website translation overrides ────────────────────────────────
+router.get('/translations', async (_req: any, res: Response) => {
+  try {
+    const rows = await query('SELECT text_key, text_ar FROM website_translations ORDER BY text_key');
+    const translations: Record<string, string> = {};
+    for (const r of rows as any[]) translations[r.text_key] = r.text_ar;
+    res.json({ translations });
+  } catch { res.json({ translations: {} }); }
+});
+
 // ── Public: get sections for a page ──────────────────────────────────────────
 router.get('/sections/:page', async (req: any, res: Response) => {
   try {

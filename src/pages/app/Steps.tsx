@@ -339,7 +339,7 @@ export default function Steps() {
 
 
   const handleDeleteEntry = async (date: string) => {
-    if (!confirm('Are you sure you want to delete this entry?')) return;
+    if (!confirm(t('confirm_delete_entry'))) return;
     
     try {
       const token = localStorage.getItem('token');
@@ -361,19 +361,19 @@ export default function Steps() {
     <div style={{ padding: isMobile ? "16px 12px 40px" : "20px 16px 40px", maxWidth: 960, margin: "0 auto" }}>
       {/* Header */}
       <div style={{ marginBottom: 24 }}>
-        <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--accent)", marginBottom: 4 }}>Activity Tracker</p>
-        <h1 style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: "clamp(20px, 4vw, 28px)", fontWeight: 700 }}>{t('activity_tracker') || 'Steps & Activity'}</h1>
+        <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--accent)", marginBottom: 4 }}>{t('activity_tracker')}</p>
+        <h1 style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: "clamp(20px, 4vw, 28px)", fontWeight: 700 }}>{t('steps_and_activity')}</h1>
       </div>
 
       {/* Offline banner */}
       {!isOnline && (
         <div style={{ marginBottom: 16, padding: "12px 16px", backgroundColor: "rgba(255,179,64,0.1)", border: "1px solid rgba(255,179,64,0.3)", borderRadius: 12, display: "flex", alignItems: "center", gap: 10, fontSize: 13, color: "var(--amber)" }}>
-          <WifiOff size={16} /> Offline — {offlineCount > 0 ? `${offlineCount} entries pending sync.` : "Changes saved locally."}
+          <WifiOff size={16} /> {t('offline_banner')} — {offlineCount > 0 ? t('entries_pending', { count: offlineCount }) : t('changes_saved_locally')}
         </div>
       )}
       {offlineCount > 0 && isOnline && (
         <button onClick={syncOfflineSteps} disabled={isSyncing} style={{ marginBottom: 16, display: "flex", alignItems: "center", gap: 8, padding: "10px 18px", borderRadius: 10, backgroundColor: "var(--accent-dim)", border: "1px solid rgba(200,255,0,0.25)", color: "var(--accent)", fontWeight: 600, fontSize: 13, cursor: "pointer" }}>
-          {isSyncing ? <Loader size={14} style={{ animation: "spin 1s linear infinite" }} /> : <Wifi size={14} />} Sync {offlineCount} offline step(s)
+          {isSyncing ? <Loader size={14} style={{ animation: "spin 1s linear infinite" }} /> : <Wifi size={14} />} {t('sync_offline', { count: offlineCount })}
         </button>
       )}
       {message && (
@@ -407,14 +407,14 @@ export default function Steps() {
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
               <span style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 14, fontWeight: 700 }}>
-                {goalReached ? "\ud83c\udf89 Goal Reached!" : "Daily Step Goal"}
+                {goalReached ? `\ud83c\udf89 ${t('goal_reached')}` : t('daily_step_goal')}
               </span>
               <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>
                 {todaySteps > 0
                   ? goalReached
-                    ? `You crushed it with ${todaySteps.toLocaleString()} steps!`
-                    : `${(stepGoal - todaySteps).toLocaleString()} steps to go`
-                  : "Start tracking to see your progress"}
+                    ? t('crushed_it', { count: todaySteps.toLocaleString() })
+                    : t('steps_to_go', { count: (stepGoal - todaySteps).toLocaleString() })
+                  : t('start_tracking_progress')}
               </span>
               <span style={{ fontSize: 12, fontWeight: 700, color: goalReached ? "var(--accent)" : "var(--blue)" }}>
                 {Math.round(pct * 100)}%
@@ -428,10 +428,10 @@ export default function Steps() {
       {weeklyStats && (
         <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(auto-fit, minmax(130px, 1fr))", gap: 12, marginBottom: 24 }}>
           {[
-            { label: "Week Total", value: weeklyStats.totalSteps.toLocaleString(), sub: `${weeklyStats.daysTracked} days`, color: "var(--accent)" },
-            { label: "Daily Avg", value: weeklyStats.avgSteps.toLocaleString(), sub: "steps/day", color: "var(--blue)" },
-            { label: "Peak Day", value: weeklyStats.maxSteps.toLocaleString(), sub: "highest", color: "var(--cyan)" },
-            { label: "Calories", value: weeklyStats.totalCalories.toLocaleString(), sub: "burned", color: "var(--red)" },
+            { label: t('week_total'), value: weeklyStats.totalSteps.toLocaleString(), sub: `${weeklyStats.daysTracked} ${t('days_word')}`, color: "var(--accent)" },
+            { label: t('daily_avg'), value: weeklyStats.avgSteps.toLocaleString(), sub: t('steps_per_day'), color: "var(--blue)" },
+            { label: t('peak_day'), value: weeklyStats.maxSteps.toLocaleString(), sub: t('highest'), color: "var(--cyan)" },
+            { label: t('calories_label'), value: weeklyStats.totalCalories.toLocaleString(), sub: t('burned'), color: "var(--red)" },
           ].map((s) => (
             <div key={s.label} style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 14, padding: "14px 16px" }}>
               <p style={{ fontSize: 11, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4 }}>{s.label}</p>
@@ -446,13 +446,13 @@ export default function Steps() {
       <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fit, minmax(280px, 1fr))", gap: 16 }}>
         {/* Record Form */}
         <div style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 16, padding: "20px" }}>
-          <h2 style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 15, fontWeight: 700, marginBottom: 16 }}>Record Activity</h2>
+          <h2 style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 15, fontWeight: 700, marginBottom: 16 }}>{t('record_activity')}</h2>
 
           {/* Mode Toggle */}
           <div style={{ display: "flex", gap: 4, backgroundColor: "var(--bg-surface)", padding: 3, borderRadius: 10, marginBottom: 16 }}>
             {(["manual", "live"] as const).map((mode) => (
               <button key={mode} onClick={() => setTrackingMode(mode)} style={{ flex: 1, padding: "8px 0", borderRadius: 8, fontSize: 12, fontWeight: 600, border: "none", cursor: "pointer", backgroundColor: trackingMode === mode ? "var(--accent)" : "transparent", color: trackingMode === mode ? "#0A0A0B" : "var(--text-secondary)", fontFamily: trackingMode === mode ? "'Chakra Petch', sans-serif" : "inherit", transition: "all 0.15s", textTransform: "capitalize" }}>
-                {mode === "manual" ? <><Keyboard size={12} style={{ display: "inline", marginInlineEnd: 5 }} />Manual</> : <><MapPin size={12} style={{ display: "inline", marginInlineEnd: 5 }} />Live</>}
+                {mode === "manual" ? <><Keyboard size={12} style={{ display: "inline", marginInlineEnd: 5 }} />{t('manual_mode')}</> : <><MapPin size={12} style={{ display: "inline", marginInlineEnd: 5 }} />{t('live_mode')}</>}
               </button>
             ))}
           </div>
@@ -461,19 +461,19 @@ export default function Steps() {
             <form onSubmit={handleAddSteps} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               {/* Walking / Running mode toggle for manual entry */}
               <div>
-                <label style={{ fontSize: 11, fontWeight: 600, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.05em", display: "block", marginBottom: 6 }}>Activity Type</label>
+                <label style={{ fontSize: 11, fontWeight: 600, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.05em", display: "block", marginBottom: 6 }}>{t('activity_type')}</label>
                 <div style={{ display: "flex", gap: 4, backgroundColor: "var(--bg-surface)", padding: 3, borderRadius: 9 }}>
                   {(["walking", "running"] as const).map(m => (
                     <button key={m} type="button" onClick={() => setManualMode(m)} style={{ flex: 1, padding: "6px 0", borderRadius: 7, fontSize: 12, fontWeight: 600, border: "none", cursor: "pointer", backgroundColor: manualMode === m ? "var(--accent)" : "transparent", color: manualMode === m ? "#0A0A0B" : "var(--text-secondary)", fontFamily: manualMode === m ? "'Chakra Petch', sans-serif" : "inherit", transition: "all 0.15s", textTransform: "capitalize" }}>
-                      {m === "walking" ? "\ud83d\udeb6" : "\ud83c\udfc3"} {m}
+                      {m === "walking" ? "\ud83d\udeb6" : "\ud83c\udfc3"} {t(m)}
                     </button>
                   ))}
                 </div>
               </div>
               {[
-                { label: "Date", type: "date", val: selectedDate, onChange: (e: any) => setSelectedDate(e.target.value) },
-                { label: "Distance (km)", type: "number", val: distanceKm, onChange: handleDistanceChange, placeholder: "0.0", step: "0.1", hint: `Auto-calculates steps (using ${normaliseHeightCm(user?.height)} cm height)` },
-                { label: "Steps", type: "number", val: steps, onChange: handleStepsChange, placeholder: "0", hint: "Auto-calculates distance" },
+                { label: t('date_label'), type: "date", val: selectedDate, onChange: (e: any) => setSelectedDate(e.target.value) },
+                { label: t('distance_km'), type: "number", val: distanceKm, onChange: handleDistanceChange, placeholder: "0.0", step: "0.1", hint: t('auto_calc_steps', { height: normaliseHeightCm(user?.height) }) },
+                { label: t('steps_label'), type: "number", val: steps, onChange: handleStepsChange, placeholder: "0", hint: t('auto_calc_distance') },
               ].map((f) => (
                 <div key={f.label}>
                   <label style={{ fontSize: 11, fontWeight: 600, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.05em", display: "block", marginBottom: 5 }}>{f.label}</label>
@@ -482,8 +482,8 @@ export default function Steps() {
                 </div>
               ))}
               <div>
-                <label style={{ fontSize: 11, fontWeight: 600, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.05em", display: "block", marginBottom: 5 }}>Notes</label>
-                <textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Any notes…" rows={2} style={{ ...iStyle, resize: "none" }} />
+                <label style={{ fontSize: 11, fontWeight: 600, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.05em", display: "block", marginBottom: 5 }}>{t('notes_label')}</label>
+                <textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={t('any_notes')} rows={2} style={{ ...iStyle, resize: "none" }} />
               </div>
               <button type="submit" disabled={loading} style={{ padding: "12px", borderRadius: 10, backgroundColor: "var(--accent)", color: "#0A0A0B", fontFamily: "'Chakra Petch', sans-serif", fontWeight: 700, fontSize: 14, border: "none", cursor: loading ? "not-allowed" : "pointer", opacity: loading ? 0.6 : 1 }}>
                 {loading ? "Saving…" : "Save Activity"}
@@ -499,7 +499,7 @@ export default function Steps() {
               <MapTracker ref={mapTrackerRef} onUpdate={handleMapUpdate} onComplete={(session: any) => handleSaveSession(session)} distanceUnit={distanceUnit} />
               {/* Distance unit selector */}
               <div>
-                <label style={{ fontSize: 11, fontWeight: 600, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.05em", display: "block", marginBottom: 6 }}>Distance Unit</label>
+                <label style={{ fontSize: 11, fontWeight: 600, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.05em", display: "block", marginBottom: 6 }}>{t('distance_unit')}</label>
                 <div style={{ display: "flex", gap: 4, backgroundColor: "var(--bg-surface)", padding: 3, borderRadius: 9 }}>
                   {(["km", "m", "cm"] as const).map(u => (
                     <button key={u} onClick={() => handleDistanceUnitChange(u)} style={{ flex: 1, padding: "6px 0", borderRadius: 7, fontSize: 12, fontWeight: 600, border: "none", cursor: "pointer", backgroundColor: distanceUnit === u ? "var(--accent)" : "transparent", color: distanceUnit === u ? "#0A0A0B" : "var(--text-secondary)", transition: "all 0.15s" }}>{u}</button>
@@ -512,10 +512,10 @@ export default function Steps() {
               <div style={{ width: 52, height: 52, borderRadius: "50%", backgroundColor: "var(--bg-surface)", border: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <MapPin size={22} color="var(--text-muted)" />
               </div>
-              <p style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 15, fontWeight: 700 }}>Live Tracking</p>
-              <p style={{ fontSize: 13, color: "var(--text-secondary)", maxWidth: 240, lineHeight: 1.6 }}>Live GPS tracking is available for Premium members and during the 7-day free trial.</p>
+              <p style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 15, fontWeight: 700 }}>{t('live_tracking_title')}</p>
+              <p style={{ fontSize: 13, color: "var(--text-secondary)", maxWidth: 240, lineHeight: 1.6 }}>{t('live_tracking_desc')}</p>
               <a href="/app/pricing" style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "10px 22px", borderRadius: 9, backgroundColor: "var(--accent)", color: "#0A0A0B", fontFamily: "'Chakra Petch', sans-serif", fontWeight: 700, fontSize: 13, textDecoration: "none" }}>
-                Upgrade to Premium
+                {t('upgrade_premium')}
               </a>
             </div>
           )}
@@ -526,21 +526,21 @@ export default function Steps() {
           {/* Tabs */}
           <div style={{ display: "flex", gap: 4, backgroundColor: "var(--bg-surface)", padding: 3, borderRadius: 10, marginBottom: 16 }}>
             {(["today", "weekly", "monthly"] as const).map((tab) => (
-              <button key={tab} onClick={() => setActiveTab(tab)} style={{ flex: 1, padding: "7px 0", borderRadius: 8, fontSize: 11, fontWeight: 600, border: "none", cursor: "pointer", backgroundColor: activeTab === tab ? "var(--accent)" : "transparent", color: activeTab === tab ? "#0A0A0B" : "var(--text-secondary)", fontFamily: activeTab === tab ? "'Chakra Petch', sans-serif" : "inherit", transition: "all 0.15s", textTransform: "capitalize" }}>
-                {tab.charAt(0).toUpperCase() + tab.slice(1)}
+              <button key={tab} onClick={() => setActiveTab(tab)} style={{ flex: 1, padding: "7px 0", borderRadius: 8, fontSize: 11, fontWeight: 600, border: "none", cursor: "pointer", backgroundColor: activeTab === tab ? "var(--accent)" : "transparent", color: activeTab === tab ? "#0A0A0B" : "var(--text-secondary)", fontFamily: activeTab === tab ? "'Chakra Petch', sans-serif" : "inherit", transition: "all 0.15s" }}>
+                {t(`${tab}_tab`)}
               </button>
             ))}
           </div>
 
           {activeTab === "today" && (
             <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              <h3 style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 14, fontWeight: 700, marginBottom: 4 }}>{t("todays_summary") || "Today's Summary"}</h3>
+              <h3 style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 14, fontWeight: 700, marginBottom: 4 }}>{t('todays_summary')}</h3>
               {steps ? (
                 <>
                   {[
-                    { label: "Steps", val: parseInt(steps).toLocaleString(), color: "var(--accent)" },
-                    ...(distanceKm ? [{ label: "Distance", val: (() => { const d = parseFloat(distanceKm); if (isNaN(d)) return `${distanceKm} km`; const display = getDisplayDistance(d * 1000); return `${display.unit === 'km' ? display.value.toFixed(2) : Math.round(display.value)} ${display.unit}`; })(), color: "var(--blue)" }] : []),
-                    ...(calories ? [{ label: "Calories", val: `${calories} kcal`, color: "var(--red)" }] : []),
+                    { label: t('steps_label'), val: parseInt(steps).toLocaleString(), color: "var(--accent)" },
+                    ...(distanceKm ? [{ label: t('distance_label'), val: (() => { const d = parseFloat(distanceKm); if (isNaN(d)) return `${distanceKm} km`; const display = getDisplayDistance(d * 1000); return `${display.unit === 'km' ? display.value.toFixed(2) : Math.round(display.value)} ${display.unit}`; })(), color: "var(--blue)" }] : []),
+                    ...(calories ? [{ label: t('calories_label'), val: `${calories} ${t('kcal_unit')}`, color: "var(--red)" }] : []),
                   ].map((item) => (
                     <div key={item.label} style={{ backgroundColor: "var(--bg-surface)", borderRadius: 12, padding: "14px 16px" }}>
                       <p style={{ fontSize: 11, color: "var(--text-secondary)", marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.05em" }}>{item.label}</p>
@@ -550,20 +550,20 @@ export default function Steps() {
                   {notes && <p style={{ fontSize: 13, color: "var(--text-secondary)", fontStyle: "italic" }}>"{notes}"</p>}
                 </>
               ) : (
-                <p style={{ textAlign: "center", color: "var(--text-muted)", fontSize: 14, padding: "32px 0" }}>{t("no_data_today_start") || "No activity recorded today yet."}</p>
+                <p style={{ textAlign: "center", color: "var(--text-muted)", fontSize: 14, padding: "32px 0" }}>{t('no_data_today_start')}</p>
               )}
             </div>
           )}
 
           {activeTab === "weekly" && weeklyStats && (
             <div>
-              <h3 style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 14, fontWeight: 700, marginBottom: 14 }}>Weekly Breakdown</h3>
+              <h3 style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 14, fontWeight: 700, marginBottom: 14 }}>{t('weekly_breakdown')}</h3>
               <div style={{ display: "flex", flexDirection: "column", gap: 8, maxHeight: 360, overflowY: "auto" }}>
                 {weeklyStats.entries.map((entry: any, i: number) => (
                   <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", backgroundColor: "var(--bg-surface)", borderRadius: 10 }}>
                     <div>
                       <p style={{ fontSize: 13, fontWeight: 600 }}>{new Date(entry.date).toLocaleDateString()}</p>
-                      <p style={{ fontSize: 12, color: "var(--accent)" }}>{entry.steps.toLocaleString()} steps</p>
+                      <p style={{ fontSize: 12, color: "var(--accent)" }}>{entry.steps.toLocaleString()} {t('steps_word')}</p>
                     </div>
                     <button onClick={() => handleDeleteEntry(entry.date)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)", padding: 4, borderRadius: 6 }}>
                       <Trash2 size={14} />
@@ -576,13 +576,13 @@ export default function Steps() {
 
           {activeTab === "monthly" && monthlyStats && (
             <div>
-              <h3 style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 14, fontWeight: 700, marginBottom: 14 }}>Monthly History</h3>
+              <h3 style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 14, fontWeight: 700, marginBottom: 14 }}>{t('monthly_history')}</h3>
               <div style={{ display: "flex", flexDirection: "column", gap: 8, maxHeight: 360, overflowY: "auto" }}>
                 {monthlyStats.entries.map((entry: any, i: number) => (
                   <div key={i} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", backgroundColor: "var(--bg-surface)", borderRadius: 10 }}>
                     <div>
                       <p style={{ fontSize: 13, fontWeight: 600 }}>{new Date(entry.date).toLocaleDateString()}</p>
-                      <p style={{ fontSize: 12, color: "var(--accent)" }}>{entry.steps.toLocaleString()} steps</p>
+                      <p style={{ fontSize: 12, color: "var(--accent)" }}>{entry.steps.toLocaleString()} {t('steps_word')}</p>
                     </div>
                     <button onClick={() => handleDeleteEntry(entry.date)} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--text-muted)", padding: 4, borderRadius: 6 }}>
                       <Trash2 size={14} />

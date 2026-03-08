@@ -55,6 +55,11 @@ export default function PaymentForm({ amount, plan, type, token, onSuccess, onEr
   const [iapProcessing, setIapProcessing] = useState(false);
   const [iapError, setIapError] = useState("");
 
+  const [enabledMethods, setEnabledMethods] = useState<Record<string, boolean>>({
+    pm_orange_cash: true, pm_vodafone_cash: true, pm_we_pay: true,
+    pm_paypal: true, pm_credit_card: false, pm_google_pay: true, pm_apple_pay: true,
+  });
+
   const api = (path: string, opts?: RequestInit) =>
     fetch(getApiBase() + path, { ...opts, headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}`, ...(opts?.headers || {}) } });
 
@@ -71,6 +76,36 @@ export default function PaymentForm({ amount, plan, type, token, onSuccess, onEr
           orange: s.ewallet_phone_orange || s.ewallet_phone || "",
           we: s.ewallet_phone_we || s.ewallet_phone || "",
         });
+        // Load payment method toggles
+        const pm: Record<string, boolean> = {};
+        for (const k of ['pm_orange_cash', 'pm_vodafone_cash', 'pm_we_pay', 'pm_paypal', 'pm_credit_card', 'pm_google_pay', 'pm_apple_pay']) {
+          pm[k] = s[k] !== '0'; // default is enabled unless explicitly "0"
+        }
+        setEnabledMethods(pm);
+
+        // Auto-select first available method if current default is disabled
+        const ewalletOn = pm.pm_vodafone_cash || pm.pm_orange_cash || pm.pm_we_pay;
+        const methodAvail: [Method, boolean][] = [
+          ["ewallet", ewalletOn],
+          ["paypal", pm.pm_paypal],
+          ["apple_iap", pm.pm_apple_pay && !coachId && (platform === "ios" || !native)],
+          ["google_iap", pm.pm_google_pay && !coachId && (platform === "android" || !native)],
+        ];
+        const curAvail = methodAvail.find(([m]) => m === method)?.[1];
+        if (!curAvail) {
+          const first = methodAvail.find(([, ok]) => ok);
+          if (first) setMethod(first[0]);
+        }
+
+        // Auto-select first available wallet type
+        const walletAvail: ("vodafone" | "orange" | "we")[] = [];
+        if (pm.pm_vodafone_cash) walletAvail.push("vodafone");
+        if (pm.pm_orange_cash) walletAvail.push("orange");
+        if (pm.pm_we_pay) walletAvail.push("we");
+        if (walletAvail.length && !walletAvail.includes(walletType)) {
+          setWalletType(walletAvail[0]);
+        }
+
         setSettingsLoaded(true);
       })
       .catch(() => setSettingsLoaded(true));
@@ -234,20 +269,20 @@ export default function PaymentForm({ amount, plan, type, token, onSuccess, onEr
       <div>
         <p style={{ fontSize: 11, fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10 }}>Payment Method</p>
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-          {methodBtn("ewallet",
+          {(enabledMethods.pm_vodafone_cash || enabledMethods.pm_orange_cash || enabledMethods.pm_we_pay) && methodBtn("ewallet",
             <Smartphone size={18} />,
             "E-Wallet"
           )}
-          {methodBtn("paypal",
+          {enabledMethods.pm_paypal && methodBtn("paypal",
             <img src="https://www.paypalobjects.com/webstatic/mktg/logo/pp_cc_mark_37x23.jpg" alt="PayPal" style={{ height: 18, borderRadius: 2 }} />,
             "PayPal"
           )}
-          {!coachId && (platform === "ios" || !native) && methodBtn("apple_iap",
+          {enabledMethods.pm_apple_pay && !coachId && (platform === "ios" || !native) && methodBtn("apple_iap",
             <span style={{ fontSize: 18 }}>🍎</span>,
             "Apple Pay",
             native ? "" : "iOS App"
           )}
-          {!coachId && (platform === "android" || !native) && methodBtn("google_iap",
+          {enabledMethods.pm_google_pay && !coachId && (platform === "android" || !native) && methodBtn("google_iap",
             <span style={{ fontSize: 18 }}>▶️</span>,
             "Google Pay",
             native ? "" : "Android"
@@ -284,10 +319,10 @@ export default function PaymentForm({ amount, plan, type, token, onSuccess, onEr
             <p style={{ fontSize: 11, fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10 }}>Select Wallet</p>
             <div style={{ display: "flex", gap: 8 }}>
               {([
-                { id: "vodafone" as const, label: "Vodafone Cash", icon: "🔴", color: "#E60000" },
-                { id: "orange" as const, label: "Orange Cash", icon: "🟠", color: "#FF6900" },
-                { id: "we" as const, label: "WE Pay", icon: "🟣", color: "#7B2D8E" },
-              ]).map(w => (
+                { id: "vodafone" as const, label: "Vodafone Cash", icon: "🔴", color: "#E60000", key: "pm_vodafone_cash" },
+                { id: "orange" as const, label: "Orange Cash", icon: "🟠", color: "#FF6900", key: "pm_orange_cash" },
+                { id: "we" as const, label: "WE Pay", icon: "🟣", color: "#7B2D8E", key: "pm_we_pay" },
+              ]).filter(w => enabledMethods[w.key]).map(w => (
                 <button key={w.id} type="button" onClick={() => setWalletType(w.id)} style={{
                   flex: 1, padding: "12px 6px", borderRadius: 12,
                   border: `2px solid ${walletType === w.id ? w.color : "var(--border)"}`,

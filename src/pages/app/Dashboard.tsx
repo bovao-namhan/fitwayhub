@@ -280,19 +280,19 @@ export default function Dashboard() {
       })()}
 
       {/* ── Featured Coach Ads (2nd section) ── */}
-      {ads.length > 0 && (
+      {(ads.length > 0 || topCoaches.length > 0) && (
         <div className="fade-up-2" style={{ marginBottom: 24 }}>
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
               <Megaphone size={15} color="var(--blue)" />
-              <h2 style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 15, fontWeight: 700 }}>Featured Coaches</h2>
+              <h2 style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 15, fontWeight: 700 }}>{t("featured_coaches") || "Featured Coaches"}</h2>
             </div>
             <Link to="/app/coaching" style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: "var(--accent)", textDecoration: "none", fontWeight: 500 }}>
-              Find Coaches <ArrowRight size={13} />
+              {t("find_coaches") || "Find Coaches"} <ArrowRight size={13} />
             </Link>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fill, minmax(260px, 1fr))", gap: 14 }}>
-            {ads.slice(0, 4).map((ad: any) => (
+            {ads.length > 0 ? ads.slice(0, 4).map((ad: any) => (
               <div key={ad.id} style={{ backgroundColor: "var(--bg-card)", border: "1px solid rgba(59,139,255,0.2)", borderRadius: 16, overflow: "hidden", display: "flex", flexDirection: "column" }}>
                 {ad.image_url && (
                   <div style={{ height: 120, overflow: "hidden", flexShrink: 0 }}>
@@ -311,10 +311,29 @@ export default function Dashboard() {
                   <p style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.5, flex: 1 }}>{ad.description.length > 90 ? ad.description.slice(0, 90) + "…" : ad.description}</p>
                   <p style={{ fontSize: 11, color: "var(--text-muted)" }}>🎯 {ad.specialty}</p>
                   <Link to={`/app/coaching?coach=${ad.coach_id}`} onClick={() => fetch(getApiBase() + `/api/coach/ads/${ad.id}/click`, { method: "POST", headers: { Authorization: `Bearer ${token}` } }).catch(() => {})} style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "9px 14px", borderRadius: 9, backgroundColor: "var(--blue)", color: "#fff", fontSize: 12, fontWeight: 700, fontFamily: "'Chakra Petch', sans-serif", textDecoration: "none", marginTop: 4 }}>
-                    {ad.cta || "Book Now"} <ExternalLink size={12} />
+                    {ad.cta || t("book_now") || "Book Now"} <ExternalLink size={12} />
                   </Link>
                 </div>
               </div>
+            )) : topCoaches.slice(0, 4).map((coach: any) => (
+              <Link key={coach.id} to={`/app/coaching?coach=${coach.id}`} style={{ backgroundColor: "var(--bg-card)", border: "1px solid rgba(59,139,255,0.2)", borderRadius: 16, overflow: "hidden", display: "flex", flexDirection: "column", textDecoration: "none", transition: "border-color 0.15s" }} onMouseOver={e => (e.currentTarget.style.borderColor = "var(--blue)")} onMouseOut={e => (e.currentTarget.style.borderColor = "rgba(59,139,255,0.2)")}>
+                <div style={{ padding: "18px 16px", flex: 1, display: "flex", flexDirection: "column", alignItems: "center", gap: 10, textAlign: "center" }}>
+                  <img src={coach.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${coach.email}`} alt={coach.name} style={{ width: 56, height: 56, borderRadius: "50%", objectFit: "cover", border: "2px solid var(--border-light)" }} />
+                  <div>
+                    <p style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 14, fontWeight: 700, color: "var(--text-primary)" }}>{coach.name}</p>
+                    <p style={{ fontSize: 11, color: "var(--blue)", marginTop: 3 }}>{coach.specialty || t("fitness_coach") || "Fitness Coach"}</p>
+                  </div>
+                  {coach.rating > 0 && (
+                    <div style={{ display: "flex", alignItems: "center", gap: 3 }}>
+                      <Star size={12} color="var(--amber)" fill="var(--amber)" />
+                      <span style={{ fontSize: 12, fontWeight: 600, color: "var(--amber)" }}>{Number(coach.rating).toFixed(1)}</span>
+                    </div>
+                  )}
+                  <span style={{ padding: "7px 16px", borderRadius: 9, backgroundColor: "var(--blue)", color: "#fff", fontSize: 12, fontWeight: 700, fontFamily: "'Chakra Petch', sans-serif" }}>
+                    {t("view_profile") || "View Profile"}
+                  </span>
+                </div>
+              </Link>
             ))}
           </div>
         </div>

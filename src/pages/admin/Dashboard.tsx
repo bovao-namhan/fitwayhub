@@ -60,7 +60,7 @@ export default function AdminDashboard() {
   const [userEditSaving, setUserEditSaving] = useState(false);
   const [medicalUploading, setMedicalUploading] = useState(false);
   const [giftForm, setGiftForm] = useState({ user_id: 0, title: "", description: "", type: "points", value: 100 });
-  const [videoForm, setVideoForm] = useState({ title: "", description: "", duration: "", category: "HIIT", is_premium: false });
+  const [videoForm, setVideoForm] = useState({ title: "", description: "", duration: "", category: "HIIT", is_premium: false, is_short: false });
   const [userEditForm, setUserEditForm] = useState<any>({
     id: "",
     name: "",
@@ -102,6 +102,13 @@ export default function AdminDashboard() {
     ewallet_phone_we: "",
     paypal_mode: "sandbox" as "sandbox" | "live",
     coach_cut_percentage: "90",
+    pm_orange_cash: "1",
+    pm_vodafone_cash: "1",
+    pm_we_pay: "1",
+    pm_paypal: "1",
+    pm_credit_card: "0",
+    pm_google_pay: "1",
+    pm_apple_pay: "1",
   });
   const [paymentSettingsSaving, setPaymentSettingsSaving] = useState(false);
   const [paymentSettingsMsg, setPaymentSettingsMsg] = useState("");
@@ -422,6 +429,7 @@ export default function AdminDashboard() {
       formData.append("duration", videoForm.duration);
       formData.append("category", videoForm.category);
       formData.append("is_premium", videoForm.is_premium ? "1" : "0");
+      formData.append("is_short", videoForm.is_short ? "1" : "0");
       formData.append("video", videoFile);
       if (thumbnailFile) formData.append("thumbnail", thumbnailFile);
       const res = await fetch(getApiBase() + "/api/admin/videos", {
@@ -433,7 +441,7 @@ export default function AdminDashboard() {
       if (res.ok && data.video) {
         setVideos(v => [data.video, ...v]);
         setShowVideoModal(false);
-        setVideoForm({ title: "", description: "", duration: "", category: "HIIT", is_premium: false });
+        setVideoForm({ title: "", description: "", duration: "", category: "HIIT", is_premium: false, is_short: false });
         setVideoFile(null); setThumbnailFile(null);
         showMsg("🎬 Video uploaded!");
       } else { showMsg("❌ " + (data.message || "Failed to upload video")); }
@@ -519,6 +527,27 @@ export default function AdminDashboard() {
                 <p style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 28, fontWeight: 700, color: s.color }}>{s.value}</p>
               </div>
             ))}
+          </div>
+          {/* Quick Actions: Fake Data */}
+          <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+            <button
+              onClick={async () => {
+                showMsg("⏳ Generating 20 fake accounts…");
+                try { const r = await api("/api/admin/generate-fake-accounts", { method: "POST" }); const d = await r.json(); showMsg(`✅ ${d.message}`); fetchAll(); } catch { showMsg("❌ Failed to generate accounts"); }
+              }}
+              style={{ padding: "11px 20px", borderRadius: 10, backgroundColor: "rgba(59,139,255,0.1)", border: "1px solid rgba(59,139,255,0.3)", color: "var(--blue)", fontFamily: "'Chakra Petch', sans-serif", fontWeight: 700, fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}
+            >
+              <Users size={15} /> Generate 20 Fake Accounts
+            </button>
+            <button
+              onClick={async () => {
+                showMsg("⏳ Generating 5 challenges…");
+                try { const r = await api("/api/admin/generate-fake-challenges", { method: "POST" }); const d = await r.json(); showMsg(`✅ ${d.message}`); } catch { showMsg("❌ Failed to generate challenges"); }
+              }}
+              style={{ padding: "11px 20px", borderRadius: 10, backgroundColor: "rgba(255,170,0,0.1)", border: "1px solid rgba(255,170,0,0.3)", color: "var(--amber)", fontFamily: "'Chakra Petch', sans-serif", fontWeight: 700, fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", gap: 8 }}
+            >
+              <Dumbbell size={15} /> Generate 5 Challenges
+            </button>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fit, minmax(280px, 1fr))", gap: 16 }}>
             <div style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 16, padding: "20px 22px" }}>
@@ -1589,6 +1618,45 @@ export default function AdminDashboard() {
                 </div>
               </div>
 
+              {/* Payment Method Toggles */}
+              <div style={{ padding: "16px", backgroundColor: "rgba(59,139,255,0.06)", border: "1px solid rgba(59,139,255,0.2)", borderRadius: 12 }}>
+                <p style={{ fontSize: 13, fontWeight: 700, color: "var(--blue)", marginBottom: 8 }}>🔀 Available Payment Methods</p>
+                <p style={{ fontSize: 11, color: "var(--text-muted)", marginBottom: 14, lineHeight: 1.5 }}>
+                  Toggle which payment methods are visible to users. Disabled methods won't appear in the payment form.
+                </p>
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  {[
+                    { key: "pm_orange_cash" as const, label: "🟠 Orange Cash (E-Wallet)", color: "#FF6900" },
+                    { key: "pm_vodafone_cash" as const, label: "🔴 Vodafone Cash (E-Wallet)", color: "#E60000" },
+                    { key: "pm_we_pay" as const, label: "🟣 WE Pay (E-Wallet)", color: "#7B2D8E" },
+                    { key: "pm_paypal" as const, label: "💳 PayPal", color: "#0070F3" },
+                    { key: "pm_credit_card" as const, label: "💳 Credit / Debit Card", color: "var(--text-secondary)" },
+                    { key: "pm_google_pay" as const, label: "▶️ Google Pay", color: "#34A853" },
+                    { key: "pm_apple_pay" as const, label: "🍎 Apple Pay", color: "#333" },
+                  ].map(pm => (
+                    <div key={pm.key} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", backgroundColor: "var(--bg-surface)", borderRadius: 10, border: "1px solid var(--border)" }}>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: pm.color }}>{pm.label}</span>
+                      <button
+                        type="button"
+                        onClick={() => setPaymentSettings(s => ({ ...s, [pm.key]: s[pm.key] === "1" ? "0" : "1" }))}
+                        style={{
+                          width: 48, height: 26, borderRadius: 13, border: "none", cursor: "pointer",
+                          backgroundColor: paymentSettings[pm.key] === "1" ? "var(--accent)" : "var(--border)",
+                          position: "relative", transition: "background-color 0.2s",
+                        }}
+                      >
+                        <div style={{
+                          width: 20, height: 20, borderRadius: "50%", backgroundColor: "#fff",
+                          position: "absolute", top: 3,
+                          left: paymentSettings[pm.key] === "1" ? 25 : 3,
+                          transition: "left 0.2s", boxShadow: "0 1px 3px rgba(0,0,0,0.3)",
+                        }} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
               {paymentSettingsMsg && (
                 <div style={{ padding: "12px 16px", borderRadius: 10, backgroundColor: paymentSettingsMsg.startsWith("✅") ? "rgba(0,220,130,0.1)" : "rgba(255,68,68,0.1)", border: `1px solid ${paymentSettingsMsg.startsWith("✅") ? "rgba(0,220,130,0.3)" : "rgba(255,68,68,0.3)"}`, fontSize: 14, fontWeight: 600, color: paymentSettingsMsg.startsWith("✅") ? "var(--accent)" : "var(--red)" }}>
                   {paymentSettingsMsg}
@@ -1764,10 +1832,16 @@ export default function AdminDashboard() {
                   </select>
                 </div>
               </div>
-              <label style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 14, cursor: "pointer" }}>
-                <input type="checkbox" checked={videoForm.is_premium} onChange={e => setVideoForm(f => ({ ...f, is_premium: e.target.checked }))} style={{ width: 16, height: 16, accentColor: "var(--accent)" }} />
-                <span style={{ color: "var(--text-secondary)" }}>Premium only</span>
-              </label>
+              <div style={{ display: "flex", gap: 20 }}>
+                <label style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 14, cursor: "pointer" }}>
+                  <input type="checkbox" checked={videoForm.is_premium} onChange={e => setVideoForm(f => ({ ...f, is_premium: e.target.checked }))} style={{ width: 16, height: 16, accentColor: "var(--accent)" }} />
+                  <span style={{ color: "var(--text-secondary)" }}>Premium only</span>
+                </label>
+                <label style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 14, cursor: "pointer" }}>
+                  <input type="checkbox" checked={videoForm.is_short} onChange={e => setVideoForm(f => ({ ...f, is_short: e.target.checked }))} style={{ width: 16, height: 16, accentColor: "var(--accent)" }} />
+                  <span style={{ color: "var(--text-secondary)" }}>Shorty (&lt; 2 min)</span>
+                </label>
+              </div>
               {videoUploadProgress && (
                 <div style={{ padding: "10px 14px", borderRadius: 8, backgroundColor: "rgba(16,185,129,0.1)", border: "1px solid var(--accent)", textAlign: "center", fontSize: 13, color: "var(--accent)" }}>
                   ⏳ {videoUploadProgress}

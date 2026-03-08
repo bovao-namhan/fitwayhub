@@ -1,10 +1,10 @@
 import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { randomUUID } from 'crypto';
+import { randomUUID, createHash } from 'crypto';
 import { resolve4, resolve6, resolveMx } from 'dns/promises';
 import { UserModel } from '../models/User';
-import { get, run } from '../config/database';
+import { get, run, query } from '../config/database';
 
 const DISPOSABLE_OR_FAKE_DOMAINS = new Set([
   'example.com',
@@ -56,6 +56,38 @@ function issueLoginToken(user: any) {
   return jwt.sign({ id: user.id, email: user.email }, getJwtSecret(), { expiresIn: '30d' });
 }
 
+function hashToken(token: string) {
+  return createHash('sha256').update(token).digest('hex');
+}
+
+function getClientIp(req: Request): string {
+  const forwarded = req.headers['x-forwarded-for'];
+  if (typeof forwarded === 'string') return forwarded.split(',')[0].trim();
+  return req.ip || req.socket.remoteAddress || 'unknown';
+}
+
+async function enforceOneSessionPerIp(userId: number, ip: string, token: string) {
+  // Clean up expired sessions
+  await run('DELETE FROM active_sessions WHERE expires_at < NOW()');
+  // Check if another user has an active session from this IP
+  const existing = await get<any>(
+    'SELECT user_id FROM active_sessions WHERE ip_address = ? AND user_id != ? LIMIT 1',
+    [ip, userId]
+  );
+  if (existing) {
+    return false; // Another account is logged in from this IP
+  }
+  // Remove any old sessions for this user
+  await run('DELETE FROM active_sessions WHERE user_id = ?', [userId]);
+  // Insert new session
+  const tokenHash = hashToken(token);
+  await run(
+    'INSERT INTO active_sessions (user_id, ip_address, token_hash, expires_at) VALUES (?,?,?, DATE_ADD(NOW(), INTERVAL 30 DAY))',
+    [userId, ip, tokenHash]
+  );
+  return true;
+}
+
 function issueOauthState(provider: 'google' | 'facebook') {
   return jwt.sign({ provider, nonce: randomUUID() }, getJwtSecret(), { expiresIn: '10m' });
 }
@@ -104,9 +136,10 @@ async function finalizeSocialLogin(res: Response, req: Request, data: { email: s
 
 export const register = async (req: Request, res: Response) => {
   try {
-    const { password, name, role } = req.body;
+    const { password, name, role, securityQuestion, securityAnswer } = req.body;
     const email = normalizeEmail(req.body?.email);
     if (!email || !password) return res.status(400).json({ message: 'Email and password are required' });
+    if (!securityQuestion || !securityAnswer) return res.status(400).json({ message: 'Security question and answer are required' });
     
     // Email format validation
     const emailRegex = /^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$/;
@@ -128,6 +161,10 @@ export const register = async (req: Request, res: Response) => {
     if (name) await run('UPDATE users SET name = ?, role = ?, is_premium = 0, membership_paid = 0 WHERE id = ?', [name, userRole, user.id]);
     else await run('UPDATE users SET role = ?, is_premium = 0, membership_paid = 0 WHERE id = ?', [userRole, user.id]);
     
+    // Save security question & hashed answer
+    const hashedAnswer = await bcrypt.hash(securityAnswer.trim().toLowerCase(), 10);
+    await UserModel.setSecurityQuestion(user.id, securityQuestion, hashedAnswer);
+    
     // Gift system: 200 points on registration
     const regPoints = await get<any>('SELECT setting_value FROM app_settings WHERE setting_key = ?', ['registration_points_gift']);
     const pointsGift = parseInt((regPoints as any)?.setting_value || '200');
@@ -135,6 +172,8 @@ export const register = async (req: Request, res: Response) => {
     await run('INSERT INTO point_transactions (user_id, points, reason, reference_type) VALUES (?,?,?,?)', [user.id, pointsGift, 'Welcome gift - registration bonus', 'registration']);
     
     const token = issueLoginToken(user);
+    const ip = getClientIp(req);
+    await enforceOneSessionPerIp(user.id, ip, token);
     const fullUser = await get('SELECT id, name, email, role, avatar, is_premium, coach_membership_active, membership_paid, points, steps, step_goal, height, weight, gender, created_at FROM users WHERE id = ?', [user.id]);
     res.status(201).json({ message: 'User registered successfully', token, user: fullUser });
   } catch (error) {
@@ -154,6 +193,14 @@ export const login = async (req: Request, res: Response) => {
     if (!isMatch) return res.status(401).json({ message: 'Invalid credentials' });
     
     const token = issueLoginToken(user);
+    const ip = getClientIp(req);
+
+    // Enforce one account per IP
+    const allowed = await enforceOneSessionPerIp(user.id, ip, token);
+    if (!allowed) {
+      return res.status(403).json({ message: 'Another account is already logged in from this network. Please log out of the other account first.', code: 'IP_SESSION_CONFLICT' });
+    }
+
     const fullUser = await get('SELECT id, name, email, role, avatar, is_premium, coach_membership_active, membership_paid, points, steps, step_goal, height, weight, gender, created_at FROM users WHERE id = ?', [user.id]);
     res.json({ message: 'Login successful', token, user: fullUser });
   } catch (error) {
@@ -162,31 +209,61 @@ export const login = async (req: Request, res: Response) => {
   }
 };
 
-export const forgotPassword = async (req: Request, res: Response) => {
+export const forgotPasswordGetQuestion = async (req: Request, res: Response) => {
   try {
     const email = normalizeEmail(req.body?.email);
     if (!email) return res.status(400).json({ message: 'Email is required' });
-    const user = await UserModel.findByEmail(email);
-    if (!user) return res.json({ message: 'If email exists, reset link has been sent' });
-    const resetToken = jwt.sign({ id: user.id, email: user.email, reset: true }, getJwtSecret(), { expiresIn: '1h' });
-    await UserModel.setResetToken(user.id, resetToken, 3600000);
-    console.log(`Password reset token for ${email}: ${resetToken}`);
-    return res.json({ message: 'Password reset token generated', resetToken, resetUrl: `/auth/reset-password?token=${resetToken}` });
+    const user = await UserModel.findByEmail(email) || await UserModel.findByUsername(email);
+    if (!user || !user.security_question) return res.status(404).json({ message: 'Account not found or no security question set' });
+    return res.json({ question: user.security_question });
   } catch (error) {
     res.status(500).json({ message: 'Server error' });
   }
 };
 
-export const resetPassword = async (req: Request, res: Response) => {
+export const forgotPasswordVerify = async (req: Request, res: Response) => {
   try {
-    const token = req.body.token || req.body.resetToken;
-    const newPassword = req.body.newPassword;
-    if (!token || !newPassword) return res.status(400).json({ message: 'Token and new password are required' });
-    const user = await UserModel.findByResetToken(token);
-    if (!user) return res.status(401).json({ message: 'Invalid or expired reset token' });
+    const email = normalizeEmail(req.body?.email);
+    const { securityAnswer, newPassword } = req.body;
+    if (!email || !securityAnswer || !newPassword) return res.status(400).json({ message: 'Email, security answer, and new password are required' });
+    if (newPassword.length < 8) return res.status(400).json({ message: 'Password must be at least 8 characters long' });
+    const user = await UserModel.findByEmail(email) || await UserModel.findByUsername(email);
+    if (!user || !user.security_answer) return res.status(404).json({ message: 'Account not found' });
+    const answerMatch = await bcrypt.compare(securityAnswer.trim().toLowerCase(), user.security_answer);
+    if (!answerMatch) return res.status(401).json({ message: 'Incorrect security answer' });
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     await UserModel.updatePassword(user.id, hashedPassword);
     return res.json({ message: 'Password reset successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+export const logout = async (req: any, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    if (userId) {
+      await run('DELETE FROM active_sessions WHERE user_id = ?', [userId]);
+    }
+    res.json({ message: 'Logged out successfully' });
+  } catch {
+    res.json({ message: 'Logged out' });
+  }
+};
+
+export const changePassword = async (req: any, res: Response) => {
+  try {
+    const userId = req.user.id;
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) return res.status(400).json({ message: 'Current and new password are required' });
+    if (newPassword.length < 8) return res.status(400).json({ message: 'New password must be at least 8 characters long' });
+    const user = await UserModel.findById(userId);
+    if (!user || !user.password) return res.status(404).json({ message: 'User not found' });
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) return res.status(401).json({ message: 'Current password is incorrect' });
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+    await UserModel.updatePassword(userId, hashedPassword);
+    return res.json({ message: 'Password changed successfully' });
   } catch (error) {
     res.status(500).json({ message: 'Server error' });
   }

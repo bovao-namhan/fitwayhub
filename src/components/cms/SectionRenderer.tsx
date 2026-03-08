@@ -10,10 +10,109 @@ const ICONS: Record<string, any> = { Target, Eye, Shield, Globe, Users, BookOpen
 
 type RenderLang = "en" | "ar";
 
+// Translation overrides loaded from DB at runtime
+let _translationOverrides: Record<string, string> | null = null;
+let _overridesLoading = false;
+
+function loadTranslationOverrides() {
+  if (_translationOverrides || _overridesLoading) return;
+  _overridesLoading = true;
+  fetch(getApiBase() + "/api/cms/translations")
+    .then(r => r.json())
+    .then(d => { _translationOverrides = d.translations || {}; })
+    .catch(() => { _translationOverrides = {}; })
+    .finally(() => { _overridesLoading = false; });
+}
+
+const WEBSITE_TEXT_AR: Record<string, string> = {
+  "#1 DIGITAL FITNESS ECOSYSTEM IN EGYPT": "#1 منظومة لياقة رقمية في مصر",
+  "Transform Your Body.": "غيّر جسمك.",
+  "Empower Your Mind.": "قوّي عقلك.",
+  "Join Fitway Hub for accessible, certified, and human-driven fitness programs. Whether you're a beginner or a pro, we have a plan for you.": "انضم لفيت واي هب واستفاد ببرامج لياقة معتمدة، سهلة الوصول، وبلمسة بشرية حقيقية. سواء لسه بادئ أو محترف، عندنا خطة تناسبك.",
+  "Start Free Today": "ابدأ مجانًا النهارده",
+  "Learn More": "اعرف أكتر",
+  "Active Members": "أعضاء نشطين",
+  "Programs": "برامج",
+  "App Rating": "تقييم التطبيق",
+  "Satisfaction": "رضا العملاء",
+  "Why Fitway": "ليه فيت واي",
+  "Everything you need to win": "كل اللي محتاجه عشان تكسب",
+  "50+ Workout Programs": "+50 برنامج تمرين",
+  "From beginner bodyweight to advanced powerlifting — certified and structured.": "من تمارين وزن الجسم للمبتدئين لحد الباورليفتنج المتقدم، وكلها بشكل منظم ومعتمد.",
+  "AI-Powered Coaching": "تدريب مدعوم بالذكاء الاصطناعي",
+  "Personalized step analysis, recovery insights, and adaptive goal-setting.": "تحليل خطوات مخصص، وفهم أفضل للاستشفاء، وأهداف بتتظبط حسب مستواك.",
+  "Smart Analytics": "تحليلات ذكية",
+  "Track steps, calories, and activity trends with beautiful visual dashboards.": "تابع خطواتك وسعراتك ونشاطك من خلال لوحات واضحة وسهلة.",
+  "Community & Challenges": "المجتمع والتحديات",
+  "Join thousands of members, compete in challenges, and stay accountable.": "انضم لآلاف الأعضاء، وادخل تحديات، وخليك ملتزم أكتر.",
+  "What is Digital Fitness?": "يعني إيه لياقة رقمية؟",
+  "The gym in your pocket.": "الجيم في جيبك.",
+  "Digital fitness bridges physical wellness and technology. We bring certified training plans, nutrition guides, and community support right to your device — anytime, anywhere.": "اللياقة الرقمية بتربط بين الصحة البدنية والتكنولوجيا. بنوصلك خطط تدريب معتمدة، وإرشادات تغذية، ودعم من المجتمع على جهازك في أي وقت ومن أي مكان.",
+  "Access workouts anytime, anywhere": "وصّل للتمارين في أي وقت ومن أي مكان",
+  "Track your progress with smart tools": "تابع تقدمك بأدوات ذكية",
+  "Connect with a supportive community": "اتواصل مع مجتمع بيدعمك",
+  "Get expert advice from certified trainers": "خد نصايح من مدربين معتمدين",
+  "Our mission": "مهمتنا",
+  "JOIN 12,000+ MEMBERS": "انضم لأكتر من 12,000 عضو",
+  "Your best shape starts today.": "أفضل نسخة منك تبدأ النهارده.",
+  "Free to join. No credit card required.": "الانضمام مجاني، ومن غير بطاقة بنكية.",
+  "Create Free Account": "اعمل حساب مجاني",
+  "Our Story": "حكايتنا",
+  "About Fitway Hub": "عن فيت واي هب",
+  "Egypt's leading digital fitness ecosystem — bridging physical wellness, digital support, and community empowerment.": "منصة مصر الرائدة في اللياقة الرقمية، بتجمع بين الصحة البدنية، والدعم الرقمي، وتمكين المجتمع.",
+  "Our Mission": "مهمتنا",
+  "To empower individuals in Egypt with accessible, certified, and human-driven digital fitness services that foster healthy lifestyles and strong communities.": "إننا نمكّن الناس في مصر بخدمات لياقة رقمية سهلة، معتمدة، وبروح بشرية، تساعد على حياة صحية ومجتمع أقوى.",
+  "Our Vision": "رؤيتنا",
+  "To become Egypt & GCC's leading digital fitness ecosystem — bridging the gap between physical wellness, digital support, and community empowerment.": "إننا نكون المنظومة الرائدة في مصر والخليج في اللياقة الرقمية، ونقرب المسافة بين الصحة البدنية والدعم الرقمي وتمكين المجتمع.",
+  "What We Stand For": "المبادئ اللي ماشيين بيها",
+  "Core Values": "قيمنا الأساسية",
+  "Authenticity": "الصدق والواقعية",
+  "Real trainers, real support — no AI-generated training.": "مدربين حقيقيين ودعم حقيقي، من غير تدريب متولد آليًا.",
+  "Accessibility": "سهولة الوصول",
+  "Bilingual support and offline programs for all connectivity levels.": "دعم بلغتين وبرامج تشتغل حتى مع الاتصال الضعيف أو بدون نت.",
+  "Community": "المجتمع",
+  "Group challenges, chat groups, and accountability forums.": "تحديات جماعية، وجروبات شات، ومساحات تشجعك تلتزم.",
+  "Knowledge": "المعرفة",
+  "Courses on fitness, nutrition, and holistic wellness.": "محتوى ودورات عن اللياقة والتغذية والصحة بشكل شامل.",
+  "Accountability": "الالتزام والمتابعة",
+  "Follow-ups, milestones, and regular assessment features.": "متابعات مستمرة، ومراحل واضحة، وتقييمات دورية.",
+  "Start Your Journey Today": "ابدأ رحلتك النهارده",
+  "Join thousands transforming their lives with Fitway Hub.": "انضم لآلاف الناس اللي غيّروا حياتهم مع فيت واي هب.",
+  "Sign Up Free": "سجّل مجانًا",
+  "Support": "الدعم",
+  "Get in Touch": "تواصل معانا",
+  "Have questions? We're here to help — reach out or check our FAQs.": "عندك أسئلة؟ إحنا هنا نساعدك، تواصل معانا أو شوف الأسئلة الشائعة.",
+  "Is the app available in Arabic?": "هل التطبيق متاح بالعربي؟",
+  "Yes! Fitway Hub is entirely bilingual, offering full support in both Arabic and English.": "أيوه، فيت واي هب بيدعم العربي والإنجليزي بالكامل.",
+  "Do I need gym equipment?": "هل لازم أكون عندي معدات جيم؟",
+  "Not necessarily. We offer programs for gym, home (with equipment), and home (bodyweight only).": "مش شرط. عندنا برامج للجيم، وللبيت بمعدات، وللبيت بوزن الجسم بس.",
+  "Are the trainers certified?": "هل المدربين معتمدين؟",
+  "Absolutely. All our trainers are certified professionals — no AI bots.": "أكيد. كل مدربينا محترفين ومعتمدين، ومفيش بديل وهمي.",
+  "Can I cancel my subscription?": "أقدر ألغي الاشتراك؟",
+  "Yes, you can cancel at any time from your account settings with no hassle.": "أيوه، تقدر تلغي في أي وقت من إعدادات حسابك بسهولة.",
+  "Hero Section": "قسم البطل",
+  "Stats Bar": "شريط الإحصائيات",
+  "Features Grid": "شبكة المميزات",
+  "Digital Fitness Explainer": "شرح اللياقة الرقمية",
+  "Bottom CTA": "دعوة الإجراء السفلية",
+  "About Hero": "مقدمة عنّا",
+  "Mission & Vision": "المهمة والرؤية",
+  "About CTA": "دعوة الإجراء لصفحة عنّا",
+  "Contact Hero": "مقدمة التواصل",
+  "Contact Details": "تفاصيل التواصل",
+};
+
+function localizeWebsiteText(text: string, lang: RenderLang): string {
+  if (lang !== "ar") return text;
+  // DB overrides take priority over hardcoded defaults
+  if (_translationOverrides?.[text]) return _translationOverrides[text];
+  return WEBSITE_TEXT_AR[text] || text;
+}
+
 function pickText(obj: any, field: string, lang: RenderLang): string {
   const en = obj?.[field];
   const ar = obj?.[`${field}_ar`];
-  if (lang === "ar") return (ar || en || "") as string;
+  if (lang === "ar") return localizeWebsiteText((ar || en || "") as string, lang);
   return (en || ar || "") as string;
 }
 
@@ -21,8 +120,8 @@ function pickList(obj: any, field: string, lang: RenderLang): string[] {
   const en = obj?.[field];
   const ar = obj?.[`${field}_ar`];
   if (lang === "ar") {
-    if (Array.isArray(ar) && ar.length > 0) return ar;
-    return Array.isArray(en) ? en : [];
+    if (Array.isArray(ar) && ar.length > 0) return ar.map((item) => localizeWebsiteText(String(item), lang));
+    return Array.isArray(en) ? en.map((item) => localizeWebsiteText(String(item), lang)) : [];
   }
   if (Array.isArray(en) && en.length > 0) return en;
   return Array.isArray(ar) ? ar : [];
@@ -81,7 +180,7 @@ function StatsSection({ c, lang }: { c: any; lang: RenderLang }) {
         {items.map((s, i) => (
           <div key={i} style={{ textAlign: "center", padding: "16px", borderInlineEnd: i < items.length - 1 ? "1px solid var(--border)" : "none" }}>
             <p style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 30, fontWeight: 700, color: "var(--accent)", lineHeight: 1 }}>{s.value}</p>
-            <p style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 4, textTransform: "uppercase", letterSpacing: "0.06em" }}>{lang === "ar" ? (s as any).label_ar || s.label : s.label || (s as any).label_ar}</p>
+            <p style={{ fontSize: 12, color: "var(--text-secondary)", marginTop: 4, textTransform: "uppercase", letterSpacing: "0.06em" }}>{lang === "ar" ? localizeWebsiteText((s as any).label_ar || s.label || "", lang) : s.label || (s as any).label_ar}</p>
           </div>
         ))}
       </div>
@@ -112,8 +211,8 @@ function FeaturesSection({ c, lang }: { c: any; lang: RenderLang }) {
                   <Icon size={20} color="var(--accent)" />
                 </div>
               )}
-              <h3 style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 15, fontWeight: 700, marginBottom: 8, color: "var(--text-primary)" }}>{lang === "ar" ? (f as any).title_ar || f.title : f.title || (f as any).title_ar}</h3>
-              <p style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.65 }}>{lang === "ar" ? (f as any).desc_ar || f.desc : f.desc || (f as any).desc_ar}</p>
+              <h3 style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 15, fontWeight: 700, marginBottom: 8, color: "var(--text-primary)" }}>{lang === "ar" ? localizeWebsiteText((f as any).title_ar || f.title || "", lang) : f.title || (f as any).title_ar}</h3>
+              <p style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.65 }}>{lang === "ar" ? localizeWebsiteText((f as any).desc_ar || f.desc || "", lang) : f.desc || (f as any).desc_ar}</p>
             </div>
           );
         })}
@@ -124,6 +223,7 @@ function FeaturesSection({ c, lang }: { c: any; lang: RenderLang }) {
 
 // ── Section: Text + Image ─────────────────────────────────────────────────────
 function TextImageSection({ c, lang }: { c: any; lang: RenderLang }) {
+  const { t } = useI18n();
   const isRight = c.imageSide !== "left";
   const sectionLabel = pickText(c, "sectionLabel", lang);
   const heading = pickText(c, "heading", lang);
@@ -157,7 +257,7 @@ function TextImageSection({ c, lang }: { c: any; lang: RenderLang }) {
       {c.imageUrl ? (
         <img src={c.imageUrl} alt={heading} style={{ width: "100%", borderRadius: 20, objectFit: "cover", position: "relative", border: "1px solid var(--border)" }} />
       ) : (
-        <div style={{ width: "100%", aspectRatio: "16/9", borderRadius: 20, backgroundColor: "var(--bg-surface)", border: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-muted)", fontSize: 13 }}>No image set</div>
+        <div style={{ width: "100%", aspectRatio: "16/9", borderRadius: 20, backgroundColor: "var(--bg-surface)", border: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-muted)", fontSize: 13 }}>{t("image")}</div>
       )}
     </div>
   );
@@ -219,8 +319,8 @@ function CardsSection({ c, lang }: { c: any; lang: RenderLang }) {
         {items.map((item, i) => {
           const Icon = item.icon ? ICONS[item.icon] : null;
           const color = colorsMap[item.color || ""] || "var(--accent)";
-          const title = lang === "ar" ? (item as any).title_ar || item.title : item.title || (item as any).title_ar;
-          const desc = lang === "ar" ? (item as any).desc_ar || item.desc : item.desc || (item as any).desc_ar;
+          const title = lang === "ar" ? localizeWebsiteText((item as any).title_ar || item.title || "", lang) : item.title || (item as any).title_ar;
+          const desc = lang === "ar" ? localizeWebsiteText((item as any).desc_ar || item.desc || "", lang) : item.desc || (item as any).desc_ar;
           return (
             <div key={i} style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 16, padding: "28px 24px", overflow: "hidden", position: "relative" }}>
               {item.imageUrl && <img src={item.imageUrl} alt={title} style={{ width: "100%", height: 140, objectFit: "cover", borderRadius: 10, marginBottom: 16 }} />}
@@ -322,10 +422,10 @@ function ContactInfoSection({ c, lang }: { c: any; lang: RenderLang }) {
               {faqs.map((faq, i) => (
                 <div key={i} style={{ borderBottom: i < faqs.length - 1 ? "1px solid var(--border)" : "none" }}>
                   <button onClick={() => setOpenFaq(openFaq === i ? null : i)} style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "12px 0", background: "none", border: "none", cursor: "pointer", textAlign: "start", color: "var(--text-primary)", fontSize: 13, fontWeight: 500 }}>
-                    {lang === "ar" ? (faq as any).q_ar || faq.q : faq.q || (faq as any).q_ar}
+                    {lang === "ar" ? localizeWebsiteText((faq as any).q_ar || faq.q || "", lang) : faq.q || (faq as any).q_ar}
                     {openFaq === i ? <ChevronUp size={15} color="var(--accent)" /> : <ChevronDown size={15} color="var(--text-muted)" />}
                   </button>
-                  {openFaq === i && <div style={{ paddingBottom: 12, fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.65 }}>{lang === "ar" ? (faq as any).a_ar || faq.a : faq.a || (faq as any).a_ar}</div>}
+                  {openFaq === i && <div style={{ paddingBottom: 12, fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.65 }}>{lang === "ar" ? localizeWebsiteText((faq as any).a_ar || faq.a || "", lang) : faq.a || (faq as any).a_ar}</div>}
                 </div>
               ))}
             </div>
@@ -361,6 +461,7 @@ function CalcSection({ c, lang }: { c: any; lang: RenderLang }) {
 
 // ── Section: Latest Blogs ─────────────────────────────────────────────────────
 export function LatestBlogsSection({ c, lang }: { c?: any; lang: RenderLang }) {
+  const { t } = useI18n();
   const [blogs, setBlogs] = useState<BlogPost[]>([]);
   const [isMobile, setIsMobile] = useState(() => typeof window !== "undefined" && window.innerWidth < 768);
   useEffect(() => { const h = () => setIsMobile(window.innerWidth < 768); window.addEventListener("resize", h); return () => window.removeEventListener("resize", h); }, []);
@@ -415,7 +516,7 @@ export function LatestBlogsSection({ c, lang }: { c?: any; lang: RenderLang }) {
                     ) : (
                       <User size={14} color="var(--text-muted)" />
                     )}
-                    <span style={{ fontSize: 11, color: "var(--text-muted)" }}>{blog.author_name || "FitWay"}</span>
+                    <span style={{ fontSize: 11, color: "var(--text-muted)" }}>{blog.author_name || t("fitway_hub")}</span>
                   </div>
                   {formattedDate && (
                     <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
@@ -431,7 +532,7 @@ export function LatestBlogsSection({ c, lang }: { c?: any; lang: RenderLang }) {
       </div>
       <div style={{ textAlign: "center", marginTop: 40 }}>
         <Link to="/blogs" style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "12px 28px", borderRadius: 11, backgroundColor: "var(--accent)", color: "#0A0A0B", fontFamily: "'Chakra Petch', sans-serif", fontWeight: 700, fontSize: 14, textDecoration: "none", letterSpacing: "0.02em" }}>
-          {lang === "ar" ? "عرض جميع المقالات" : "View All Articles"} <ArrowRight size={16} />
+          {t("view_all_articles")} <ArrowRight size={16} />
         </Link>
       </div>
     </section>
@@ -448,6 +549,7 @@ export interface CmsSection {
 
 export default function SectionRenderer({ section }: { section: CmsSection }) {
   const { lang } = useI18n();
+  loadTranslationOverrides();
   const { type, content: c } = section;
   switch (type) {
     case "hero":          return <HeroSection c={c} lang={lang} />;

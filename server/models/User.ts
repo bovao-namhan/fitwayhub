@@ -12,6 +12,8 @@ export interface User {
   steps?: number;
   height?: number;
   weight?: number;
+  security_question?: string;
+  security_answer?: string;
   created_at: string;
 }
 
@@ -65,6 +67,9 @@ export const UserModel = {
     params.push(userId);
     return run(`UPDATE users SET ${updates.join(', ')} WHERE id = ?`, params);
   },
+
+  setSecurityQuestion: async (userId: number, question: string, answerHash: string) =>
+    run('UPDATE users SET security_question = ?, security_answer = ? WHERE id = ?', [question, answerHash, userId]),
 
   addOfflineSteps: async (userId: number, steps: number) =>
     run('UPDATE users SET offline_steps = offline_steps + ?, last_sync = NOW() WHERE id = ?', [steps, userId]),

@@ -209,7 +209,7 @@ export default function CoachChat() {
                       <div style={{ minWidth: 180 }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
                           <Mic size={13} color={isMe ? "#fff" : "var(--accent)"} />
-                          <span style={{ fontSize: 10, fontWeight: 600, opacity: 0.7 }}>Voice note</span>
+                          <span style={{ fontSize: 10, fontWeight: 600, opacity: 0.7 }}>{t('voice_note')}</span>
                         </div>
                         <audio controls preload="metadata" style={{ width: "100%", height: 28, borderRadius: 6 }}
                           src={msg.media_url.startsWith('http') ? msg.media_url : getApiBase() + msg.media_url} />
@@ -233,7 +233,7 @@ export default function CoachChat() {
                 </button>
                 <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", backgroundColor: "rgba(255,68,68,0.06)", borderRadius: 11, border: "1px solid rgba(255,68,68,0.15)" }}>
                   <div style={{ width: 8, height: 8, borderRadius: "50%", backgroundColor: "#FF4444" }} />
-                  <span style={{ fontSize: 13, fontWeight: 600, color: "#FF6B6B" }}>Recording {formatRecTime(recordingDuration)}</span>
+                  <span style={{ fontSize: 13, fontWeight: 600, color: "#FF6B6B" }}>{t('recording_label')} {formatRecTime(recordingDuration)}</span>
                 </div>
                 <button onClick={stopRecording} style={{ width: 42, height: 42, borderRadius: 11, backgroundColor: "var(--blue)", border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flexShrink: 0 }}>
                   <Send size={16} color="#fff" />

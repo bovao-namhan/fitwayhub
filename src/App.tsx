@@ -21,6 +21,7 @@ const WebsiteBlogs = lazy(() => import("@/pages/website/Blogs"));
 const Login = lazy(() => import("@/pages/auth/Login"));
 const Register = lazy(() => import("@/pages/auth/Register"));
 const SocialCallback = lazy(() => import("@/pages/auth/SocialCallback"));
+const ForgotPassword = lazy(() => import("@/pages/auth/ForgotPassword"));
 const Dashboard = lazy(() => import("@/pages/app/Dashboard"));
 const Workouts = lazy(() => import("@/pages/app/Workouts"));
 const Community = lazy(() => import("@/pages/app/Community"));
@@ -46,6 +47,7 @@ const CoachBlogs = lazy(() => import("@/pages/coach/Blogs"));
 const PaymentResult = lazy(() => import("@/pages/PaymentResult"));
 const AppBlogs = lazy(() => import("@/pages/app/Blogs"));
 const AdminBlogs = lazy(() => import("@/pages/admin/Blogs"));
+const AdminEmailServer = lazy(() => import("@/pages/admin/EmailServer"));
 
 function SmartRedirect() {
   // Handled in AuthContext login flow
@@ -85,6 +87,7 @@ export default function App() {
               {/* Auth Routes */}
               <Route path="/auth/login" element={<Login />} />
               <Route path="/auth/register" element={<Register />} />
+              <Route path="/auth/forgot-password" element={<ForgotPassword />} />
               <Route path="/auth/social-callback" element={<SocialCallback />} />
 
               {/* User App Routes */}
@@ -152,6 +155,7 @@ export default function App() {
                 <Route path="/admin/subscriptions" element={<AdminDashboard />} />
                 <Route path="/admin/withdrawals" element={<AdminDashboard />} />
                 <Route path="/admin/blogs" element={<AdminBlogs />} />
+                <Route path="/admin/email" element={<AdminEmailServer />} />
               </Route>
 
               {/* Payment Result Routes */}

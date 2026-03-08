@@ -2,7 +2,7 @@ import { Outlet } from "react-router-dom";
 import {
   LayoutDashboard, Users, Settings, Activity,
   Gift, DollarSign, Video, Megaphone, UserCheck, Globe, MessageCircle, FileText,
-  ClipboardList, Wallet,
+  ClipboardList, Wallet, Mail,
 } from "lucide-react";
 import { useBranding, getBrandLogoForLang } from "@/context/BrandingContext";
 import { useI18n } from "@/context/I18nContext";
@@ -22,6 +22,7 @@ const navItems: NavItem[] = [
   { path: "/admin/website",        icon: Globe,           label: "Website" },
   { path: "/admin/subscriptions",  icon: ClipboardList,   label: "Subscriptions" },
   { path: "/admin/withdrawals",    icon: Wallet,          label: "Withdrawals" },
+  { path: "/admin/email",          icon: Mail,            label: "Email Server" },
   { path: "/admin/settings",       icon: Settings,        label: "Settings" },
 ];
 
@@ -41,6 +42,7 @@ const moreItems: NavItem[] = [
   { path: "/admin/website",        icon: Globe,         label: "Website" },
   { path: "/admin/subscriptions",  icon: ClipboardList, label: "Subscriptions" },
   { path: "/admin/withdrawals",    icon: Wallet,        label: "Withdrawals" },
+  { path: "/admin/email",          icon: Mail,          label: "Email Server" },
 ];
 
 export function AdminLayout() {
@@ -62,6 +64,7 @@ export function AdminLayout() {
     { path: "/admin/website",        icon: Globe,           label: t("website") },
     { path: "/admin/subscriptions",  icon: ClipboardList,   label: t("subscriptions") || "Subscriptions" },
     { path: "/admin/withdrawals",    icon: Wallet,          label: t("withdrawals") || "Withdrawals" },
+    { path: "/admin/email",          icon: Mail,            label: "Email Server" },
     { path: "/admin/settings",       icon: Settings,        label: t("settings") },
   ];
 
@@ -82,6 +85,7 @@ export function AdminLayout() {
     { path: "/admin/website",        icon: Globe,          label: t("website") },
     { path: "/admin/subscriptions",  icon: ClipboardList,  label: t("subscriptions") || "Subscriptions" },
     { path: "/admin/withdrawals",    icon: Wallet,         label: t("withdrawals") || "Withdrawals" },
+    { path: "/admin/email",          icon: Mail,           label: "Email Server" },
   ];
   const { isMobile, sidebarW, DesktopSidebar, OverlayDrawer, MobileTopBar, MobileBottomBar } = SharedSidebar({
     navItems: translatedNavItems,

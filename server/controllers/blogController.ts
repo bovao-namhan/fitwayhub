@@ -42,15 +42,13 @@ export const getPublicBlogs = async (req: Request, res: Response) => {
     const limit = Math.min(Math.max(Number(req.query.limit || 30), 1), 100);
     const q = String(req.query.q || '').trim();
 
-    const where: string[] = ['bp.status = \"published\"'];
+    const where: string[] = ['bp.status = "published"'];
     const params: any[] = [];
 
     if (q) {
       where.push('(bp.title LIKE ? OR bp.excerpt LIKE ? OR bp.content LIKE ?)');
       params.push(`%${q}%`, `%${q}%`, `%${q}%`);
     }
-
-    params.push(limit);
 
     const posts = await query(
       `SELECT bp.id, bp.title, bp.slug, bp.excerpt, bp.content, bp.header_image_url, bp.video_url,
@@ -60,12 +58,13 @@ export const getPublicBlogs = async (req: Request, res: Response) => {
        JOIN users u ON u.id = bp.author_id
        WHERE ${where.join(' AND ')}
        ORDER BY COALESCE(bp.published_at, bp.created_at) DESC
-       LIMIT ?`,
+       LIMIT ${limit}`,
       params
     );
 
     res.json({ posts });
-  } catch {
+  } catch (err) {
+    console.error('getPublicBlogs error:', err);
     res.status(500).json({ message: 'Failed to fetch public blogs' });
   }
 };
@@ -128,8 +127,6 @@ export const getBlogs = async (req: Request, res: Response) => {
       params.push(`%${q}%`, `%${q}%`, `%${q}%`);
     }
 
-    params.push(limit);
-
     const posts = await query(
       `SELECT bp.id, bp.title, bp.slug, bp.excerpt, bp.content, bp.header_image_url, bp.video_url,
               bp.status, bp.author_id, bp.author_role, bp.created_at, bp.updated_at, bp.published_at,
@@ -138,7 +135,7 @@ export const getBlogs = async (req: Request, res: Response) => {
        JOIN users u ON u.id = bp.author_id
        ${where.length ? `WHERE ${where.join(' AND ')}` : ''}
        ORDER BY COALESCE(bp.published_at, bp.created_at) DESC, bp.updated_at DESC
-       LIMIT ?`,
+       LIMIT ${limit}`,
       params
     );
 

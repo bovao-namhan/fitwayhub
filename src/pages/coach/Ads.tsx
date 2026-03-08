@@ -210,7 +210,7 @@ export default function CoachAds() {
       {/* Rate info */}
       <div style={{ padding: "12px 16px", borderRadius: 12, background: "rgba(255,179,64,0.07)", border: "1px solid rgba(255,179,64,0.2)", fontSize: 13, color: "var(--amber)", display: "flex", gap: 8, alignItems: "center" }}>
         <Clock size={15} />
-        <span>{t("coach_ads_rate_prefix")} <strong>{RATE_PER_MIN} EGP / {t("minute")}</strong> {t("coach_ads_rate_suffix")}</span>
+        <span>{t("coach_ads_rate_prefix")} <strong>{RATE_PER_MIN} {t('currency_egp')} / {t("minute")}</strong> {t("coach_ads_rate_suffix")}</span>
       </div>
 
       {/* Stats */}
@@ -218,10 +218,10 @@ export default function CoachAds() {
         {[
           { label: t("impressions"), value: totalImpressions.toLocaleString(), icon: Eye, color: "var(--blue)" },
           { label: t("clicks"), value: totalClicks, icon: MousePointerClick, color: "var(--accent)" },
-          { label: "CTR", value: totalImpressions > 0 ? `${((totalClicks / totalImpressions) * 100).toFixed(1)}%` : "—", icon: TrendingUp, color: "var(--cyan)" },
+          { label: t('ctr_label'), value: totalImpressions > 0 ? `${((totalClicks / totalImpressions) * 100).toFixed(1)}%` : "—", icon: TrendingUp, color: "var(--cyan)" },
           { label: t("active"), value: ads.filter(a => a.status === "active").length, icon: Radio, color: "var(--accent)" },
           { label: t("pending"), value: ads.filter(a => a.status === "pending").length, icon: Clock, color: "var(--amber)" },
-          { label: t("coach_ads_spent"), value: `${ads.reduce((s, a) => s + ((a.payment_status === "approved" ? a.paid_amount : 0) || 0), 0)} EGP`, icon: DollarSign, color: "var(--amber)" },
+          { label: t("coach_ads_spent"), value: `${ads.reduce((s, a) => s + ((a.payment_status === "approved" ? a.paid_amount : 0) || 0), 0)} ${t('currency_egp')}`, icon: DollarSign, color: "var(--amber)" },
         ].map(s => (
           <div key={s.label} style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 14, padding: 16 }}>
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8 }}>
@@ -312,7 +312,7 @@ export default function CoachAds() {
                           border: `1px solid ${ad.payment_status === "approved" ? "rgba(200,255,0,0.2)" : ad.payment_status === "pending" ? "rgba(255,179,64,0.3)" : "rgba(255,68,68,0.2)"}`,
                         }}>
                           {ad.payment_status === "approved" ? <CheckCircle size={10} /> : ad.payment_status === "pending" ? <Clock size={10} /> : <AlertCircle size={10} />}
-                          {ad.paid_amount || 0} EGP · {ad.payment_status}
+                          {ad.paid_amount || 0} {t('currency_egp')} · {ad.payment_status}
                         </span>
                       )}
                       {boostEnd && !isExpired && ad.status === "active" && (
@@ -346,7 +346,7 @@ export default function CoachAds() {
                       </div>
                       <div style={{ padding: "8px 10px", borderRadius: 8, background: "rgba(255,179,64,0.06)", border: "1px solid rgba(255,179,64,0.15)" }}>
                         <p style={{ fontSize: 9, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 3 }}>{t("money_spent")}</p>
-                        <p style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 14, fontWeight: 700, color: "var(--amber)" }}>{moneySpent} EGP</p>
+                        <p style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 14, fontWeight: 700, color: "var(--amber)" }}>{moneySpent} {t('currency_egp')}</p>
                       </div>
                       <div style={{ padding: "8px 10px", borderRadius: 8, background: "rgba(200,255,0,0.06)", border: "1px solid rgba(200,255,0,0.15)" }}>
                         <p style={{ fontSize: 9, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 3 }}>{t("time_left")}</p>
@@ -356,7 +356,7 @@ export default function CoachAds() {
                       </div>
                       <div style={{ padding: "8px 10px", borderRadius: 8, background: "rgba(6,182,212,0.06)", border: "1px solid rgba(6,182,212,0.15)" }}>
                         <p style={{ fontSize: 9, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 3 }}>{t("money_left")}</p>
-                        <p style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 14, fontWeight: 700, color: "var(--cyan)" }}>{moneyRemaining} EGP</p>
+                        <p style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 14, fontWeight: 700, color: "var(--cyan)" }}>{moneyRemaining} {t('currency_egp')}</p>
                       </div>
                     </div>
                   )}
@@ -365,7 +365,7 @@ export default function CoachAds() {
                   <div style={{ display: "flex", gap: 14, fontSize: 11, color: "var(--text-muted)" }}>
                     <span>👁 {(ad.impressions || 0).toLocaleString()}</span>
                     <span>🖱 {ad.clicks || 0}</span>
-                    <span style={{ color: "var(--blue)", fontWeight: 600 }}>{adCtr}% CTR</span>
+                    <span style={{ color: "var(--blue)", fontWeight: 600 }}>{adCtr}% {t('ctr_label')}</span>
                     <span>🕒 {new Date(ad.created_at).toLocaleDateString()}</span>
                   </div>
                 </div>
@@ -463,7 +463,7 @@ export default function CoachAds() {
                           {isDragging ? t("coach_ads_drop_here") : t("coach_ads_drag_upload")}
                         </p>
                         <p style={{ fontSize: 11, color: "var(--text-muted)" }}>
-                          {mediaType === "image" ? "PNG, JPG, WEBP — max 5MB" : "MP4, MOV, WEBM — max 500MB"}
+                          {mediaType === "image" ? t('png_jpg_hint') : t('video_hint')}
                         </p>
                       </div>
                     )}
@@ -523,7 +523,7 @@ export default function CoachAds() {
                       <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>
                         {durationDays > 0 ? `${durationDays}d ` : ""}{durationHours > 0 ? `${durationHours}h` : ""} = {totalMinutes} {t("minutes")}
                       </span>
-                      <span style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 18, fontWeight: 700, color: "var(--accent)" }}>{totalCost} EGP</span>
+                      <span style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 18, fontWeight: 700, color: "var(--accent)" }}>{totalCost} {t('currency_egp')}</span>
                     </div>
                   )}
                 </div>
@@ -532,7 +532,7 @@ export default function CoachAds() {
                   onClick={() => { if (!form.title || !form.description) return; if (editing) { saveAd().then(ok => { if (ok) { setShowModal(false); fetchAds(); } }); } else { setModalStep("payment"); } }}
                   disabled={!form.title || !form.description || saving}
                   style={{ padding: "12px", borderRadius: 11, background: saving ? "var(--bg-surface)" : "var(--blue)", border: "none", color: saving ? "var(--text-muted)" : "#fff", fontFamily: "'Chakra Petch', sans-serif", fontWeight: 700, fontSize: 14, cursor: !form.title || !form.description || saving ? "not-allowed" : "pointer", opacity: !form.title || !form.description ? 0.5 : 1 }}>
-                  {saving ? t("saving") : editing ? t("coach_ads_update_ad") : `${t("coach_ads_next_payment")} (${totalCost} EGP) →`}
+                  {saving ? t("saving") : editing ? t("coach_ads_update_ad") : `${t("coach_ads_next_payment")} (${totalCost} ${t('currency_egp')}) →`}
                 </button>
               </div>
             )}
@@ -558,18 +558,18 @@ export default function CoachAds() {
                   </div>
                   <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginBottom: 6 }}>
                     <span style={{ color: "var(--text-secondary)" }}>{t("rate")}</span>
-                    <span>{RATE_PER_MIN} EGP / {t("minute")}</span>
+                    <span>{RATE_PER_MIN} {t('currency_egp')} / {t("minute")}</span>
                   </div>
                   <div style={{ borderTop: "1px solid var(--border)", paddingTop: 8, display: "flex", justifyContent: "space-between" }}>
                     <span style={{ fontWeight: 700, color: "var(--amber)" }}>{t("total")}</span>
-                    <span style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 20, fontWeight: 700, color: "var(--accent)" }}>{totalCost} EGP</span>
+                    <span style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 20, fontWeight: 700, color: "var(--accent)" }}>{totalCost} {t('currency_egp')}</span>
                   </div>
                 </div>
 
                 {/* E-wallet instructions */}
                 <div style={{ padding: "14px 16px", borderRadius: 12, background: "rgba(59,139,255,0.07)", border: "1px solid rgba(59,139,255,0.2)" }}>
                   <p style={{ fontSize: 13, fontWeight: 700, color: "var(--blue)", marginBottom: 8 }}>📱 {t("coach_ads_ewallet_payment")}</p>
-                  <p style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 6 }}>{t("coach_ads_send") } <strong style={{ color: "var(--accent)" }}>{totalCost} EGP</strong> {t("coach_ads_to")}</p>
+                  <p style={{ fontSize: 13, color: "var(--text-secondary)", marginBottom: 6 }}>{t("coach_ads_send") } <strong style={{ color: "var(--accent)" }}>{totalCost} {t('currency_egp')}</strong> {t("coach_ads_to")}</p>
                   <div style={{ padding: "10px 14px", borderRadius: 8, background: "var(--bg-surface)", border: "1px solid rgba(59,139,255,0.3)", fontFamily: "monospace", fontSize: 18, fontWeight: 800, color: "var(--blue)", marginBottom: 6 }}>
                     {ewalletPhone}
                     <button onClick={() => navigator.clipboard?.writeText(ewalletPhone)} style={{ float: "right", background: "none", border: "none", cursor: "pointer", fontSize: 11, color: "var(--text-muted)" }}>{t("copy")}</button>
@@ -599,7 +599,7 @@ export default function CoachAds() {
                 <div style={{ display: "flex", gap: 10 }}>
                   <button onClick={() => setModalStep("details")} style={{ flex: 1, padding: "11px", borderRadius: 10, backgroundColor: "var(--bg-surface)", border: "1px solid var(--border)", color: "var(--text-secondary)", cursor: "pointer", fontSize: 14 }}>← {t("back")}</button>
                   <button onClick={handleSubmitWithPayment} disabled={adPayProcessing} style={{ flex: 2, padding: "11px", borderRadius: 10, backgroundColor: adPayProcessing ? "var(--bg-surface)" : "var(--blue)", color: adPayProcessing ? "var(--text-muted)" : "#fff", fontFamily: "'Chakra Petch', sans-serif", fontWeight: 700, fontSize: 14, border: "none", cursor: adPayProcessing ? "not-allowed" : "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-                    <Lock size={14} /> {adPayProcessing ? t("coach_ads_submitting") : `${t("submit_pay")} ${totalCost} EGP`}
+                    <Lock size={14} /> {adPayProcessing ? t("coach_ads_submitting") : `${t("submit_pay")} ${totalCost} ${t('currency_egp')}`}
                   </button>
                 </div>
               </div>

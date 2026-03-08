@@ -48,8 +48,8 @@ export default function CoachAthletes() {
     setSelected(a);
     setTab("overview");
     setEditingStepGoal(false);
-    setWorkoutPlan({ title: `${a.name}'s Workout`, description: "", days_per_week: 3, exercises: [] });
-    setNutritionPlan({ title: `${a.name}'s Nutrition`, daily_calories: 2000, protein_g: 150, carbs_g: 250, fat_g: 65, meals: [], notes: "" });
+    setWorkoutPlan({ title: t('workout_plan_title', { name: a.name }), description: "", days_per_week: 3, exercises: [] });
+    setNutritionPlan({ title: t('nutrition_plan_title', { name: a.name }), daily_calories: 2000, protein_g: 150, carbs_g: 250, fat_g: 65, meals: [], notes: "" });
     // Load existing plans and profile
     try {
       const [wp, np, profile] = await Promise.all([
@@ -62,7 +62,7 @@ export default function CoachAthletes() {
       }
       if (wp.plan) {
         setWorkoutPlan({
-          title: wp.plan.title || `${a.name}'s Workout`,
+          title: wp.plan.title || t('workout_plan_title', { name: a.name }),
           description: wp.plan.description || "",
           days_per_week: wp.plan.days_per_week || 3,
           exercises: Array.isArray(wp.plan.exercises) ? wp.plan.exercises.map((e: any) => ({ ...e, id: e.id || Date.now().toString() })) : [],
@@ -70,7 +70,7 @@ export default function CoachAthletes() {
       }
       if (np.plan) {
         setNutritionPlan({
-          title: np.plan.title || `${a.name}'s Nutrition`,
+          title: np.plan.title || t('nutrition_plan_title', { name: a.name }),
           daily_calories: np.plan.daily_calories || 2000,
           protein_g: np.plan.protein_g || 150,
           carbs_g: np.plan.carbs_g || 250,
@@ -182,7 +182,7 @@ export default function CoachAthletes() {
                   {[
                     { label: t("height_label"), value: selected.height ? `${selected.height} cm` : "—", color: "var(--blue)" },
                     { label: t("weight_label"), value: selected.weight ? `${selected.weight} kg` : "—", color: "var(--amber)" },
-                    { label: "BMI", value: bmi || "—", color: "var(--cyan)" },
+                    { label: t('bmi_label'), value: bmi || "—", color: "var(--cyan)" },
                     { label: t("coach_requests_steps_today"), value: (selected.steps || 0).toLocaleString(), color: "var(--accent)" },
                     { label: t("premium_member"), value: selected.is_premium ? t("yes") : t("free_label"), color: selected.is_premium ? "var(--accent)" : "var(--text-muted)" },
                   ].map(s => (
@@ -247,7 +247,7 @@ export default function CoachAthletes() {
                         <p style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 13, fontWeight: 700 }}>{p.label}</p>
                         {p.tab === "workout" ? <Dumbbell size={14} color={p.color} /> : <Activity size={14} color={p.color} />}
                       </div>
-                      <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 10 }}>{p.tab === "workout" ? `${workoutPlan.exercises.length} ${t("exercises")}` : `${nutritionPlan.daily_calories} kcal/day`}</p>
+                      <p style={{ fontSize: 12, color: "var(--text-muted)", marginBottom: 10 }}>{p.tab === "workout" ? `${workoutPlan.exercises.length} ${t("exercises")}` : `${nutritionPlan.daily_calories} ${t('kcal_per_day')}`}</p>
                       <button onClick={() => setTab(p.tab)} style={{ width: "100%", padding: "7px", borderRadius: 8, background: p.bg, border: `1px solid ${p.border}`, color: p.color, cursor: "pointer", fontSize: 12, fontWeight: 600 }}>{t("manage_plan")}</button>
                     </div>
                   ))}
@@ -271,7 +271,7 @@ export default function CoachAthletes() {
                   <div>
                     <label style={{ fontSize: 11, color: "var(--text-muted)", display: "block", marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.07em" }}>{t("coach_athletes_days_week")}</label>
                     <select className="input-base" value={workoutPlan.days_per_week} onChange={e => setWorkoutPlan(p => ({ ...p, days_per_week: Number(e.target.value) }))}>
-                      {[2,3,4,5,6].map(n => <option key={n} value={n}>{n} days</option>)}
+                      {[2,3,4,5,6].map(n => <option key={n} value={n}>{t('n_days', { n })}</option>)}
                     </select>
                   </div>
                 </div>
@@ -283,13 +283,13 @@ export default function CoachAthletes() {
                 {workoutPlan.exercises.map(ex => (
                   <div key={ex.id} style={{ backgroundColor: "var(--bg-surface)", border: "1px solid var(--border)", borderRadius: 12, padding: "12px 14px" }}>
                     <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 70px 70px 70px auto", gap: 8, alignItems: "center" }}>
-                      <input className="input-base" value={ex.name} onChange={e => updateEx(ex.id, "name", e.target.value)} placeholder="Exercise name" style={{ padding: "7px 10px" }} />
+                      <input className="input-base" value={ex.name} onChange={e => updateEx(ex.id, "name", e.target.value)} placeholder={t('exercise_name')} style={{ padding: "7px 10px" }} />
                       <select className="input-base" value={ex.day} onChange={e => updateEx(ex.id, "day", e.target.value)} style={{ padding: "7px 8px", fontSize: 12 }}>
                         {DAYS.map(d => <option key={d} value={d}>{d.slice(0,3)}</option>)}
                       </select>
-                      <input className="input-base" type="number" value={ex.sets} onChange={e => updateEx(ex.id, "sets", Number(e.target.value))} placeholder="Sets" style={{ padding: "7px 8px" }} min={1} />
-                      <input className="input-base" value={ex.reps} onChange={e => updateEx(ex.id, "reps", e.target.value)} placeholder="Reps" style={{ padding: "7px 8px" }} />
-                      <input className="input-base" type="number" value={ex.rest_seconds} onChange={e => updateEx(ex.id, "rest_seconds", Number(e.target.value))} placeholder="Rest" style={{ padding: "7px 8px" }} min={0} />
+                      <input className="input-base" type="number" value={ex.sets} onChange={e => updateEx(ex.id, "sets", Number(e.target.value))} placeholder={t('sets_label')} style={{ padding: "7px 8px" }} min={1} />
+                      <input className="input-base" value={ex.reps} onChange={e => updateEx(ex.id, "reps", e.target.value)} placeholder={t('reps_label')} style={{ padding: "7px 8px" }} />
+                      <input className="input-base" type="number" value={ex.rest_seconds} onChange={e => updateEx(ex.id, "rest_seconds", Number(e.target.value))} placeholder={t('rest_label')} style={{ padding: "7px 8px" }} min={0} />
                       <button onClick={() => removeEx(ex.id)} style={{ background: "rgba(255,68,68,0.1)", border: "1px solid var(--red)", borderRadius: 7, padding: "7px", cursor: "pointer", color: "var(--red)" }}><Trash2 size={13} /></button>
                     </div>
                   </div>
@@ -307,7 +307,7 @@ export default function CoachAthletes() {
                 </div>
                 <input className="input-base" value={nutritionPlan.title} onChange={e => setNutritionPlan(p => ({ ...p, title: e.target.value }))} placeholder={t("coach_athletes_plan_title")} />
                 <div style={{ display: "grid", gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(4, 1fr)", gap: 10 }}>
-                  {[{ label: "Calories", field: "daily_calories" as const, unit: "kcal", color: "var(--amber)" }, { label: "Protein", field: "protein_g" as const, unit: "g", color: "var(--accent)" }, { label: "Carbs", field: "carbs_g" as const, unit: "g", color: "var(--blue)" }, { label: "Fat", field: "fat_g" as const, unit: "g", color: "var(--red)" }].map(m => (
+                  {[{ label: t('calories_nutrition'), field: "daily_calories" as const, unit: t('kcal_unit'), color: "var(--amber)" }, { label: t('protein_label'), field: "protein_g" as const, unit: t('g_unit'), color: "var(--accent)" }, { label: t('carbs_label'), field: "carbs_g" as const, unit: t('g_unit'), color: "var(--blue)" }, { label: t('fat_label'), field: "fat_g" as const, unit: t('g_unit'), color: "var(--red)" }].map(m => (
                     <div key={m.field} style={{ backgroundColor: "var(--bg-surface)", border: "1px solid var(--border)", borderRadius: 12, padding: "12px 14px" }}>
                       <p style={{ fontSize: 10, color: "var(--text-muted)", marginBottom: 6, textTransform: "uppercase" }}>{m.label}</p>
                       <div style={{ display: "flex", alignItems: "center", gap: 3 }}>
@@ -325,12 +325,12 @@ export default function CoachAthletes() {
                 {nutritionPlan.meals.map(m => (
                   <div key={m.id} style={{ backgroundColor: "var(--bg-surface)", border: "1px solid var(--border)", borderRadius: 12, padding: "12px 14px", display: "flex", flexDirection: "column", gap: 8 }}>
                     <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 100px auto", gap: 8, alignItems: "center" }}>
-                      <input className="input-base" value={m.name} onChange={e => updateMeal(m.id, "name", e.target.value)} placeholder="Meal name" style={{ padding: "7px 10px" }} />
+                      <input className="input-base" value={m.name} onChange={e => updateMeal(m.id, "name", e.target.value)} placeholder={t('meal_name')} style={{ padding: "7px 10px" }} />
                       <input className="input-base" type="time" value={m.time} onChange={e => updateMeal(m.id, "time", e.target.value)} style={{ padding: "7px 8px" }} />
-                      <input className="input-base" type="number" value={m.calories} onChange={e => updateMeal(m.id, "calories", Number(e.target.value))} placeholder="kcal" style={{ padding: "7px 8px" }} min={0} />
+                      <input className="input-base" type="number" value={m.calories} onChange={e => updateMeal(m.id, "calories", Number(e.target.value))} placeholder={t('kcal_unit')} style={{ padding: "7px 8px" }} min={0} />
                       <button onClick={() => removeMeal(m.id)} style={{ background: "rgba(255,68,68,0.1)", border: "1px solid var(--red)", borderRadius: 7, padding: "7px", cursor: "pointer", color: "var(--red)" }}><Trash2 size={13} /></button>
                     </div>
-                    <input className="input-base" value={m.foods} onChange={e => updateMeal(m.id, "foods", e.target.value)} placeholder="Foods: e.g. Oats 80g, Eggs 3, Banana..." style={{ padding: "7px 10px" }} />
+                    <input className="input-base" value={m.foods} onChange={e => updateMeal(m.id, "foods", e.target.value)} placeholder={t('foods_placeholder')} style={{ padding: "7px 10px" }} />
                   </div>
                 ))}
                 <div>

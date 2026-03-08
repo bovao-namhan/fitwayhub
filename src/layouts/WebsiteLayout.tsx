@@ -17,7 +17,7 @@ export function WebsiteLayout() {
   const { branding } = useBranding();
   const { user, logout } = useAuth();
   const { t, lang, setLang } = useI18n();
-  const displayName = user?.name || user?.email?.split("@")[0] || "there";
+  const displayName = user?.name || user?.email?.split("@")[0] || t("nav_home");
   const brandLogo = getBrandLogoForLang(branding, lang, isDark);
 
   const appRoute = user?.role === "admin"
@@ -27,11 +27,20 @@ export function WebsiteLayout() {
       : "/app/dashboard";
 
   const navLinks: Array<{name:string;path:string}> = [
-    { name: "Home", path: "/" },
-    { name: "No Pain No Shawerma", path: "/blogs" },
-    { name: "About", path: "/about" },
-    { name: "Contact", path: "/contact" },
+    { name: t("nav_home"), path: "/" },
+    { name: t("blog_title"), path: "/blogs" },
+    { name: t("about"), path: "/about" },
+    { name: t("contact"), path: "/contact" },
   ];
+
+  const helloLabel = lang === "ar" ? "أهلا" : "Hello";
+  const footerProductLinks = [
+    { name: t("nav_home"), path: "/" },
+    { name: t("about"), path: "/about" },
+    { name: t("contact"), path: "/contact" },
+  ];
+  const legalLinks = [t("privacy_policy"), t("terms")];
+  const storeLinks = [t("app_store"), t("google_play")];
 
   // Dynamic header BG based on theme
   const headerBg = isDark ? "rgba(10,10,11,0.88)" : "rgba(248,248,250,0.92)";
@@ -65,7 +74,7 @@ export function WebsiteLayout() {
         <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 20px", height: 64 }}>
           {/* Logo */}
           <Link to="/" style={{ display: "flex", alignItems: "center", textDecoration: "none" }}>
-            <img src={brandLogo || "/logo.svg"} alt={branding.app_name || "FitWay Hub"} style={{ height: 36, borderRadius: 7, objectFit: "contain" }} />
+            <img src={brandLogo || "/logo.svg"} alt={branding.app_name || t("fitway_hub")} style={{ height: 36, borderRadius: 7, objectFit: "contain" }} />
           </Link>
 
           {/* Desktop nav */}
@@ -85,7 +94,7 @@ export function WebsiteLayout() {
             {/* Theme toggle */}
             <button
               onClick={toggleTheme}
-              title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
+              title={isDark ? t("switch_to_light_mode") : t("switch_to_dark_mode")}
               style={{
                 marginInlineStart: 4, width: 36, height: 36, borderRadius: 9,
                 display: "flex", alignItems: "center", justifyContent: "center",
@@ -99,7 +108,7 @@ export function WebsiteLayout() {
             <div style={{ display: "flex", alignItems: "center", gap: 4, marginInlineStart: 4, padding: 3, borderRadius: 9, border: "1px solid var(--border)", background: "var(--bg-card)" }}>
               <button
                 onClick={() => setLang("en")}
-                title="English"
+                title={t("english")}
                 style={{
                   minWidth: 34,
                   height: 30,
@@ -155,7 +164,7 @@ export function WebsiteLayout() {
                     alt=""
                     style={{ width: 22, height: 22, borderRadius: "50%", objectFit: "cover" }}
                   />
-                  {`Hello ${displayName}`}
+                  {`${helloLabel} ${displayName}`}
                   <ChevronDown size={14} style={{ opacity: 0.7 }} />
                 </button>
 
@@ -194,7 +203,7 @@ export function WebsiteLayout() {
                 fontFamily: "'Chakra Petch', sans-serif", letterSpacing: "0.02em",
                 transition: "opacity 0.15s",
               }}>
-                Get Started
+                {t("get_started")}
               </Link>
             )}
           </nav>
@@ -206,7 +215,7 @@ export function WebsiteLayout() {
             <div style={{ display: "flex", alignItems: "center", gap: 3, padding: 2, borderRadius: 8, border: "1px solid var(--border)", background: "var(--bg-card)" }}>
               <button
                 onClick={() => setLang("en")}
-                title="English"
+                title={t("english")}
                 style={{
                   minWidth: 30,
                   height: 30,
@@ -260,7 +269,7 @@ export function WebsiteLayout() {
                 cursor: "pointer", color: menuOpen ? "var(--accent)" : "var(--text-primary)",
                 transition: "all 0.15s",
               }}
-              aria-label="Toggle menu"
+              aria-label={t("toggle_menu")}
             >
               {menuOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
@@ -360,7 +369,7 @@ export function WebsiteLayout() {
               )}
               <span style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 16, fontWeight: 700 }}>{branding.app_name || "FITWAY HUB"}</span>
             </div>
-            <p style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.7, maxWidth: 260 }}>{branding.footer_text || "Egypt's #1 digital fitness ecosystem."}</p>
+            <p style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.7, maxWidth: 260 }}>{branding.footer_text || t("egypt_fitness")}</p>
             <div style={{ display: "flex", gap: 12, marginTop: 16 }}>
               {[
                 { Icon: Instagram, url: branding.social_instagram },
@@ -378,26 +387,26 @@ export function WebsiteLayout() {
             </div>
           </div>
           <div>
-            <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--text-muted)", marginBottom: 16 }}>Product</p>
-            {[{ name: "Home", path: "/" }, { name: "About", path: "/about" }, { name: "Contact", path: "/contact" }].map(l => (
+            <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--text-muted)", marginBottom: 16 }}>{t("product")}</p>
+            {footerProductLinks.map(l => (
               <Link key={l.path} to={l.path} style={{ display: "block", fontSize: 13, color: "var(--text-secondary)", textDecoration: "none", marginBottom: 10 }}>{l.name}</Link>
             ))}
           </div>
           <div>
-            <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--text-muted)", marginBottom: 16 }}>Legal</p>
-            {["Privacy Policy", "Terms of Service"].map((l) => (
+            <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--text-muted)", marginBottom: 16 }}>{t("legal")}</p>
+            {legalLinks.map((l) => (
               <a key={l} href="#" style={{ display: "block", fontSize: 13, color: "var(--text-secondary)", textDecoration: "none", marginBottom: 10 }}>{l}</a>
             ))}
           </div>
           <div>
-            <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--text-muted)", marginBottom: 16 }}>Get the App</p>
-            {["App Store", "Google Play"].map((l) => (
+            <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--text-muted)", marginBottom: 16 }}>{t("get_the_app")}</p>
+            {storeLinks.map((l) => (
               <a key={l} href="#" style={{ display: "block", fontSize: 13, color: "var(--text-secondary)", textDecoration: "none", marginBottom: 10 }}>{l}</a>
             ))}
           </div>
         </div>
         <div style={{ maxWidth: 1100, margin: "32px auto 0", paddingTop: 24, borderTop: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
-          <p style={{ fontSize: 12, color: "var(--text-muted)" }}>{branding.copyright_text || `© ${new Date().getFullYear()} Fitway Hub. All rights reserved.`}</p>
+          <p style={{ fontSize: 12, color: "var(--text-muted)" }}>{branding.copyright_text || `© ${new Date().getFullYear()} ${t("fitway_hub")}. ${t("all_rights_reserved")}`}</p>
         </div>
       </footer>
     </div>

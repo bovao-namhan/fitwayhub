@@ -2,8 +2,10 @@ import { Router } from 'express';
 import {
   register,
   login,
-  forgotPassword,
-  resetPassword,
+  logout,
+  forgotPasswordGetQuestion,
+  forgotPasswordVerify,
+  changePassword,
   loginWithRememberToken,
   addOfflineSteps,
   updateProfile,
@@ -17,10 +19,12 @@ const router = Router();
 
 router.post('/register', register);
 router.post('/login', login);
+router.post('/logout', authenticateToken, logout);
 router.get('/oauth/google', oauthGoogleStart);
 router.get('/oauth/google/callback', oauthGoogleCallback);
-router.post('/forgot-password', forgotPassword);
-router.post('/reset-password', resetPassword);
+router.post('/forgot-password/question', forgotPasswordGetQuestion);
+router.post('/forgot-password/verify', forgotPasswordVerify);
+router.post('/change-password', authenticateToken, changePassword);
 router.post('/login-remember', loginWithRememberToken);
 router.post('/offline-steps', authenticateToken, addOfflineSteps);
 router.post('/update-profile', authenticateToken, updateProfile);

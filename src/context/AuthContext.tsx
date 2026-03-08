@@ -42,7 +42,7 @@ interface AuthContextType {
   token: string | null;
   loading: boolean;
   login: (email: string, password: string, rememberMe?: boolean) => Promise<any>;
-  register: (email: string, password: string, name: string, role?: "user" | "coach") => Promise<void>;
+  register: (email: string, password: string, name: string, role?: "user" | "coach", securityQuestion?: string, securityAnswer?: string) => Promise<void>;
   completeSocialLogin: (jwtToken: string) => Promise<User>;
   logout: () => void;
   updateUser: (data: Partial<User>) => void;
@@ -173,13 +173,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return data;
   };
 
-  const register = async (email: string, password: string, name: string, role: "user" | "coach" = "user") => {
+  const register = async (email: string, password: string, name: string, role: "user" | "coach" = "user", securityQuestion?: string, securityAnswer?: string) => {
     ensureSingleAccount(email);
 
     const response = await fetch(getApiBase() + '/api/auth/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password, name, role }),
+      body: JSON.stringify({ email, password, name, role, securityQuestion, securityAnswer }),
     });
     const text = await response.text();
     let data: any;
@@ -213,6 +213,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = () => {
+    const t = localStorage.getItem("token");
+    if (t) {
+      fetch(getApiBase() + '/api/auth/logout', { method: 'POST', headers: { Authorization: `Bearer ${t}` } }).catch(() => {});
+    }
     setUser(null);
     setToken(null);
     localStorage.removeItem("token");
