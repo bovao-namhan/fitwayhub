@@ -176,6 +176,17 @@ export const createBlog = async (req: Request, res: Response) => {
       return res.status(400).json({ message: 'Language must be "en" or "ar"' });
     }
 
+    // Validate relatedBlogId if provided
+    if (relatedBlogId) {
+      const relatedPost = await get<any>('SELECT id, language FROM blog_posts WHERE id = ?', [relatedBlogId]);
+      if (!relatedPost) {
+        return res.status(400).json({ message: 'Related blog post not found' });
+      }
+      if (relatedPost.language === language) {
+        return res.status(400).json({ message: 'Related blog must be in a different language' });
+      }
+    }
+
     const slugBase = toSlug(title);
     const slug = await uniqueSlug(slugBase, undefined, language);
     const publishedAt = status === 'published' ? new Date() : null;
@@ -198,7 +209,8 @@ export const createBlog = async (req: Request, res: Response) => {
     res.status(201).json({ post });
   } catch (err) {
     console.error('createBlog error:', err);
-    res.status(500).json({ message: 'Failed to create blog post' });
+    const errorMessage = err instanceof Error ? err.message : 'Failed to create blog post';
+    res.status(500).json({ message: 'Failed to create blog post', error: errorMessage });
   }
 };
 
@@ -267,8 +279,10 @@ export const updateBlog = async (req: Request, res: Response) => {
     );
 
     res.json({ post });
-  } catch {
-    res.status(500).json({ message: 'Failed to update blog post' });
+  } catch (err) {
+    console.error('updateBlog error:', err);
+    const errorMessage = err instanceof Error ? err.message : 'Failed to update blog post';
+    res.status(500).json({ message: 'Failed to update blog post', error: errorMessage });
   }
 };
 

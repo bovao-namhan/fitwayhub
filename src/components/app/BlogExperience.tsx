@@ -611,7 +611,18 @@ export default function BlogExperience({ mode, heading, subheading, allowWriting
                   <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>Language</span>
                   <div style={{ display: "flex", gap: 8 }}>
                     <button
-                      onClick={() => setLanguage("en")}
+                      onClick={() => {
+                        if (!editingPost) {
+                          setLanguage("en");
+                          setDraft(defaultDraft);
+                          setHeaderFile(null);
+                          setVideoFile(null);
+                          setVideoDuration(null);
+                          setRemoveHeaderImage(false);
+                          setRemoveVideo(false);
+                        }
+                      }}
+                      disabled={!!editingPost}
                       style={{
                         flex: 1,
                         padding: "8px 12px",
@@ -619,7 +630,8 @@ export default function BlogExperience({ mode, heading, subheading, allowWriting
                         border: `1px solid ${language === "en" ? "var(--accent)" : "var(--border)"}`,
                         background: language === "en" ? "var(--accent-dim)" : "var(--bg-surface)",
                         color: language === "en" ? "var(--accent)" : "var(--text-secondary)",
-                        cursor: "pointer",
+                        cursor: editingPost ? "not-allowed" : "pointer",
+                        opacity: editingPost ? 0.5 : 1,
                         fontWeight: language === "en" ? 600 : 400,
                         fontSize: 12,
                       }}
@@ -627,7 +639,18 @@ export default function BlogExperience({ mode, heading, subheading, allowWriting
                       🇬🇧 English
                     </button>
                     <button
-                      onClick={() => setLanguage("ar")}
+                      onClick={() => {
+                        if (!editingPost) {
+                          setLanguage("ar");
+                          setDraft(defaultDraft);
+                          setHeaderFile(null);
+                          setVideoFile(null);
+                          setVideoDuration(null);
+                          setRemoveHeaderImage(false);
+                          setRemoveVideo(false);
+                        }
+                      }}
+                      disabled={!!editingPost}
                       style={{
                         flex: 1,
                         padding: "8px 12px",
@@ -635,7 +658,8 @@ export default function BlogExperience({ mode, heading, subheading, allowWriting
                         border: `1px solid ${language === "ar" ? "var(--accent)" : "var(--border)"}`,
                         background: language === "ar" ? "var(--accent-dim)" : "var(--bg-surface)",
                         color: language === "ar" ? "var(--accent)" : "var(--text-secondary)",
-                        cursor: "pointer",
+                        cursor: editingPost ? "not-allowed" : "pointer",
+                        opacity: editingPost ? 0.5 : 1,
                         fontWeight: language === "ar" ? 600 : 400,
                         fontSize: 12,
                       }}
@@ -643,6 +667,16 @@ export default function BlogExperience({ mode, heading, subheading, allowWriting
                       🇸🇦 العربية
                     </button>
                   </div>
+                  {!editingPost && (
+                    <small style={{ color: "var(--text-muted)", fontSize: 11 }}>
+                      {lang === "ar" ? "اختر اللغة قبل البدء في الكتابة" : "Select language before writing"}
+                    </small>
+                  )}
+                  {editingPost && (
+                    <small style={{ color: "var(--text-muted)", fontSize: 11 }}>
+                      {lang === "ar" ? "لا يمكن تغيير لغة المقال بعد إنشائه" : "Cannot change language after creation"}
+                    </small>
+                  )}
                   {!editingPost && (
                     <select
                       value={relatedBlogId || ""}
