@@ -136,6 +136,8 @@ export default function BlogExperience({ mode, heading, subheading, allowWriting
   const [showEditor, setShowEditor] = useState(false);
   const [editingPost, setEditingPost] = useState<BlogPost | null>(null);
   const [draft, setDraft] = useState<DraftState>(defaultDraft);
+  const [draftEn, setDraftEn] = useState<DraftState>(defaultDraft);
+  const [draftAr, setDraftAr] = useState<DraftState>(defaultDraft);
   const [language, setLanguage] = useState<"en" | "ar">("en");
   const [relatedBlogId, setRelatedBlogId] = useState<number | null>(null);
   const [headerFile, setHeaderFile] = useState<File | null>(null);
@@ -172,8 +174,13 @@ export default function BlogExperience({ mode, heading, subheading, allowWriting
     reader.readAsDataURL(file);
   };
 
-  const draftKey = useMemo(
-    () => `fitway_blog_draft_${mode}_${user?.id || "guest"}`,
+  const draftKeyEn = useMemo(
+    () => `fitway_blog_draft_en_${mode}_${user?.id || "guest"}`,
+    [mode, user?.id]
+  );
+  
+  const draftKeyAr = useMemo(
+    () => `fitway_blog_draft_ar_${mode}_${user?.id || "guest"}`,
     [mode, user?.id]
   );
 
@@ -218,22 +225,50 @@ export default function BlogExperience({ mode, heading, subheading, allowWriting
   useEffect(() => {
     if (!showEditor || editingPost) return;
     try {
-      const raw = localStorage.getItem(draftKey);
-      if (!raw) return;
-      const parsed = JSON.parse(raw);
-      setDraft({ ...defaultDraft, ...parsed });
+      const rawEn = localStorage.getItem(draftKeyEn);
+      const rawAr = localStorage.getItem(draftKeyAr);
+      
+      if (rawEn) {
+        const parsedEn = JSON.parse(rawEn);
+        setDraftEn({ ...defaultDraft, ...parsedEn });
+      }
+      
+      if (rawAr) {
+        const parsedAr = JSON.parse(rawAr);
+        setDraftAr({ ...defaultDraft, ...parsedAr });
+      }
+      
+      // Load the draft for the current language
+      if (language === "en" && rawEn) {
+        const parsedEn = JSON.parse(rawEn);
+        setDraft({ ...defaultDraft, ...parsedEn });
+      } else if (language === "ar" && rawAr) {
+        const parsedAr = JSON.parse(rawAr);
+        setDraft({ ...defaultDraft, ...parsedAr });
+      }
     } catch {
       // Ignore draft hydration errors.
     }
-  }, [showEditor, editingPost, draftKey]);
+  }, [showEditor, editingPost, draftKeyEn, draftKeyAr, language]);
 
   useEffect(() => {
     if (!showEditor || editingPost) return;
     const timer = window.setTimeout(() => {
-      localStorage.setItem(draftKey, JSON.stringify(draft));
+      try {
+        // Save to the appropriate language draft
+        if (language === "en") {
+          localStorage.setItem(draftKeyEn, JSON.stringify(draft));
+          setDraftEn(draft);
+        } else {
+          localStorage.setItem(draftKeyAr, JSON.stringify(draft));
+          setDraftAr(draft);
+        }
+      } catch {
+        // ignore storage errors
+      }
     }, 400);
     return () => window.clearTimeout(timer);
-  }, [draft, showEditor, editingPost, draftKey]);
+  }, [draft, showEditor, editingPost, language, draftKeyEn, draftKeyAr]);
 
   useEffect(() => {
     if (!showEditor) return;
@@ -251,9 +286,35 @@ export default function BlogExperience({ mode, heading, subheading, allowWriting
 
   function openNewEditor() {
     setEditingPost(null);
-    setDraft(defaultDraft);
     setLanguage("en");
     setRelatedBlogId(null);
+    
+    // Load saved drafts from localStorage
+    try {
+      const rawEn = localStorage.getItem(draftKeyEn);
+      const rawAr = localStorage.getItem(draftKeyAr);
+      
+      if (rawEn) {
+        const parsedEn = JSON.parse(rawEn);
+        setDraftEn({ ...defaultDraft, ...parsedEn });
+        setDraft({ ...defaultDraft, ...parsedEn }); // Start with English draft
+      } else {
+        setDraftEn(defaultDraft);
+        setDraft(defaultDraft);
+      }
+      
+      if (rawAr) {
+        const parsedAr = JSON.parse(rawAr);
+        setDraftAr({ ...defaultDraft, ...parsedAr });
+      } else {
+        setDraftAr(defaultDraft);
+      }
+    } catch {
+      setDraftEn(defaultDraft);
+      setDraftAr(defaultDraft);
+      setDraft(defaultDraft);
+    }
+    
     setHeaderFile(null);
     setVideoFile(null);
     setVideoDuration(null);
@@ -291,6 +352,9 @@ export default function BlogExperience({ mode, heading, subheading, allowWriting
     setUploadProgress(0);
     setLanguage("en");
     setRelatedBlogId(null);
+    setDraftEn(defaultDraft);
+    setDraftAr(defaultDraft);
+    setDraft(defaultDraft);
   }
 
   function insertSyntax(before: string, after = "", placeholder = "text") {
@@ -344,7 +408,8 @@ export default function BlogExperience({ mode, heading, subheading, allowWriting
         (percentage) => setUploadProgress(percentage)
       );
 
-      localStorage.removeItem(draftKey);
+      localStorage.removeItem(draftKeyEn);
+      localStorage.removeItem(draftKeyAr);
       closeEditor();
       await loadPosts();
       setSelectedId(saved.id);
@@ -613,13 +678,15 @@ export default function BlogExperience({ mode, heading, subheading, allowWriting
                     <button
                       onClick={() => {
                         if (!editingPost) {
+                          // Save current draft before switching
+                          if (language === "ar") {
+                            setDraftAr(draft);
+                            localStorage.setItem(draftKeyAr, JSON.stringify(draft));
+                          }
+                          
+                          // Switch to English and load English draft
                           setLanguage("en");
-                          setDraft(defaultDraft);
-                          setHeaderFile(null);
-                          setVideoFile(null);
-                          setVideoDuration(null);
-                          setRemoveHeaderImage(false);
-                          setRemoveVideo(false);
+                          setDraft(draftEn);
                         }
                       }}
                       disabled={!!editingPost}
@@ -641,13 +708,15 @@ export default function BlogExperience({ mode, heading, subheading, allowWriting
                     <button
                       onClick={() => {
                         if (!editingPost) {
+                          // Save current draft before switching
+                          if (language === "en") {
+                            setDraftEn(draft);
+                            localStorage.setItem(draftKeyEn, JSON.stringify(draft));
+                          }
+                          
+                          // Switch to Arabic and load Arabic draft
                           setLanguage("ar");
-                          setDraft(defaultDraft);
-                          setHeaderFile(null);
-                          setVideoFile(null);
-                          setVideoDuration(null);
-                          setRemoveHeaderImage(false);
-                          setRemoveVideo(false);
+                          setDraft(draftAr);
                         }
                       }}
                       disabled={!!editingPost}
@@ -669,7 +738,7 @@ export default function BlogExperience({ mode, heading, subheading, allowWriting
                   </div>
                   {!editingPost && (
                     <small style={{ color: "var(--text-muted)", fontSize: 11 }}>
-                      {lang === "ar" ? "اختر اللغة قبل البدء في الكتابة" : "Select language before writing"}
+                      {lang === "ar" ? "يمكنك التبديل بين اللغتين - سيتم حفظ كل نسخة تلقائيًا" : "You can switch between languages - each version is saved separately"}
                     </small>
                   )}
                   {editingPost && (

@@ -751,18 +751,75 @@ export async function initDatabase() {
   try { await pool.execute("ALTER TABLE posts ADD COLUMN is_announcement TINYINT(1) DEFAULT 0"); } catch {}
   try { await pool.execute("ALTER TABLE posts ADD COLUMN is_pinned TINYINT(1) DEFAULT 0"); } catch {}
 
-  // Bilingual blog support
-  try { await pool.execute("ALTER TABLE blog_posts ADD COLUMN language VARCHAR(5) DEFAULT 'en'"); } catch {}
-  try { await pool.execute("ALTER TABLE blog_posts ADD COLUMN related_blog_id INT"); } catch {}
-  try { await pool.execute("ALTER TABLE blog_posts ADD COLUMN video_duration INT"); } catch {}
+  // Bilingual blog support (with logging for troubleshooting)
+  console.log('🔄 Running blog_posts multilingual migrations...');
+  
+  try { 
+    await pool.execute("ALTER TABLE blog_posts ADD COLUMN language VARCHAR(5) DEFAULT 'en'");
+    console.log('✓ Added language column');
+  } catch (e: any) {
+    if (!e.message?.includes('Duplicate column')) {
+      console.log('Note: language column migration:', e.message || 'already exists');
+    }
+  }
+  
+  try { 
+    await pool.execute("ALTER TABLE blog_posts ADD COLUMN related_blog_id INT");
+    console.log('✓ Added related_blog_id column');
+  } catch (e: any) {
+    if (!e.message?.includes('Duplicate column')) {
+      console.log('Note: related_blog_id column migration:', e.message || 'already exists');
+    }
+  }
+  
+  try { 
+    await pool.execute("ALTER TABLE blog_posts ADD COLUMN video_duration INT");
+    console.log('✓ Added video_duration column');
+  } catch (e: any) {
+    if (!e.message?.includes('Duplicate column')) {
+      console.log('Note: video_duration column migration:', e.message || 'already exists');
+    }
+  }
+  
   // Fix slug uniqueness constraint for multilingual support
-  try { await pool.execute("ALTER TABLE blog_posts DROP INDEX slug"); } catch {}
-  try { await pool.execute("ALTER TABLE blog_posts ADD UNIQUE KEY unique_slug_lang (slug, language)"); } catch {}
-  try { await pool.execute("ALTER TABLE blog_posts ADD INDEX idx_blog_posts_language (language)"); } catch {}
-  try { await pool.execute("ALTER TABLE blog_posts ADD INDEX idx_blog_posts_related (related_blog_id)"); } catch {}
+  try { 
+    await pool.execute("ALTER TABLE blog_posts DROP INDEX slug");
+    console.log('✓ Dropped old slug index');
+  } catch (e: any) {
+    // Index doesn't exist or already dropped - this is fine
+  }
+  
+  try { 
+    await pool.execute("ALTER TABLE blog_posts ADD UNIQUE KEY unique_slug_lang (slug, language)");
+    console.log('✓ Added composite slug+language unique index');
+  } catch (e: any) {
+    if (!e.message?.includes('Duplicate key')) {
+      console.log('Note: unique_slug_lang index:', e.message || 'already exists');
+    }
+  }
+  
+  try { 
+    await pool.execute("ALTER TABLE blog_posts ADD INDEX idx_blog_posts_language (language)");
+    console.log('✓ Added language index');
+  } catch (e: any) {
+    // Index already exists - this is fine
+  }
+  
+  try { 
+    await pool.execute("ALTER TABLE blog_posts ADD INDEX idx_blog_posts_related (related_blog_id)");
+    console.log('✓ Added related_blog_id index');
+  } catch (e: any) {
+    // Index already exists - this is fine
+  }
+  
   try { 
     await pool.execute("ALTER TABLE blog_posts ADD CONSTRAINT fk_blog_posts_related FOREIGN KEY (related_blog_id) REFERENCES blog_posts(id) ON DELETE SET NULL");
-  } catch {}
+    console.log('✓ Added foreign key constraint');
+  } catch (e: any) {
+    // Constraint already exists - this is fine
+  }
+  
+  console.log('✅ Blog multilingual migrations complete');
 
   // App settings table for dynamic config / branding
   try {
