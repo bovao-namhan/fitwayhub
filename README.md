@@ -15,6 +15,7 @@ A full-stack fitness platform with real-time coaching, video meetings, AI-powere
 | Email | Built-in SMTP server (port 2525), Nodemailer outbound |
 | Maps | Leaflet + OpenStreetMap |
 | Video Calls | WebRTC + Socket.IO signaling |
+| Video Processing | ffprobe / MediaInfo (duration extraction) |
 | Mobile | Capacitor 8 (Android), standalone Gradle project |
 | Validation | Zod, React Hook Form |
 | File Uploads | Multer |
@@ -172,11 +173,12 @@ Set `VITE_API_BASE` in `.env` to your backend URL. For Capacitor/Android builds 
 - **User management** — full CRUD: create, edit, delete users; change roles; toggle premium; adjust points; view medical history
 - **Coach management** — coach-specific admin controls
 - **Payment tracking** — proof image verification, approve/reject transactions
-- **Video management** — upload/manage workout videos with categories, premium flag, thumbnails
+- **Video management** — upload/manage workout videos with categories, premium flag, thumbnails, configurable upload limit
+- **Blog management** — create/edit/delete blog posts with multilingual support, version linking
 - **Ad moderation** — approve/reject coach-submitted ads with admin notes
 - **Gift system** — send points, premium access, badges, coupons to any user
 - **Community moderation** — announcements, pin/hide/delete posts
-- **App configuration** — platform-wide key-value settings
+- **App configuration** — platform-wide key-value settings including max video upload size
 - **Website CMS** — section-based page editor for Home, About, Contact with 13 section types and sort ordering
 - **Notification management** — push templates, welcome messages, segment blasting, push log viewer
 - **Email server** — compose/send emails, manage SMTP settings and accounts
@@ -255,11 +257,25 @@ Set `VITE_API_BASE` in `.env` to your backend URL. For Capacitor/Android builds 
 - **Notes sync** — collaborative meeting notes
 - **File notifications** — real-time alerts on file shares
 
+### � Blog System
+- **Multilingual content** — create separate English and Arabic blog post versions
+- **Per-language slugs** — same slug allowed in different languages via composite unique constraint
+- **Version linking** — link Arabic ↔ English versions via `related_blog_id` foreign key
+- **Draft & publish** — status-based visibility (draft/published)
+- **Featured media** — header image + embedded video with auto-detected duration
+- **Author attribution** — post author name, role, avatar auto-included
+- **Public browsing** — filter posts by language in `/api/blogs/public`
+- **Admin management** — create, edit, delete, view all posts from coach/admin panel
+- **Auto-slug generation** — sanitized URL-friendly slugs from post title
+
 ### 📁 File Upload System
 - **Image uploads** — Multer with image MIME filter, 5MB limit
-- **Video uploads** — Multer with video/image filter, 500MB limit
+- **Video uploads** — Multer with configurable size limit (40MB default, admin-settable)
+- **Upload progress** — XMLHttpRequest-based progress tracking with percentage display
+- **Video duration detection** — client-side via HTML5 Video API, server-side fallback via ffprobe/mediainfo
+- **File validation** — validateVideoSize middleware checks file size against app_settings
 - **Static serving** — Express static middleware on `/uploads`
-- **Use cases** — avatars, post media, chat attachments, medical files, body photos, ad media, payment proofs, video thumbnails, meeting files
+- **Use cases** — avatars, post media, chat attachments, medical files, body photos, ad media, payment proofs, video thumbnails, meeting files, blog headers/videos
 
 ---
 
@@ -317,24 +333,50 @@ npm run dev
 ├── run-server.ts            # Server launcher with MySQL retry
 ├── server/
 │   ├── config/database.ts   # MySQL connection, table init & seeding
-│   ├── controllers/         # Route handlers (auth, AI, chat, coaching, etc.)
+│   ├── controllers/         # Route handlers (auth, AI, chat, coaching, blogs, etc.)
 │   ├── emailServer.ts       # Built-in SMTP server & email sending
 │   ├── notificationService.ts # FCM push, welcome messages, in-app notifications
-│   ├── middleware/          # Auth, error handling, file upload
+│   ├── middleware/          # Auth, error handling, file uploads, video size validation
 │   ├── models/              # DailySummary, User
-│   └── routes/              # 20 route modules
+│   ├── utils/videoMetadata.ts # Video duration extraction via ffprobe/mediainfo
+│   ├── migrations/          # Database migrations (bilingual blogs, video duration)
+│   └── routes/              # 20 route modules including blogRoutes
 ├── src/
 │   ├── App.tsx              # React router with all routes
 │   ├── context/             # AuthContext, BrandingContext, I18nContext, ThemeContext
 │   ├── layouts/             # App, Admin, Coach, Website layouts
-│   ├── components/          # Reusable UI (calculators, map, CMS renderer, sidebar)
+│   ├── components/          # Reusable UI (calculators, map, CMS renderer, sidebar, blog editor)
 │   ├── pages/
-│   │   ├── app/             # User pages (Dashboard, Steps, Workouts, etc.)
-│   │   ├── coach/           # Coach pages (Dashboard, Athletes, Ads, etc.)
+│   │   ├── app/             # User pages (Dashboard, Steps, Workouts, Blogs, etc.)
+│   │   ├── coach/           # Coach pages (Dashboard, Athletes, Ads, Blogs, etc.)
 │   │   ├── admin/           # Admin pages (Dashboard, WebsiteCMS, EmailServer, Notifications)
 │   │   ├── auth/            # Login, Register, SocialCallback
 │   │   └── website/         # Public CMS pages
-│   └── lib/                 # API helpers, utilities, step calculations
+│   └── lib/                 # API helpers, utilities, step calculations, blogs
 ├── FitWayHub-Android/       # Standalone Android Gradle project (AGP 8.5.2, SDK 34)
 └── uploads/                 # User-uploaded files
 ```
+
+---
+
+## Recent Updates (v2.1)
+
+### ✨ Multilingual Blog System
+- **Bilingual content support** — create separate English and Arabic versions of each blog post
+- **Intelligent slug management** — same slug allowed across languages via composite unique constraint `(slug, language)`
+- **Version linking** — link Arabic ↔ English versions automatically via `related_blog_id` foreign key
+- **Smart UI** — language toggle buttons (🇬🇧 English / 🇸🇦 عربية) and related blog dropdown in editor
+- **Database migrations** — all 11 backward-compatibility migrations included for existing installations
+
+### ⚡ Enhanced Video Upload System
+- **Upload progress tracking** — real-time percentage display during file upload via XMLHttpRequest
+- **Smart duration detection** — client-side detection via HTML5 Video API with automatic server-side fallback (ffprobe/mediainfo)
+- **Admin-configurable limits** — `max_video_upload_size_mb` setting (40MB default, admin-adjustable)
+- **Size validation middleware** — validateVideoSize middleware with user-friendly error messages
+- **Long file support** — handles multi-hour video uploads reliably
+
+### 🎤 Voice Recording Improvements
+- **Enhanced debugging** — detailed console logging for MediaRecorder lifecycle
+- **Better error messages** — user-friendly notifications for permission issues
+- **Lower sensitivity threshold** — 100 byte minimum (vs 500 bytes) allows shorter voice notes
+- **Graceful fallbacks** — improved error handling in voice send flow
