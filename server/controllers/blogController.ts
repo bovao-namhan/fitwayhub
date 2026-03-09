@@ -106,11 +106,17 @@ export const getBlogs = async (req: Request, res: Response) => {
     const role = (req as any).user?.role || 'user';
     const userId = Number((req as any).user?.id || 0);
     const mode = String(req.query.mode || 'feed');
+    const langRaw = String(req.query.lang || 'en').trim().toLowerCase();
+    const lang = langRaw === 'ar' ? 'ar' : 'en';
     const q = String(req.query.q || '').trim();
     const limit = Math.min(Math.max(Number(req.query.limit || 60), 1), 150);
 
     const where: string[] = [];
     const params: any[] = [];
+
+    // Always scope feed/manage results to the selected app language.
+    where.push('bp.language = ?');
+    params.push(lang);
 
     if (mode === 'manage') {
       if (role === 'admin') {
