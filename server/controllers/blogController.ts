@@ -159,6 +159,13 @@ export const createBlog = async (req: Request, res: Response) => {
     }
 
     const files = (req as any).files as { [fieldName: string]: Express.Multer.File[] } | undefined;
+    
+    // Log file upload details for debugging
+    console.log('📁 Blog create - files received:', {
+      headerImage: files?.headerImage?.[0]?.filename,
+      video: files?.video?.[0]?.filename
+    });
+    
     const headerImage = computeMediaPath(files?.headerImage?.[0]);
     const video = computeMediaPath(files?.video?.[0]);
 
@@ -209,7 +216,10 @@ export const createBlog = async (req: Request, res: Response) => {
     res.status(201).json({ post });
   } catch (err) {
     console.error('createBlog error:', err);
+    console.error('Request body:', JSON.stringify(req.body, null, 2));
     const errorMessage = err instanceof Error ? err.message : 'Failed to create blog post';
+    const errorStack = err instanceof Error ? err.stack : '';
+    console.error('Error stack:', errorStack);
     res.status(500).json({ message: 'Failed to create blog post', error: errorMessage });
   }
 };

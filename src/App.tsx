@@ -18,6 +18,7 @@ const WebsiteLayout = lazy(() => import("@/layouts/WebsiteLayout").then((m) => (
 
 const CmsPage = lazy(() => import("@/pages/website/CmsPage"));
 const WebsiteBlogs = lazy(() => import("@/pages/website/Blogs"));
+const WebsiteBlogPost = lazy(() => import("@/pages/website/BlogPost"));
 const Login = lazy(() => import("@/pages/auth/Login"));
 const Register = lazy(() => import("@/pages/auth/Register"));
 const SocialCallback = lazy(() => import("@/pages/auth/SocialCallback"));
@@ -83,6 +84,7 @@ export default function App() {
                 <Route path="/about" element={<CmsPage page="about" />} />
                 <Route path="/contact" element={<CmsPage page="contact" />} />
                 <Route path="/blogs" element={<WebsiteBlogs />} />
+                <Route path="/blogs/:slug" element={<WebsiteBlogPost />} />
               </Route>
 
               {/* Auth Routes */}

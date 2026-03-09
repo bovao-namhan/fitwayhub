@@ -184,11 +184,6 @@ export default function BlogExperience({ mode, heading, subheading, allowWriting
     [mode, user?.id]
   );
 
-  const selectedPost = useMemo(
-    () => posts.find((post) => post.id === selectedId) || posts[0] || null,
-    [posts, selectedId]
-  );
-
   async function loadPosts() {
     setLoading(true);
     setError("");
@@ -519,93 +514,262 @@ export default function BlogExperience({ mode, heading, subheading, allowWriting
         </div>
       )}
 
-      <div style={{ display: "grid", gridTemplateColumns: "minmax(260px, 360px) 1fr", gap: 14 }} className="grid-2col">
-        <aside style={{ display: "grid", gap: 10, alignContent: "start" }}>
-          {loading ? (
-            <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 14, padding: 24, color: "var(--text-secondary)" }}>
-              {blogText.loadingPosts}
-            </div>
-          ) : posts.length === 0 ? (
-            <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 14, padding: 24, color: "var(--text-secondary)" }}>
-              {blogText.noPosts}
-            </div>
-          ) : (
-            posts.map((post) => {
-              const active = post.id === (selectedPost?.id || 0);
-              return (
-                <button
-                  key={post.id}
-                  onClick={() => setSelectedId(post.id)}
-                  style={{
-                    textAlign: "start",
-                    border: "1px solid",
-                    borderColor: active ? "var(--accent)" : "var(--border)",
-                    background: active ? "var(--accent-dim)" : "var(--bg-card)",
-                    borderRadius: 14,
-                    padding: 12,
-                    cursor: "pointer",
-                    display: "grid",
-                    gap: 8,
-                  }}
-                >
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
-                    <strong style={{ color: "var(--text-primary)", lineHeight: 1.3 }}>{post.title}</strong>
-                    <small style={{ color: post.status === "published" ? "var(--accent)" : "var(--amber)", fontWeight: 700 }}>
-                      {post.status}
-                    </small>
-                  </div>
-                  <p style={{ margin: 0, color: "var(--text-secondary)", fontSize: 13 }}>
-                    {(post.excerpt || blogText.noExcerpt).slice(0, 95)}
-                  </p>
-                  <small style={{ color: "var(--text-muted)" }}>{toDate(post.published_at || post.created_at, lang)} • {post.author_name || blogText.unknown}</small>
-                </button>
-              );
-            })
-          )}
-        </aside>
+      {loading ? (
+        <div style={{ 
+          background: "var(--bg-card)", 
+          border: "1px solid var(--border)", 
+          borderRadius: 14, 
+          padding: 60, 
+          color: "var(--text-secondary)",
+          textAlign: "center" 
+        }}>
+          {blogText.loadingPosts}
+        </div>
+      ) : posts.length === 0 ? (
+        <div style={{ 
+          background: "var(--bg-card)", 
+          border: "1px solid var(--border)", 
+          borderRadius: 14, 
+          padding: 60, 
+          color: "var(--text-secondary)",
+          textAlign: "center" 
+        }}>
+          {blogText.noPosts}
+        </div>
+      ) : (
+        <div style={{ 
+          display: "grid", 
+          gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))", 
+          gap: 20 
+        }}>
+          {posts.map((post) => {
+            const blogUrl = mode === "website" 
+              ? `/blogs/${post.slug}` 
+              : mode === "app" 
+              ? `/app/blogs/${post.slug}`
+              : mode === "coach"
+              ? `/coach/blogs/${post.slug}`
+              : `/admin/blogs/${post.slug}`;
 
-        <article style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 16, padding: 16 }}>
-          {selectedPost ? (
-            <div style={{ display: "grid", gap: 14 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", gap: 8, flexWrap: "wrap" }}>
-                <div>
-                  <h2 style={{ margin: 0, fontSize: "clamp(22px,2.5vw,30px)" }}>{selectedPost.title}</h2>
-                  <p style={{ margin: "6px 0 0", color: "var(--text-secondary)" }}>
-                    {blogText.by} {selectedPost.author_name || blogText.unknown} • {toDate(selectedPost.published_at || selectedPost.created_at, lang)} • {estimateReadMinutes(selectedPost.content)} {blogText.minRead}
-                  </p>
-                </div>
-                {canWrite && activeTab === "manage" && (
-                  <div style={{ display: "flex", gap: 8 }}>
-                    <button onClick={() => openEditEditor(selectedPost)} style={{ border: "1px solid var(--border)", background: "var(--bg-surface)", color: "var(--text-primary)", borderRadius: 10, padding: "8px 10px", cursor: "pointer" }}>{t("edit")}</button>
-                    <button onClick={() => onDelete(selectedPost.id)} style={{ border: "1px solid rgba(255,68,68,0.4)", background: "rgba(255,68,68,0.1)", color: "#ff9a9a", borderRadius: 10, padding: "8px 10px", cursor: "pointer" }}>
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {selectedPost.header_image_url && (
-                <img src={resolveMediaUrl(selectedPost.header_image_url)} alt={blogText.headerImage} style={{ width: "100%", maxHeight: 360, objectFit: "cover", borderRadius: 14, border: "1px solid var(--border)" }} />
-              )}
-
-              {selectedPost.video_url && (
-                <video controls src={resolveMediaUrl(selectedPost.video_url)} style={{ width: "100%", borderRadius: 14, border: "1px solid var(--border)", background: "#000" }} />
-              )}
-
-              {selectedPost.excerpt && (
-                <p style={{ margin: 0, color: "var(--text-secondary)", fontSize: 17, lineHeight: 1.6 }}>{selectedPost.excerpt}</p>
-              )}
-
+            return (
               <div
-                style={{ color: "var(--text-primary)", lineHeight: 1.8, fontSize: 16 }}
-                dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(markdownToHtml(selectedPost.content)) }}
-              />
-            </div>
-          ) : (
-            <div style={{ color: "var(--text-secondary)" }}>{blogText.selectPost}</div>
-          )}
-        </article>
-      </div>
+                key={post.id}
+                style={{
+                  background: "var(--bg-card)",
+                  border: "1px solid var(--border)",
+                  borderRadius: 14,
+                  overflow: "hidden",
+                  cursor: "pointer",
+                  transition: "transform 0.2s, box-shadow 0.2s",
+                  display: "flex",
+                  flexDirection: "column",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = "translateY(-4px)";
+                  e.currentTarget.style.boxShadow = "0 8px 24px rgba(0,0,0,0.12)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = "translateY(0)";
+                  e.currentTarget.style.boxShadow = "none";
+                }}
+                onClick={() => {
+                  if (canWrite && activeTab === "manage") {
+                    setSelectedId(post.id);
+                    openEditEditor(post);
+                  } else {
+                    window.location.href = blogUrl;
+                  }
+                }}
+              >
+                {/* Featured Image */}
+                <div style={{ 
+                  width: "100%", 
+                  height: 200, 
+                  background: post.header_image_url 
+                    ? `url(${resolveMediaUrl(post.header_image_url)})` 
+                    : "linear-gradient(135deg, var(--accent-dim) 0%, var(--bg-surface) 100%)",
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                  position: "relative"
+                }}>
+                  {/* Status Badge */}
+                  {canWrite && activeTab === "manage" && (
+                    <div style={{ 
+                      position: "absolute", 
+                      top: 10, 
+                      right: lang === "ar" ? "auto" : 10,
+                      left: lang === "ar" ? 10 : "auto",
+                      padding: "4px 10px", 
+                      borderRadius: 8,
+                      background: post.status === "published" 
+                        ? "rgba(34, 197, 94, 0.9)" 
+                        : "rgba(251, 146, 60, 0.9)",
+                      color: "#fff",
+                      fontSize: 12,
+                      fontWeight: 700
+                    }}>
+                      {post.status === "published" 
+                        ? (lang === "ar" ? "منشور" : "Published") 
+                        : (lang === "ar" ? "مسودة" : "Draft")}
+                    </div>
+                  )}
+                  
+                  {/* Language Badge */}
+                  <div style={{ 
+                    position: "absolute", 
+                    top: 10, 
+                    left: lang === "ar" ? "auto" : 10,
+                    right: lang === "ar" ? 10 : "auto",
+                    padding: "4px 10px", 
+                    borderRadius: 8,
+                    background: "rgba(0, 0, 0, 0.6)",
+                    color: "#fff",
+                    fontSize: 11,
+                    fontWeight: 600
+                  }}>
+                    {post.language === "ar" ? "🇸🇦 AR" : "🇬🇧 EN"}
+                  </div>
+                </div>
+
+                {/* Card Content */}
+                <div style={{ padding: 16, display: "flex", flexDirection: "column", gap: 10, flex: 1 }}>
+                  {/* Title */}
+                  <h3 style={{ 
+                    margin: 0, 
+                    fontSize: 18, 
+                    fontWeight: 700,
+                    color: "var(--text-primary)", 
+                    lineHeight: 1.3,
+                    display: "-webkit-box",
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: "vertical",
+                    overflow: "hidden"
+                  }}>
+                    {post.title}
+                  </h3>
+
+                  {/* Excerpt */}
+                  {post.excerpt && (
+                    <p style={{
+                      margin: 0,
+                      fontSize: 14,
+                      color: "var(--text-secondary)",
+                      lineHeight: 1.5,
+                      display: "-webkit-box",
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: "vertical",
+                      overflow: "hidden"
+                    }}>
+                      {post.excerpt}
+                    </p>
+                  )}
+
+                  {/* Meta Info */}
+                  <div style={{ 
+                    marginTop: "auto",
+                    paddingTop: 10,
+                    borderTop: "1px solid var(--border)",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 12,
+                    fontSize: 13,
+                    color: "var(--text-muted)"
+                  }}>
+                    {/* Author Avatar & Name */}
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, flex: 1, minWidth: 0 }}>
+                      {post.author_avatar ? (
+                        <img 
+                          src={resolveMediaUrl(post.author_avatar)} 
+                          alt={post.author_name || ""} 
+                          style={{ 
+                            width: 24, 
+                            height: 24, 
+                            borderRadius: "50%",
+                            objectFit: "cover" 
+                          }} 
+                        />
+                      ) : (
+                        <div style={{ 
+                          width: 24, 
+                          height: 24, 
+                          borderRadius: "50%", 
+                          background: "var(--accent-dim)",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontSize: 11,
+                          fontWeight: 700,
+                          color: "var(--accent)"
+                        }}>
+                          {(post.author_name || "U")[0].toUpperCase()}
+                        </div>
+                      )}
+                      <span style={{ 
+                        fontWeight: 500, 
+                        whiteSpace: "nowrap",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis"
+                      }}>
+                        {post.author_name || blogText.unknown}
+                      </span>
+                    </div>
+
+                    {/* Date */}
+                    <span style={{ whiteSpace: "nowrap" }}>
+                      {toDate(post.published_at || post.created_at, lang)}
+                    </span>
+                  </div>
+
+                  {/* Admin Actions */}
+                  {canWrite && activeTab === "manage" && (
+                    <div style={{ 
+                      display: "flex", 
+                      gap: 8, 
+                      marginTop: 10 
+                    }}>
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openEditEditor(post);
+                        }} 
+                        style={{ 
+                          flex: 1,
+                          border: "1px solid var(--border)", 
+                          background: "var(--bg-surface)", 
+                          color: "var(--text-primary)", 
+                          borderRadius: 8, 
+                          padding: "6px 10px", 
+                          cursor: "pointer",
+                          fontSize: 13,
+                          fontWeight: 600
+                        }}
+                      >
+                        {t("edit")}
+                      </button>
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onDelete(post.id);
+                        }} 
+                        style={{ 
+                          border: "1px solid rgba(255,68,68,0.4)", 
+                          background: "rgba(255,68,68,0.1)", 
+                          color: "#ff9a9a", 
+                          borderRadius: 8, 
+                          padding: "6px 10px", 
+                          cursor: "pointer" 
+                        }}
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       {showEditor && canWrite && (
         <div style={{ position: "fixed", inset: 0, zIndex: 90, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(3px)", padding: 16, overflowY: "auto" }}>

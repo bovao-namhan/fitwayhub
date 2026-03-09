@@ -80,6 +80,14 @@ export async function fetchBlogs(token: string, mode: "feed" | "manage", query =
   return data.posts || [];
 }
 
+export async function fetchPublicBlogBySlug(slug: string, language: BlogLanguage = "en"): Promise<BlogPost> {
+  const params = new URLSearchParams({ lang: language });
+  const response = await fetch(`${getApiBase()}/api/blogs/public/${slug}?${params.toString()}`);
+  const data = await parseJsonResponse(response);
+  if (!response.ok) throw new Error(data.message || "Blog post not found");
+  return data.post;
+}
+
 export async function saveBlog(
   token: string,
   input: SaveBlogInput,
