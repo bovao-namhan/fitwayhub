@@ -227,7 +227,7 @@ export const updateBlog = async (req: Request, res: Response) => {
     const title = String(req.body.title ?? existing.title).trim();
     const excerpt = String(req.body.excerpt ?? existing.excerpt ?? '').trim();
     const content = String(req.body.content ?? existing.content ?? '').trim();
-    const videoDuration = parseInt(req.body.videoDuration || req.body.videoDuration ?? existing.video_duration || '0') || null;
+    const videoDuration = parseInt(req.body.videoDuration ?? existing.video_duration ?? '0') || null;
     const language = existing.language || 'en'; // Don't allow changing language
     const relatedBlogId = req.body.relatedBlogId ? Number(req.body.relatedBlogId) : existing.related_blog_id;
     const status: BlogStatus = req.body.status === 'draft' ? 'draft' : 'published';
