@@ -127,10 +127,11 @@ const MapTracker = React.forwardRef<
 
     const initWithLocation = (L: any) => {
       if (navigator.geolocation) {
+        // Request with high accuracy to trigger the location permission prompt on Android/Capacitor
         navigator.geolocation.getCurrentPosition(
           (pos) => createMapInstance(L, pos.coords.latitude, pos.coords.longitude),
           () => createMapInstance(L, 30.0444, 31.2357),
-          { enableHighAccuracy: false, timeout: 10000, maximumAge: 120000 } // Use low accuracy for initial map center to avoid permission issues
+          { enableHighAccuracy: true, timeout: 15000, maximumAge: 120000 }
         );
       } else {
         createMapInstance(L, 30.0444, 31.2357);
