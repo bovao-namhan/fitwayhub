@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { authenticateToken } from '../middleware/auth';
 import { get, run, query } from '../config/database';
-import { uploadVideo, uploadFont, upload, optimizeImage } from '../middleware/upload';
+import { uploadVideo, uploadFont, upload, optimizeImage, validateVideoSize } from '../middleware/upload';
 import bcrypt from 'bcryptjs';
 
 const router = Router();
@@ -228,7 +228,7 @@ router.get('/videos', authenticateToken, adminOnly, async (_req: any, res: Respo
 router.post('/videos', authenticateToken, adminOnly, uploadVideo.fields([
   { name: 'video', maxCount: 1 },
   { name: 'thumbnail', maxCount: 1 }
-]), optimizeImage(), async (req: any, res: Response) => {
+]), validateVideoSize, optimizeImage(), async (req: any, res: Response) => {
   try {
     const { title, description, duration, category, is_premium } = req.body;
     if (!title) return res.status(400).json({ message: 'Title is required' });
@@ -259,7 +259,7 @@ router.post('/videos', authenticateToken, adminOnly, uploadVideo.fields([
 router.patch('/videos/:id', authenticateToken, adminOnly, uploadVideo.fields([
   { name: 'video', maxCount: 1 },
   { name: 'thumbnail', maxCount: 1 }
-]), optimizeImage(), async (req: any, res: Response) => {
+]), validateVideoSize, optimizeImage(), async (req: any, res: Response) => {
   try {
     const { id } = req.params;
     const existing = await get<any>('SELECT * FROM workout_videos WHERE id = ?', [id]);

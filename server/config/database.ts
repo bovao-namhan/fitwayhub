@@ -348,11 +348,14 @@ async function initTables() {
     `CREATE TABLE IF NOT EXISTS blog_posts (
       id INT AUTO_INCREMENT PRIMARY KEY,
       title VARCHAR(255) NOT NULL,
-      slug VARCHAR(160) NOT NULL UNIQUE,
+      slug VARCHAR(160) NOT NULL,
+      language VARCHAR(5) NOT NULL DEFAULT 'en',
+      related_blog_id INT,
       excerpt TEXT,
       content LONGTEXT NOT NULL,
       header_image_url VARCHAR(500),
       video_url VARCHAR(500),
+      video_duration INT,
       status VARCHAR(20) NOT NULL DEFAULT 'published',
       author_id INT NOT NULL,
       author_role VARCHAR(50) NOT NULL,
@@ -360,9 +363,13 @@ async function initTables() {
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
       FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE CASCADE,
+      FOREIGN KEY (related_blog_id) REFERENCES blog_posts(id) ON DELETE SET NULL,
+      UNIQUE KEY unique_slug_lang (slug, language),
       INDEX idx_blog_posts_status (status),
       INDEX idx_blog_posts_author_id (author_id),
-      INDEX idx_blog_posts_published_at (published_at)
+      INDEX idx_blog_posts_published_at (published_at),
+      INDEX idx_blog_posts_language (language),
+      INDEX idx_blog_posts_related (related_blog_id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`,
 
     `CREATE TABLE IF NOT EXISTS payment_settings (
@@ -743,6 +750,20 @@ export async function initDatabase() {
   try { await pool.execute("ALTER TABLE posts ADD COLUMN moderation_reason VARCHAR(255)"); } catch {}
   try { await pool.execute("ALTER TABLE posts ADD COLUMN is_announcement TINYINT(1) DEFAULT 0"); } catch {}
   try { await pool.execute("ALTER TABLE posts ADD COLUMN is_pinned TINYINT(1) DEFAULT 0"); } catch {}
+
+  // Bilingual blog support
+  try { await pool.execute("ALTER TABLE blog_posts ADD COLUMN language VARCHAR(5) DEFAULT 'en'"); } catch {}
+  try { await pool.execute("ALTER TABLE blog_posts ADD COLUMN related_blog_id INT"); } catch {}
+  try { await pool.execute("ALTER TABLE blog_posts ADD COLUMN video_duration INT"); } catch {}
+  // Fix slug uniqueness constraint for multilingual support
+  try { await pool.execute("ALTER TABLE blog_posts DROP INDEX slug"); } catch {}
+  try { await pool.execute("ALTER TABLE blog_posts ADD UNIQUE KEY unique_slug_lang (slug, language)"); } catch {}
+  try { await pool.execute("ALTER TABLE blog_posts ADD INDEX idx_blog_posts_language (language)"); } catch {}
+  try { await pool.execute("ALTER TABLE blog_posts ADD INDEX idx_blog_posts_related (related_blog_id)"); } catch {}
+  try { 
+    await pool.execute("ALTER TABLE blog_posts ADD CONSTRAINT fk_blog_posts_related FOREIGN KEY (related_blog_id) REFERENCES blog_posts(id) ON DELETE SET NULL");
+  } catch {}
+
   // App settings table for dynamic config / branding
   try {
     await pool.execute(`CREATE TABLE IF NOT EXISTS app_settings (
@@ -780,6 +801,7 @@ export async function initDatabase() {
       ['font_heading', 'Chakra Petch', 'font', 'branding', 'Heading Font'],
       ['free_user_max_videos', '3', 'number', 'access', 'Free Videos Limit'],
       ['free_user_can_access_coaching', '1', 'boolean', 'access', 'Free Users Can Browse Coaches'],
+      ['max_video_upload_size_mb', '40', 'number', 'access', 'Max Video Upload Size (MB)'],
       ['coach_membership_fee_usd', '29.99', 'number', 'pricing', 'Coach Monthly Fee (USD)'],
       ['user_premium_fee_usd', '9.99', 'number', 'pricing', 'User Premium Monthly (USD)'],
       ['registration_points_gift', '200', 'number', 'points', 'Registration Bonus Points'],

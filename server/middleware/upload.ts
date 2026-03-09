@@ -4,6 +4,7 @@ import fs from 'fs';
 import { fileURLToPath } from 'url';
 import sharp from 'sharp';
 import { Request, Response, NextFunction } from 'express';
+import { query as dbQuery } from '../config/database';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -49,11 +50,11 @@ const upload = multer({
   limits: { fileSize: 5 * 1024 * 1024 }
 });
 
-// Upload for videos (500MB limit)
+// Upload for videos (40MB limit)
 const uploadVideo = multer({
   storage: storage,
   fileFilter: videoFilter,
-  limits: { fileSize: 500 * 1024 * 1024 }
+  limits: { fileSize: 40 * 1024 * 1024 }
 });
 
 const uploadAny = multer({
@@ -169,4 +170,59 @@ function optimizeImage(maxWidth = 1920, maxHeight = 1920, quality = 80) {
 }
 
 export default upload;
-export { upload, uploadAny, uploadVideo, uploadFont, uploadAudio, optimizeImage };
+
+/**
+ * Middleware to validate video file size against app_settings.
+ * Checks max_video_upload_size_mb setting after upload.
+ * Deletes file and returns error if oversized.
+ */
+async function validateVideoSize(req: Request, res: Response, next: NextFunction) {
+  try {
+    // Get max size from database (cached for 5 min)
+    let maxSizeMb = 40; // default
+    try {
+      const rows = await dbQuery('SELECT setting_value FROM app_settings WHERE setting_key = ?', ['max_video_upload_size_mb']) as any[];
+      if (rows && rows.length > 0) {
+        maxSizeMb = parseInt(String(rows[0].setting_value), 10) || 40;
+      }
+    } catch (e) {
+      // Use default if query fails
+    }
+
+    const maxSizeBytes = maxSizeMb * 1024 * 1024;
+    const files: Express.Multer.File[] = [];
+
+    if ((req as any).file) {
+      files.push((req as any).file);
+    }
+    if ((req as any).files) {
+      if (Array.isArray((req as any).files)) {
+        files.push(...(req as any).files);
+      } else {
+        for (const fieldFiles of Object.values((req as any).files as Record<string, Express.Multer.File[]>)) {
+          files.push(...fieldFiles);
+        }
+      }
+    }
+
+    for (const file of files) {
+      // Only check video files
+      if (!file.mimetype.startsWith('video/')) continue;
+      if (file.size > maxSizeBytes) {
+        // Delete the oversized file
+        try {
+          await fs.promises.unlink(file.path);
+        } catch {}
+        return res.status(413).json({
+          message: `File too large. Maximum video size is ${maxSizeMb}MB, but file is ${(file.size / 1024 / 1024).toFixed(2)}MB`
+        });
+      }
+    }
+
+    next();
+  } catch (err) {
+    next(err);
+  }
+}
+
+export { upload, uploadAny, uploadVideo, uploadFont, uploadAudio, optimizeImage, validateVideoSize };

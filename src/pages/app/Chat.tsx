@@ -96,25 +96,66 @@ export default function Chat() {
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      
+      // Log stream tracks to verify we're getting real audio
+      const audioTracks = stream.getAudioTracks();
+      if (audioTracks.length === 0) {
+        console.error('No audio tracks detected');
+        setError('No microphone detected');
+        return;
+      }
+      
+      // Verify audio is actually flowing
+      const audioTrack = audioTracks[0];
+      console.log('Audio track obtained:', {
+        label: audioTrack.label,
+        enabled: audioTrack.enabled,
+        readyState: audioTrack.readyState,
+      });
+
       const mimeTypes = ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus', 'audio/ogg', 'audio/mp4', 'audio/aac'];
       const supported = mimeTypes.find(m => MediaRecorder.isTypeSupported(m));
       const mediaRecorder = supported ? new MediaRecorder(stream, { mimeType: supported }) : new MediaRecorder(stream);
+      
+      console.log('MediaRecorder created with mime:', mediaRecorder.mimeType);
+      
       audioChunksRef.current = [];
-      mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) audioChunksRef.current.push(e.data); };
+      mediaRecorder.ondataavailable = (e) => {
+        console.log('Data available, chunk size:', e.data.size);
+        if (e.data.size > 0) audioChunksRef.current.push(e.data);
+      };
+      
       mediaRecorder.onstop = async () => {
+        console.log('Recording stopped, total chunks:', audioChunksRef.current.length);
         stream.getTracks().forEach(t => t.stop());
+        
         const mime = mediaRecorder.mimeType || 'audio/webm';
         const blob = new Blob(audioChunksRef.current, { type: mime });
-        if (blob.size < 500) return;
+        
+        console.log('Blob created with size:', blob.size, 'mime:', mime);
+        
+        // Reduced threshold to 100 bytes for shorter recordings
+        if (blob.size < 100) {
+          console.warn('Recording too small:', blob.size, 'bytes');
+          setError('Recording too short - please record at least 1 second');
+          return;
+        }
+        
         const ext = mime.includes('mp4') || mime.includes('aac') ? 'mp4' : mime.includes('ogg') ? 'ogg' : 'webm';
         await sendVoiceNote(blob, ext);
       };
+      
       mediaRecorderRef.current = mediaRecorder;
       mediaRecorder.start(250);
       setIsRecording(true);
       setRecordingDuration(0);
       recordingTimerRef.current = setInterval(() => setRecordingDuration(d => d + 1), 1000);
-    } catch { /* mic permission denied or not available */ }
+      
+      console.log('Recording started');
+    } catch (err) {
+      console.error('Recording error:', err);
+      setError('Microphone permission denied or not available');
+    }
   };
 
   const stopRecording = () => {

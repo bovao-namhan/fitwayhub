@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { authenticateToken, requireActiveCoachMembershipForDeals } from '../middleware/auth';
-import { upload, uploadVideo, optimizeImage } from '../middleware/upload';
+import { upload, uploadVideo, optimizeImage, validateVideoSize } from '../middleware/upload';
 import { get, run, query } from '../config/database';
 
 const router = Router();
@@ -42,7 +42,7 @@ router.get('/ads', authenticateToken, coachOrAdmin, async (req: any, res: Respon
 });
 
 // ── Coach: create ad (with optional image upload) ────────────────────────────
-router.post('/ads', authenticateToken, coachOrAdmin, requireActiveCoachMembershipForDeals, uploadVideo.fields([{ name: 'image', maxCount: 1 }, { name: 'video', maxCount: 1 }]), optimizeImage(), async (req: any, res: Response) => {
+router.post('/ads', authenticateToken, coachOrAdmin, requireActiveCoachMembershipForDeals, uploadVideo.fields([{ name: 'image', maxCount: 1 }, { name: 'video', maxCount: 1 }]), validateVideoSize, optimizeImage(), async (req: any, res: Response) => {
   const { title, description, specialty, cta, highlight, paymentMethod, ad_type, media_type, objective, duration_hours, duration_days } = req.body;
   if (!title || !description) return res.status(400).json({ message: 'Title and description required' });
   try {
@@ -60,7 +60,7 @@ router.post('/ads', authenticateToken, coachOrAdmin, requireActiveCoachMembershi
 });
 
 // ── Coach: update ad ─────────────────────────────────────────────────────────
-router.put('/ads/:id', authenticateToken, coachOrAdmin, requireActiveCoachMembershipForDeals, uploadVideo.fields([{ name: 'image', maxCount: 1 }, { name: 'video', maxCount: 1 }]), optimizeImage(), async (req: any, res: Response) => {
+router.put('/ads/:id', authenticateToken, coachOrAdmin, requireActiveCoachMembershipForDeals, uploadVideo.fields([{ name: 'image', maxCount: 1 }, { name: 'video', maxCount: 1 }]), validateVideoSize, optimizeImage(), async (req: any, res: Response) => {
   const { id } = req.params;
   const { title, description, specialty, cta, highlight, paymentMethod, ad_type, media_type, objective, duration_hours, duration_days } = req.body;
   try {

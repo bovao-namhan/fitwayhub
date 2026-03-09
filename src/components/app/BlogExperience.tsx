@@ -136,14 +136,41 @@ export default function BlogExperience({ mode, heading, subheading, allowWriting
   const [showEditor, setShowEditor] = useState(false);
   const [editingPost, setEditingPost] = useState<BlogPost | null>(null);
   const [draft, setDraft] = useState<DraftState>(defaultDraft);
+  const [language, setLanguage] = useState<"en" | "ar">("en");
+  const [relatedBlogId, setRelatedBlogId] = useState<number | null>(null);
   const [headerFile, setHeaderFile] = useState<File | null>(null);
   const [videoFile, setVideoFile] = useState<File | null>(null);
+  const [videoDuration, setVideoDuration] = useState<number | null>(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [removeHeaderImage, setRemoveHeaderImage] = useState(false);
   const [removeVideo, setRemoveVideo] = useState(false);
   const [saving, setSaving] = useState(false);
   const [previewMode, setPreviewMode] = useState(false);
 
   const editorRef = useRef<HTMLTextAreaElement | null>(null);
+
+  // Detect video duration client-side when file is selected
+  const handleVideoFileChange = (file: File | null) => {
+    setVideoFile(file);
+    setVideoDuration(null);
+
+    if (!file) return;
+
+    // Use HTML5 video API to detect duration
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const video = document.createElement("video");
+      video.onloadedmetadata = () => {
+        setVideoDuration(Math.round(video.duration));
+      };
+      video.onerror = () => {
+        // If duration detection fails, it will be null - backend will try to detect it
+        console.warn("Failed to detect video duration client-side");
+      };
+      video.src = e.target?.result as string;
+    };
+    reader.readAsDataURL(file);
+  };
 
   const draftKey = useMemo(
     () => `fitway_blog_draft_${mode}_${user?.id || "guest"}`,
@@ -160,15 +187,16 @@ export default function BlogExperience({ mode, heading, subheading, allowWriting
     setError("");
     try {
       let nextPosts: BlogPost[] = [];
+      const displayLang = lang as "en" | "ar";
 
       if (mode === "website") {
-        nextPosts = await fetchPublicBlogs(query);
+        nextPosts = await fetchPublicBlogs(query, displayLang);
       } else if (!token) {
-        nextPosts = await fetchPublicBlogs(query);
+        nextPosts = await fetchPublicBlogs(query, displayLang);
       } else if (canWrite && activeTab === "manage") {
-        nextPosts = await fetchBlogs(token, "manage", query);
+        nextPosts = await fetchBlogs(token, "manage", query, displayLang);
       } else {
-        nextPosts = await fetchBlogs(token, "feed", query);
+        nextPosts = await fetchBlogs(token, "feed", query, displayLang);
       }
 
       setPosts(nextPosts);
@@ -185,7 +213,7 @@ export default function BlogExperience({ mode, heading, subheading, allowWriting
   useEffect(() => {
     const timer = window.setTimeout(() => loadPosts(), 220);
     return () => window.clearTimeout(timer);
-  }, [query, activeTab, token, mode, canWrite]);
+  }, [query, activeTab, token, mode, canWrite, lang]);
 
   useEffect(() => {
     if (!showEditor || editingPost) return;
@@ -224,8 +252,12 @@ export default function BlogExperience({ mode, heading, subheading, allowWriting
   function openNewEditor() {
     setEditingPost(null);
     setDraft(defaultDraft);
+    setLanguage("en");
+    setRelatedBlogId(null);
     setHeaderFile(null);
     setVideoFile(null);
+    setVideoDuration(null);
+    setUploadProgress(0);
     setRemoveHeaderImage(false);
     setRemoveVideo(false);
     setPreviewMode(false);
@@ -240,8 +272,12 @@ export default function BlogExperience({ mode, heading, subheading, allowWriting
       content: post.content || "",
       status: post.status,
     });
+    setLanguage(post.language || "en");
+    setRelatedBlogId(post.related_blog_id || null);
     setHeaderFile(null);
     setVideoFile(null);
+    setVideoDuration(null);
+    setUploadProgress(0);
     setRemoveHeaderImage(false);
     setRemoveVideo(false);
     setPreviewMode(false);
@@ -252,6 +288,9 @@ export default function BlogExperience({ mode, heading, subheading, allowWriting
     setShowEditor(false);
     setEditingPost(null);
     setSaving(false);
+    setUploadProgress(0);
+    setLanguage("en");
+    setRelatedBlogId(null);
   }
 
   function insertSyntax(before: string, after = "", placeholder = "text") {
@@ -285,6 +324,7 @@ export default function BlogExperience({ mode, heading, subheading, allowWriting
 
     setSaving(true);
     setError("");
+    setUploadProgress(0);
 
     try {
       const saved = await saveBlog(
@@ -292,12 +332,16 @@ export default function BlogExperience({ mode, heading, subheading, allowWriting
         {
           ...draft,
           status,
+          language,
+          relatedBlogId,
           headerImage: headerFile,
           video: videoFile,
+          videoDuration,
           removeHeaderImage,
           removeVideo,
         },
-        editingPost?.id
+        editingPost?.id,
+        (percentage) => setUploadProgress(percentage)
       );
 
       localStorage.removeItem(draftKey);
@@ -308,6 +352,7 @@ export default function BlogExperience({ mode, heading, subheading, allowWriting
       setError(err.message || blogText.saveFailed);
     } finally {
       setSaving(false);
+      setUploadProgress(0);
     }
   }
 
@@ -563,6 +608,68 @@ export default function BlogExperience({ mode, heading, subheading, allowWriting
 
               <aside style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 14, padding: 14, display: "grid", gap: 12, alignContent: "start" }}>
                 <label style={{ display: "grid", gap: 6 }}>
+                  <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>Language</span>
+                  <div style={{ display: "flex", gap: 8 }}>
+                    <button
+                      onClick={() => setLanguage("en")}
+                      style={{
+                        flex: 1,
+                        padding: "8px 12px",
+                        borderRadius: 10,
+                        border: `1px solid ${language === "en" ? "var(--accent)" : "var(--border)"}`,
+                        background: language === "en" ? "var(--accent-dim)" : "var(--bg-surface)",
+                        color: language === "en" ? "var(--accent)" : "var(--text-secondary)",
+                        cursor: "pointer",
+                        fontWeight: language === "en" ? 600 : 400,
+                        fontSize: 12,
+                      }}
+                    >
+                      🇬🇧 English
+                    </button>
+                    <button
+                      onClick={() => setLanguage("ar")}
+                      style={{
+                        flex: 1,
+                        padding: "8px 12px",
+                        borderRadius: 10,
+                        border: `1px solid ${language === "ar" ? "var(--accent)" : "var(--border)"}`,
+                        background: language === "ar" ? "var(--accent-dim)" : "var(--bg-surface)",
+                        color: language === "ar" ? "var(--accent)" : "var(--text-secondary)",
+                        cursor: "pointer",
+                        fontWeight: language === "ar" ? 600 : 400,
+                        fontSize: 12,
+                      }}
+                    >
+                      🇸🇦 العربية
+                    </button>
+                  </div>
+                  {!editingPost && (
+                    <select
+                      value={relatedBlogId || ""}
+                      onChange={(e) => setRelatedBlogId(e.target.value ? Number(e.target.value) : null)}
+                      style={{
+                        padding: "8px 10px",
+                        borderRadius: 10,
+                        border: "1px solid var(--border)",
+                        background: "var(--bg-surface)",
+                        color: "var(--text-primary)",
+                        fontSize: 12,
+                        cursor: "pointer",
+                      }}
+                    >
+                      <option value="">{language === "ar" ? "لا توجد نسخة مرتبطة" : "No related version"}</option>
+                      {posts
+                        .filter((p) => p.language !== language && !p.related_blog_id)
+                        .map((p) => (
+                          <option key={p.id} value={p.id}>
+                            {language === "ar" ? "ربط بـ" : "Link to"}: {p.title}
+                          </option>
+                        ))}
+                    </select>
+                  )}
+                </label>
+
+                <label style={{ display: "grid", gap: 6 }}>
                   <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>{blogText.headerImage}</span>
                   <label style={{ border: "1px dashed var(--border-light)", borderRadius: 12, padding: 12, cursor: "pointer", background: "var(--bg-surface)", display: "grid", gap: 6 }}>
                     <input type="file" accept="image/*" onChange={(e) => setHeaderFile(e.target.files?.[0] || null)} style={{ display: "none" }} />
@@ -574,8 +681,11 @@ export default function BlogExperience({ mode, heading, subheading, allowWriting
                 <label style={{ display: "grid", gap: 6 }}>
                   <span style={{ fontSize: 13, color: "var(--text-secondary)" }}>{blogText.videoUpload}</span>
                   <label style={{ border: "1px dashed var(--border-light)", borderRadius: 12, padding: 12, cursor: "pointer", background: "var(--bg-surface)", display: "grid", gap: 6 }}>
-                    <input type="file" accept="video/*" onChange={(e) => setVideoFile(e.target.files?.[0] || null)} style={{ display: "none" }} />
+                    <input type="file" accept="video/*" onChange={(e) => handleVideoFileChange(e.target.files?.[0] || null)} style={{ display: "none" }} />
                     <div style={{ display: "flex", alignItems: "center", gap: 8, color: "var(--text-secondary)" }}><PlayCircle size={14} /> {videoFile ? videoFile.name : blogText.uploadVideo}</div>
+                    {videoDuration !== null && (
+                      <small style={{ color: "var(--accent)", fontWeight: 600 }}>Duration: {Math.floor(videoDuration / 60)}m {videoDuration % 60}s</small>
+                    )}
                     <small style={{ color: "var(--text-muted)" }}>{blogText.videoHint}</small>
                   </label>
                 </label>
@@ -606,6 +716,26 @@ export default function BlogExperience({ mode, heading, subheading, allowWriting
                   >
                     <Upload size={15} /> {saving ? blogText.saving : blogText.publish}
                   </button>
+                  {saving && uploadProgress > 0 && (
+                    <div style={{ display: "grid", gap: 6 }}>
+                      <div style={{
+                        width: "100%",
+                        height: 6,
+                        background: "var(--bg-surface)",
+                        borderRadius: 3,
+                        overflow: "hidden",
+                        border: "1px solid var(--border-light)"
+                      }}>
+                        <div style={{
+                          height: "100%",
+                          width: `${uploadProgress}%`,
+                          background: "var(--accent)",
+                          transition: "width 0.3s ease",
+                        }} />
+                      </div>
+                      <small style={{ color: "var(--text-muted)", textAlign: "center" }}>{uploadProgress}% uploaded</small>
+                    </div>
+                  )}
                 </div>
               </aside>
             </div>

@@ -16,13 +16,13 @@ function toSlug(input: string): string {
     .slice(0, 120);
 }
 
-async function uniqueSlug(base: string, ignoreId?: number): Promise<string> {
+async function uniqueSlug(base: string, ignoreId?: number, language: string = 'en'): Promise<string> {
   const safeBase = base || `post-${Date.now()}`;
   let slug = safeBase;
   let i = 1;
 
   while (true) {
-    const row = await get<any>('SELECT id FROM blog_posts WHERE slug = ?', [slug]);
+    const row = await get<any>('SELECT id FROM blog_posts WHERE slug = ? AND language = ?', [slug, language]);
     if (!row || (ignoreId && Number(row.id) === Number(ignoreId))) return slug;
     slug = `${safeBase}-${i++}`;
   }
@@ -41,9 +41,10 @@ export const getPublicBlogs = async (req: Request, res: Response) => {
   try {
     const limit = Math.min(Math.max(Number(req.query.limit || 30), 1), 100);
     const q = String(req.query.q || '').trim();
+    const lang = String(req.query.lang || 'en').trim();
 
-    const where: string[] = ['bp.status = "published"'];
-    const params: any[] = [];
+    const where: string[] = ['bp.status = "published"', 'bp.language = ?'];
+    const params: any[] = [lang];
 
     if (q) {
       where.push('(bp.title LIKE ? OR bp.excerpt LIKE ? OR bp.content LIKE ?)');
@@ -52,7 +53,8 @@ export const getPublicBlogs = async (req: Request, res: Response) => {
 
     const posts = await query(
       `SELECT bp.id, bp.title, bp.slug, bp.excerpt, bp.content, bp.header_image_url, bp.video_url,
-              bp.status, bp.author_id, bp.author_role, bp.created_at, bp.updated_at, bp.published_at,
+              bp.video_duration, bp.language, bp.related_blog_id, bp.status, bp.author_id, bp.author_role, 
+              bp.created_at, bp.updated_at, bp.published_at,
               u.name AS author_name, u.avatar AS author_avatar
        FROM blog_posts bp
        JOIN users u ON u.id = bp.author_id
@@ -72,6 +74,7 @@ export const getPublicBlogs = async (req: Request, res: Response) => {
 export const getPublicBlogBySlug = async (req: Request, res: Response) => {
   try {
     const key = String(req.params.slug || '').trim();
+    const lang = String(req.query.lang || 'en').trim();
     if (!key) return res.status(400).json({ message: 'Blog slug is required' });
 
     const byId = Number(key);
@@ -80,15 +83,15 @@ export const getPublicBlogBySlug = async (req: Request, res: Response) => {
         `SELECT bp.*, u.name AS author_name, u.avatar AS author_avatar
          FROM blog_posts bp
          JOIN users u ON u.id = bp.author_id
-         WHERE bp.id = ? AND bp.status = 'published'`,
-        [byId]
+         WHERE bp.id = ? AND bp.language = ? AND bp.status = 'published'`,
+        [byId, lang]
       )
       : await get<any>(
         `SELECT bp.*, u.name AS author_name, u.avatar AS author_avatar
          FROM blog_posts bp
          JOIN users u ON u.id = bp.author_id
-         WHERE bp.slug = ? AND bp.status = 'published'`,
-        [key]
+         WHERE bp.slug = ? AND bp.language = ? AND bp.status = 'published'`,
+        [key, lang]
       );
 
     if (!post) return res.status(404).json({ message: 'Blog post not found' });
@@ -129,7 +132,8 @@ export const getBlogs = async (req: Request, res: Response) => {
 
     const posts = await query(
       `SELECT bp.id, bp.title, bp.slug, bp.excerpt, bp.content, bp.header_image_url, bp.video_url,
-              bp.status, bp.author_id, bp.author_role, bp.created_at, bp.updated_at, bp.published_at,
+              bp.video_duration, bp.language, bp.related_blog_id, bp.status, bp.author_id, bp.author_role, 
+              bp.created_at, bp.updated_at, bp.published_at,
               u.name AS author_name, u.avatar AS author_avatar
        FROM blog_posts bp
        JOIN users u ON u.id = bp.author_id
@@ -161,19 +165,26 @@ export const createBlog = async (req: Request, res: Response) => {
     const title = String(req.body.title || '').trim();
     const excerpt = String(req.body.excerpt || '').trim();
     const content = String(req.body.content || '').trim();
+    const videoDuration = parseInt(req.body.videoDuration || '0') || null;
+    const language = String(req.body.language || 'en').trim().toLowerCase();
+    const relatedBlogId = req.body.relatedBlogId ? Number(req.body.relatedBlogId) : null;
     const status: BlogStatus = req.body.status === 'draft' ? 'draft' : 'published';
 
     if (!title) return res.status(400).json({ message: 'Title is required' });
     if (!content) return res.status(400).json({ message: 'Content is required' });
+    if (!['en', 'ar'].includes(language)) {
+      return res.status(400).json({ message: 'Language must be "en" or "ar"' });
+    }
 
-    const slug = await uniqueSlug(toSlug(title));
+    const slugBase = toSlug(title);
+    const slug = await uniqueSlug(slugBase, undefined, language);
     const publishedAt = status === 'published' ? new Date() : null;
 
     const { insertId } = await run(
       `INSERT INTO blog_posts
-        (title, slug, excerpt, content, header_image_url, video_url, status, author_id, author_role, published_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [title, slug, excerpt, content, headerImage, video, status, userId, role, publishedAt]
+        (title, slug, excerpt, content, header_image_url, video_url, video_duration, language, related_blog_id, status, author_id, author_role, published_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [title, slug, excerpt, content, headerImage, video, videoDuration, language, relatedBlogId, status, userId, role, publishedAt]
     );
 
     const post = await get<any>(
@@ -185,7 +196,8 @@ export const createBlog = async (req: Request, res: Response) => {
     );
 
     res.status(201).json({ post });
-  } catch {
+  } catch (err) {
+    console.error('createBlog error:', err);
     res.status(500).json({ message: 'Failed to create blog post' });
   }
 };
@@ -215,13 +227,16 @@ export const updateBlog = async (req: Request, res: Response) => {
     const title = String(req.body.title ?? existing.title).trim();
     const excerpt = String(req.body.excerpt ?? existing.excerpt ?? '').trim();
     const content = String(req.body.content ?? existing.content ?? '').trim();
+    const videoDuration = parseInt(req.body.videoDuration || req.body.videoDuration ?? existing.video_duration || '0') || null;
+    const language = existing.language || 'en'; // Don't allow changing language
+    const relatedBlogId = req.body.relatedBlogId ? Number(req.body.relatedBlogId) : existing.related_blog_id;
     const status: BlogStatus = req.body.status === 'draft' ? 'draft' : 'published';
 
     if (!title) return res.status(400).json({ message: 'Title is required' });
     if (!content) return res.status(400).json({ message: 'Content is required' });
 
     const slugBase = toSlug(title);
-    const slug = title === existing.title ? existing.slug : await uniqueSlug(slugBase, postId);
+    const slug = title === existing.title ? existing.slug : await uniqueSlug(slugBase, postId, language);
 
     const nextHeaderImage = req.body.removeHeaderImage === '1'
       ? null
@@ -237,10 +252,10 @@ export const updateBlog = async (req: Request, res: Response) => {
 
     await run(
       `UPDATE blog_posts
-       SET title = ?, slug = ?, excerpt = ?, content = ?, header_image_url = ?, video_url = ?,
-           status = ?, published_at = ?, updated_at = NOW()
+       SET title = ?, slug = ?, excerpt = ?, content = ?, header_image_url = ?, video_url = ?, video_duration = ?,
+           related_blog_id = ?, status = ?, published_at = ?, updated_at = NOW()
        WHERE id = ?`,
-      [title, slug, excerpt, content, nextHeaderImage, nextVideo, status, publishedAt, postId]
+      [title, slug, excerpt, content, nextHeaderImage, nextVideo, videoDuration, relatedBlogId, status, publishedAt, postId]
     );
 
     const post = await get<any>(
