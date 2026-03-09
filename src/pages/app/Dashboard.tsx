@@ -1,10 +1,11 @@
 import { getApiBase } from "@/lib/api";
 import { StatCard } from "@/components/app/StatCard";
-import { Activity, Flame, Droplets, Footprints, PlayCircle, ArrowRight, Zap, Megaphone, ExternalLink, Target, Edit2, Check, X, ChevronDown, ChevronUp, Utensils, Dumbbell, Star, Crown, Play, Clock } from "lucide-react";
+import { Activity, Flame, Droplets, Footprints, PlayCircle, ArrowRight, Zap, Megaphone, ExternalLink, Target, Edit2, Check, X, ChevronDown, ChevronUp, Utensils, Dumbbell, Star, Crown, Play, Clock, BookOpen } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { useState, useEffect, useRef } from "react";
 import { useI18n } from "@/context/I18nContext";
+import { fetchPublicBlogs, resolveMediaUrl, type BlogPost } from "@/lib/blogs";
 
 export default function Dashboard() {
   const { user, token, updateUser, refreshUser } = useAuth();
@@ -24,7 +25,8 @@ export default function Dashboard() {
   const [bannerIndex, setBannerIndex] = useState(0);
   const [topCoaches, setTopCoaches] = useState<any[]>([]);
   const [recentVideos, setRecentVideos] = useState<any[]>([]);
-  const { t } = useI18n();
+  const [recentBlogs, setRecentBlogs] = useState<BlogPost[]>([]);
+  const { t, lang } = useI18n();
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
   useEffect(() => { const h = () => setIsMobile(window.innerWidth < 768); window.addEventListener("resize", h); return () => window.removeEventListener("resize", h); }, []);
 
@@ -84,6 +86,13 @@ export default function Dashboard() {
         .catch(() => {});
     }
   }, [token]);
+
+  // Fetch recent blogs filtered by language
+  useEffect(() => {
+    fetchPublicBlogs("", lang as "en" | "ar")
+      .then((blogs) => setRecentBlogs(blogs.slice(0, 6)))
+      .catch(() => setRecentBlogs([]));
+  }, [lang]);
 
   // Auto-rotate home banner carousel every 5s
   useEffect(() => {
@@ -638,6 +647,150 @@ export default function Dashboard() {
               <p style={{ fontSize: 11, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.06em" }}>Tomorrow's Goal</p>
               <p style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 20, fontWeight: 700, color: "var(--accent)" }}>{aiAnalysis.tomorrow_goal?.toLocaleString()} steps</p>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Recent Blogs Section ── */}
+      {recentBlogs.length > 0 && (
+        <div className="fade-up" style={{ marginTop: 24 }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <BookOpen size={15} color="var(--accent)" />
+              <h2 style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 15, fontWeight: 700 }}>
+                {t("recent_articles") || (lang === "ar" ? "أحدث المقالات" : "Recent Articles")}
+              </h2>
+            </div>
+            <Link to="/app/blogs" style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: "var(--accent)", textDecoration: "none", fontWeight: 500 }}>
+              {t("view_all") || (lang === "ar" ? "عرض الكل" : "View All")} <ArrowRight size={13} />
+            </Link>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fill, minmax(260px, 1fr))", gap: 14 }}>
+            {recentBlogs.map((blog) => (
+              <Link
+                key={blog.id}
+                to={`/app/blogs/${blog.slug}`}
+                style={{
+                  backgroundColor: "var(--bg-card)",
+                  border: "1px solid var(--border)",
+                  borderRadius: 16,
+                  overflow: "hidden",
+                  display: "flex",
+                  flexDirection: "column",
+                  textDecoration: "none",
+                  transition: "transform 0.2s, box-shadow 0.2s",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = "translateY(-4px)";
+                  e.currentTarget.style.boxShadow = "0 8px 24px rgba(0,0,0,0.12)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = "translateY(0)";
+                  e.currentTarget.style.boxShadow = "none";
+                }}
+              >
+                {/* Blog Image */}
+                <div style={{ 
+                  width: "100%", 
+                  height: 140, 
+                  background: blog.header_image_url 
+                    ? `url(${resolveMediaUrl(blog.header_image_url)})` 
+                    : "linear-gradient(135deg, var(--accent-dim) 0%, var(--bg-surface) 100%)",
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                  position: "relative"
+                }}>
+                  <div style={{ 
+                    position: "absolute", 
+                    top: 8, 
+                    left: lang === "ar" ? "auto" : 8,
+                    right: lang === "ar" ? 8 : "auto",
+                    padding: "3px 8px", 
+                    borderRadius: 6,
+                    background: "rgba(0, 0, 0, 0.6)",
+                    color: "#fff",
+                    fontSize: 10,
+                    fontWeight: 600
+                  }}>
+                    {blog.language === "ar" ? "🇸🇦 AR" : "🇬🇧 EN"}
+                  </div>
+                </div>
+
+                {/* Blog Content */}
+                <div style={{ padding: 14, display: "flex", flexDirection: "column", gap: 8, flex: 1 }}>
+                  <h3 style={{ 
+                    margin: 0, 
+                    fontSize: 15, 
+                    fontWeight: 700,
+                    color: "var(--text-primary)", 
+                    lineHeight: 1.3,
+                    display: "-webkit-box",
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: "vertical",
+                    overflow: "hidden"
+                  }}>
+                    {blog.title}
+                  </h3>
+
+                  {blog.excerpt && (
+                    <p style={{
+                      margin: 0,
+                      fontSize: 13,
+                      color: "var(--text-secondary)",
+                      lineHeight: 1.4,
+                      display: "-webkit-box",
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: "vertical",
+                      overflow: "hidden"
+                    }}>
+                      {blog.excerpt}
+                    </p>
+                  )}
+
+                  {/* Meta */}
+                  <div style={{ 
+                    marginTop: "auto",
+                    paddingTop: 8,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 8,
+                    fontSize: 11,
+                    color: "var(--text-muted)"
+                  }}>
+                    {blog.author_avatar ? (
+                      <img 
+                        src={resolveMediaUrl(blog.author_avatar)} 
+                        alt={blog.author_name || ""} 
+                        style={{ 
+                          width: 20, 
+                          height: 20, 
+                          borderRadius: "50%",
+                          objectFit: "cover" 
+                        }} 
+                      />
+                    ) : (
+                      <div style={{ 
+                        width: 20, 
+                        height: 20, 
+                        borderRadius: "50%", 
+                        background: "var(--accent-dim)",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontSize: 10,
+                        fontWeight: 700,
+                        color: "var(--accent)"
+                      }}>
+                        {(blog.author_name || "U")[0].toUpperCase()}
+                      </div>
+                    )}
+                    <span style={{ fontWeight: 500, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {blog.author_name || (lang === "ar" ? "غير معروف" : "Unknown")}
+                    </span>
+                  </div>
+                </div>
+              </Link>
+            ))}
           </div>
         </div>
       )}

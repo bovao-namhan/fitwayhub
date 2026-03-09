@@ -1,9 +1,10 @@
 import { getApiBase } from "@/lib/api";
 import { useState, useEffect } from "react";
-import { Users, TrendingUp, Activity, CheckCircle, Clock, DollarSign, Star, MessageSquare, ClipboardList } from "lucide-react";
+import { Users, TrendingUp, Activity, CheckCircle, Clock, DollarSign, Star, MessageSquare, ClipboardList, BookOpen, ArrowRight } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useI18n } from "@/context/I18nContext";
 import { Link } from "react-router-dom";
+import { fetchPublicBlogs, resolveMediaUrl, type BlogPost } from "@/lib/blogs";
 
 interface CoachStats {
   athletes: number;
@@ -39,13 +40,14 @@ interface ActivityItem {
 
 export default function CoachHome() {
   const { user, token } = useAuth();
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
   useEffect(() => { const h = () => setIsMobile(window.innerWidth < 768); window.addEventListener("resize", h); return () => window.removeEventListener("resize", h); }, []);
   const [stats, setStats] = useState<CoachStats | null>(null);
   const [sessions, setSessions] = useState<Session[]>([]);
   const [activity, setActivity] = useState<ActivityItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [recentBlogs, setRecentBlogs] = useState<BlogPost[]>([]);
 
   const api = (path: string) =>
     fetch(getApiBase() + path, { headers: { Authorization: `Bearer ${token}` } }).then((r) => {
@@ -72,6 +74,13 @@ export default function CoachHome() {
       })
       .finally(() => setLoading(false));
   }, [token]);
+
+  // Fetch recent blogs filtered by language
+  useEffect(() => {
+    fetchPublicBlogs("", lang as "en" | "ar")
+      .then((blogs) => setRecentBlogs(blogs.slice(0, 6)))
+      .catch(() => setRecentBlogs([]));
+  }, [lang]);
 
   const formatTime = (dateStr: string) => {
     const d = new Date(dateStr);
@@ -210,6 +219,150 @@ export default function CoachHome() {
           );
         })}
       </div>
+
+      {/* Recent Blogs Section */}
+      {recentBlogs.length > 0 && (
+        <div style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 16, padding: "20px 22px" }}>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+              <BookOpen size={16} color="var(--blue)" />
+              <p style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 14, fontWeight: 700 }}>
+                {t("recent_articles") || (lang === "ar" ? "أحدث المقالات" : "Recent Articles")}
+              </p>
+            </div>
+            <Link to="/coach/blogs" style={{ fontSize: 12, color: "var(--accent)", textDecoration: "none", fontWeight: 600, display: "flex", alignItems: "center", gap: 4 }}>
+              {t("view_all") || (lang === "ar" ? "عرض الكل" : "View All")} <ArrowRight size={12} />
+            </Link>
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fill, minmax(240px, 1fr))", gap: 12 }}>
+            {recentBlogs.map((blog) => (
+              <Link
+                key={blog.id}
+                to={`/coach/blogs/${blog.slug}`}
+                style={{
+                  backgroundColor: "var(--bg-surface)",
+                  border: "1px solid var(--border)",
+                  borderRadius: 12,
+                  overflow: "hidden",
+                  display: "flex",
+                  flexDirection: "column",
+                  textDecoration: "none",
+                  transition: "transform 0.2s, box-shadow 0.2s",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = "translateY(-2px)";
+                  e.currentTarget.style.boxShadow = "0 4px 12px rgba(0,0,0,0.1)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = "translateY(0)";
+                  e.currentTarget.style.boxShadow = "none";
+                }}
+              >
+                {/* Blog Image */}
+                <div style={{ 
+                  width: "100%", 
+                  height: 120, 
+                  background: blog.header_image_url 
+                    ? `url(${resolveMediaUrl(blog.header_image_url)})` 
+                    : "linear-gradient(135deg, var(--blue) 0%, var(--bg-surface) 100%)",
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                  position: "relative"
+                }}>
+                  <div style={{ 
+                    position: "absolute", 
+                    top: 6, 
+                    left: lang === "ar" ? "auto" : 6,
+                    right: lang === "ar" ? 6 : "auto",
+                    padding: "2px 6px", 
+                    borderRadius: 5,
+                    background: "rgba(0, 0, 0, 0.6)",
+                    color: "#fff",
+                    fontSize: 9,
+                    fontWeight: 600
+                  }}>
+                    {blog.language === "ar" ? "🇸🇦 AR" : "🇬🇧 EN"}
+                  </div>
+                </div>
+
+                {/* Blog Content */}
+                <div style={{ padding: 12, display: "flex", flexDirection: "column", gap: 6, flex: 1 }}>
+                  <h4 style={{ 
+                    margin: 0, 
+                    fontSize: 14, 
+                    fontWeight: 700,
+                    color: "var(--text-primary)", 
+                    lineHeight: 1.3,
+                    display: "-webkit-box",
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: "vertical",
+                    overflow: "hidden"
+                  }}>
+                    {blog.title}
+                  </h4>
+
+                  {blog.excerpt && (
+                    <p style={{
+                      margin: 0,
+                      fontSize: 12,
+                      color: "var(--text-secondary)",
+                      lineHeight: 1.4,
+                      display: "-webkit-box",
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: "vertical",
+                      overflow: "hidden"
+                    }}>
+                      {blog.excerpt}
+                    </p>
+                  )}
+
+                  {/* Meta */}
+                  <div style={{ 
+                    marginTop: "auto",
+                    paddingTop: 6,
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 6,
+                    fontSize: 11,
+                    color: "var(--text-muted)"
+                  }}>
+                    {blog.author_avatar ? (
+                      <img 
+                        src={resolveMediaUrl(blog.author_avatar)} 
+                        alt={blog.author_name || ""} 
+                        style={{ 
+                          width: 18, 
+                          height: 18, 
+                          borderRadius: "50%",
+                          objectFit: "cover" 
+                        }} 
+                      />
+                    ) : (
+                      <div style={{ 
+                        width: 18, 
+                        height: 18, 
+                        borderRadius: "50%", 
+                        background: "var(--blue)",
+                        color: "#fff",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontSize: 9,
+                        fontWeight: 700
+                      }}>
+                        {(blog.author_name || "U")[0].toUpperCase()}
+                      </div>
+                    )}
+                    <span style={{ fontWeight: 500, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {blog.author_name || (lang === "ar" ? "غير معروف" : "Unknown")}
+                    </span>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

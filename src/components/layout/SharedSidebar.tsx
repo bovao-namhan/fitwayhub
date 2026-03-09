@@ -170,63 +170,92 @@ export function SharedSidebar({
     ) : null;
 
   // ── Footer actions ─────────────────────────────────────────────────────────
-  const FooterActions = ({ showLabels = true }: { showLabels?: boolean }) => (
-    <div
-      style={{
-        borderTop: "1px solid var(--border)",
-        padding: showLabels ? "8px 10px 16px" : "8px 8px 14px",
-        flexShrink: 0,
-      }}
-    >
-      {extraFooter && showLabels && (
-        <div style={{ marginBottom: 10 }}>{extraFooter}</div>
-      )}
-      <button
-        onClick={toggleTheme}
+  const FooterActions = ({ showLabels = true }: { showLabels?: boolean }) => {
+    const { setLang } = useI18n();
+    
+    return (
+      <div
         style={{
-          display: "flex",
-          alignItems: "center",
-          gap: showLabels ? 8 : 0,
-          justifyContent: showLabels ? "flex-start" : "center",
-          width: "100%",
-          padding: showLabels ? "8px 10px" : "8px 0",
-          borderRadius: 8,
-          fontSize: 12,
-          color: "var(--text-muted)",
-          background: "none",
-          border: "none",
-          cursor: "pointer",
-          marginBottom: 2,
-          whiteSpace: "nowrap",
+          borderTop: "1px solid var(--border)",
+          padding: showLabels ? "8px 10px 16px" : "8px 8px 14px",
+          flexShrink: 0,
         }}
       >
-        {isDark ? <Moon size={14} /> : <Sun size={14} />}
-        {showLabels && (isDark ? t("dark_mode") : t("light_mode"))}
-      </button>
-      <button
-        onClick={logout}
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: showLabels ? 10 : 0,
-          justifyContent: showLabels ? "flex-start" : "center",
-          width: "100%",
-          padding: showLabels ? "9px 10px" : "9px 0",
-          borderRadius: 10,
-          fontSize: 13,
-          fontWeight: 500,
-          color: "var(--red)",
-          background: "none",
-          border: "none",
-          cursor: "pointer",
-          whiteSpace: "nowrap",
-        }}
-      >
-        <LogOut size={16} style={{ flexShrink: 0 }} />
-        {showLabels && t("sign_out")}
-      </button>
-    </div>
-  );
+        {extraFooter && showLabels && (
+          <div style={{ marginBottom: 10 }}>{extraFooter}</div>
+        )}
+        <button
+          onClick={toggleTheme}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: showLabels ? 8 : 0,
+            justifyContent: showLabels ? "flex-start" : "center",
+            width: "100%",
+            padding: showLabels ? "8px 10px" : "8px 0",
+            borderRadius: 8,
+            fontSize: 12,
+            color: "var(--text-muted)",
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            marginBottom: 2,
+            whiteSpace: "nowrap",
+          }}
+        >
+          {isDark ? <Moon size={14} /> : <Sun size={14} />}
+          {showLabels && (isDark ? t("dark_mode") : t("light_mode"))}
+        </button>
+        
+        {/* Language Toggle */}
+        <button
+          onClick={() => setLang(lang === "en" ? "ar" : "en")}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: showLabels ? 8 : 0,
+            justifyContent: showLabels ? "flex-start" : "center",
+            width: "100%",
+            padding: showLabels ? "8px 10px" : "8px 0",
+            borderRadius: 8,
+            fontSize: 12,
+            color: "var(--text-muted)",
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            marginBottom: 2,
+            whiteSpace: "nowrap",
+          }}
+        >
+          <span style={{ fontSize: 16, flexShrink: 0 }}>{lang === "en" ? "🇸🇦" : "🇬🇧"}</span>
+          {showLabels && (lang === "en" ? "العربية" : "English")}
+        </button>
+        
+        <button
+          onClick={logout}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: showLabels ? 10 : 0,
+            justifyContent: showLabels ? "flex-start" : "center",
+            width: "100%",
+            padding: showLabels ? "9px 10px" : "9px 0",
+            borderRadius: 10,
+            fontSize: 13,
+            fontWeight: 500,
+            color: "var(--red)",
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            whiteSpace: "nowrap",
+          }}
+        >
+          <LogOut size={16} style={{ flexShrink: 0 }} />
+          {showLabels && t("sign_out")}
+        </button>
+      </div>
+    );
+  };
 
   // ── Desktop Sidebar (persistent, collapsible to icon rail) ────────────────
   const DesktopSidebar = () => (
