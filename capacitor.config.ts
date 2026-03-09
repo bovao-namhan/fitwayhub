@@ -18,6 +18,15 @@ const config: CapacitorConfig = {
     // url: 'http://192.168.1.X:3000',
     cleartext: true, // allow HTTP during dev
     androidScheme: 'https',
+    // Allow OAuth flow to navigate within the WebView (not Chrome Custom Tab)
+    allowNavigation: [
+      'peter-adel.taila6a2b4.ts.net',
+      'accounts.google.com',
+      '*.google.com',
+      '*.googleapis.com',
+      '*.facebook.com',
+      '*.fbcdn.net',
+    ],
   },
   plugins: {
     // Geolocation permissions are declared in AndroidManifest.xml

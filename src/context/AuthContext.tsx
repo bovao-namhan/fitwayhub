@@ -113,7 +113,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const t = localStorage.getItem("token");
     if (!t) { setLoading(false); return; }
     fetch(getApiBase() + '/api/auth/me', { headers: { Authorization: `Bearer ${t}` } })
-      .then(r => r.ok ? r.json() : null)
+      .then(r => {
+        if (!r.ok) {
+          // Token invalid/expired – clear stale auth so user must re-login
+          setToken(null);
+          setUser(null);
+          localStorage.removeItem("token");
+          localStorage.removeItem("user");
+          return null;
+        }
+        return r.json();
+      })
       .then(data => {
         if (data?.user) {
           const fresh = mapServerUser(data.user);

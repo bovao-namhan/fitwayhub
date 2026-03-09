@@ -33,6 +33,7 @@ import paymentRoutes from './server/routes/paymentRoutes.js';
 import cmsRoutes from './server/routes/cmsRoutes.js';
 import blogRoutes from './server/routes/blogRoutes.js';
 import emailRoutes from './server/routes/emailRoutes.js';
+import notificationRoutes from './server/routes/notificationRoutes.js';
 import { startSmtpServer } from './server/emailServer.js';
 import { errorHandler } from './server/middleware/error.js';
 
@@ -45,7 +46,9 @@ const ALLOWED_ORIGINS = [
   'https://fitwayhub.ddns.net',
   'https://peter-adel.taila6a2b4.ts.net',
   'http://peter-adel.taila6a2b4.ts.net',
-  'http://peter-adel.taila6a2b4.ts.net',
+  'capacitor://localhost',
+  'https://localhost',
+  'http://localhost',
 ];
 
 async function startServer() {
@@ -126,6 +129,7 @@ async function startServer() {
   app.use('/api/cms', cmsRoutes);
   app.use('/api/blogs', blogRoutes);
   app.use('/api/email', emailRoutes);
+  app.use('/api/notifications', notificationRoutes);
   console.log('API routes registered');
 
   // Start SMTP receive server

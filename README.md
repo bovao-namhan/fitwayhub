@@ -9,11 +9,13 @@ A full-stack fitness platform with real-time coaching, video meetings, AI-powere
 | Layer | Technology |
 |-------|-----------|
 | Frontend | React 19, React Router 7, Tailwind CSS 4, Recharts, Lucide Icons |
-| Backend | Express.js, MySQL2, Socket.IO, JWT, bcryptjs |
+| Backend | Express.js, MySQL2, Socket.IO, JWT, bcryptjs, Nodemailer |
 | AI | Google Gemini 2.5 Flash |
+| Push Notifications | Firebase Cloud Messaging (FCM Legacy + v1) |
+| Email | Built-in SMTP server (port 2525), Nodemailer outbound |
 | Maps | Leaflet + OpenStreetMap |
 | Video Calls | WebRTC + Socket.IO signaling |
-| Mobile | Capacitor 8 (Android) |
+| Mobile | Capacitor 8 (Android), standalone Gradle project |
 | Validation | Zod, React Hook Form |
 | File Uploads | Multer |
 
@@ -148,6 +150,23 @@ Set `VITE_API_BASE` in `.env` to your backend URL. For Capacitor/Android builds 
 - **Analytics insights** — AI-generated contextual trend summaries
 - **Daily summary persistence** — AI output stored per user per day in `DailySummary` model
 
+### � Push Notifications & Welcome Messages
+- **FCM integration** — Firebase Cloud Messaging with dual support: Legacy API (server key) and HTTP v1 (service account JWT)
+- **35+ notification templates** — categorized: new_user, new_coach, engagement, streak, inactivity, promo, coach_tip, system
+- **Template tokens** — `{{first_name}}`, `{{streak_days}}`, `{{coach_name}}`, `{{app_url}}` with dynamic replacement
+- **Welcome messages** — automatic email + push + in-app notification for new user and coach registration
+- **Segment blasting** — send push to all users, coaches only, premium users, or inactive (7d+) users
+- **Push log** — full audit trail of all sent notifications with status tracking
+- **Admin notification UI** — manage templates, welcome messages, send pushes, and view logs from `/admin/notifications`
+- **Device token management** — register/remove FCM tokens per user per platform (Android/iOS/Web)
+
+### 📧 Email Server
+- **Built-in SMTP server** — smtp4dev-style server on port 2525 for receiving and testing emails
+- **SMTP sending** — Nodemailer integration for outbound emails via configured SMTP settings
+- **Email accounts** — create multiple sender accounts with custom display names
+- **System email fallback** — `sendSystemEmail()` works without email accounts using SMTP settings directly
+- **Admin email UI** — compose, send, and manage emails from `/admin/email`
+
 ### 🛡️ Admin Panel
 - **Overview dashboard** — platform-wide aggregate KPI stats
 - **User management** — full CRUD: create, edit, delete users; change roles; toggle premium; adjust points; view medical history
@@ -158,7 +177,9 @@ Set `VITE_API_BASE` in `.env` to your backend URL. For Capacitor/Android builds 
 - **Gift system** — send points, premium access, badges, coupons to any user
 - **Community moderation** — announcements, pin/hide/delete posts
 - **App configuration** — platform-wide key-value settings
-- **Website CMS** — section-based page editor for Home, About, Contact with visibility toggle and sort ordering
+- **Website CMS** — section-based page editor for Home, About, Contact with 13 section types and sort ordering
+- **Notification management** — push templates, welcome messages, segment blasting, push log viewer
+- **Email server** — compose/send emails, manage SMTP settings and accounts
 - **Payment settings** — PayPal credentials, e-wallet phone number, coach cut (90%)
 - **Server configuration** — server URL setting with connectivity test button
 - **Subscription management** — view, approve, reject coaching subscriptions
@@ -221,7 +242,7 @@ Set `VITE_API_BASE` in `.env` to your backend URL. For Capacitor/Android builds 
 - **Fully responsive** — all pages adapt to mobile/tablet with isMobile breakpoints at 768px
 - **Mobile navigation** — floating bottom nav bar on app pages
 - **Collapsible sidebar** — hamburger menu on tablet and mobile
-- **Android app** — Capacitor 8 native wrapper (`com.fitwayhub.app`)
+- **Android app** — Capacitor 8 native wrapper (`com.peetrix.fitwayhub`) with standalone Gradle project
 - **Native GPS** — Capacitor geolocation plugin for activity tracking
 - **Native splash screen** — Capacitor splash screen plugin
 
@@ -292,24 +313,28 @@ npm run dev
 ## Project Structure
 
 ```
-├── server.ts              # Express + Socket.IO entry point
+├── server.ts                # Express + Socket.IO entry point
+├── run-server.ts            # Server launcher with MySQL retry
 ├── server/
-│   ├── config/database.ts # MySQL connection & table init
-│   ├── controllers/       # Route handlers (auth, AI, chat, coaching, etc.)
-│   ├── middleware/         # Auth, error handling, file upload
-│   ├── models/            # DailySummary, User
-│   └── routes/            # 16 route modules
+│   ├── config/database.ts   # MySQL connection, table init & seeding
+│   ├── controllers/         # Route handlers (auth, AI, chat, coaching, etc.)
+│   ├── emailServer.ts       # Built-in SMTP server & email sending
+│   ├── notificationService.ts # FCM push, welcome messages, in-app notifications
+│   ├── middleware/          # Auth, error handling, file upload
+│   ├── models/              # DailySummary, User
+│   └── routes/              # 20 route modules
 ├── src/
-│   ├── App.tsx            # React router with all routes
-│   ├── context/           # AuthContext, I18nContext, ThemeContext
-│   ├── layouts/           # App, Admin, Coach, Website layouts
-│   ├── components/        # Reusable UI (calculators, map, sidebar, etc.)
+│   ├── App.tsx              # React router with all routes
+│   ├── context/             # AuthContext, BrandingContext, I18nContext, ThemeContext
+│   ├── layouts/             # App, Admin, Coach, Website layouts
+│   ├── components/          # Reusable UI (calculators, map, CMS renderer, sidebar)
 │   ├── pages/
-│   │   ├── app/           # User pages (Dashboard, Steps, Workouts, etc.)
-│   │   ├── coach/         # Coach pages (Dashboard, Athletes, Ads, etc.)
-│   │   ├── admin/         # Admin pages (Dashboard, WebsiteCMS)
-│   │   ├── auth/          # Login, Register, SocialCallback
-│   │   └── website/       # Public CMS pages
-│   └── lib/               # API helpers, utilities, step calculations
-└── uploads/               # User-uploaded files
+│   │   ├── app/             # User pages (Dashboard, Steps, Workouts, etc.)
+│   │   ├── coach/           # Coach pages (Dashboard, Athletes, Ads, etc.)
+│   │   ├── admin/           # Admin pages (Dashboard, WebsiteCMS, EmailServer, Notifications)
+│   │   ├── auth/            # Login, Register, SocialCallback
+│   │   └── website/         # Public CMS pages
+│   └── lib/                 # API helpers, utilities, step calculations
+├── FitWayHub-Android/       # Standalone Android Gradle project (AGP 8.5.2, SDK 34)
+└── uploads/                 # User-uploaded files
 ```

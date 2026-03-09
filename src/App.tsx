@@ -48,6 +48,7 @@ const PaymentResult = lazy(() => import("@/pages/PaymentResult"));
 const AppBlogs = lazy(() => import("@/pages/app/Blogs"));
 const AdminBlogs = lazy(() => import("@/pages/admin/Blogs"));
 const AdminEmailServer = lazy(() => import("@/pages/admin/EmailServer"));
+const AdminNotifications = lazy(() => import("@/pages/admin/Notifications"));
 
 function SmartRedirect() {
   // Handled in AuthContext login flow
@@ -156,6 +157,7 @@ export default function App() {
                 <Route path="/admin/withdrawals" element={<AdminDashboard />} />
                 <Route path="/admin/blogs" element={<AdminBlogs />} />
                 <Route path="/admin/email" element={<AdminEmailServer />} />
+                <Route path="/admin/notifications" element={<AdminNotifications />} />
               </Route>
 
               {/* Payment Result Routes */}

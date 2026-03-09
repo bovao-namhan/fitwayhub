@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { useI18n } from "@/context/I18nContext";
+import { getApiBase } from "@/lib/api";
 import { Eye, EyeOff, Mail, Lock, User, Activity, CheckCircle2, Dumbbell, Trophy, Chrome, ArrowLeft, ShieldQuestion } from "lucide-react";
 
 const SECURITY_QUESTIONS = [
@@ -28,8 +29,11 @@ export default function Register() {
   const navigate = useNavigate();
 
   const startSocialSignup = (provider: "google") => {
-    const base = (import.meta.env.VITE_API_BASE as string) || "";
-    window.location.href = `${base}/api/auth/oauth/${provider}`;
+    const base = getApiBase();
+    const cap = (window as any).Capacitor;
+    const isNative = typeof cap?.isNativePlatform === 'function' && cap.isNativePlatform();
+    const qs = isNative ? '?platform=mobile' : '';
+    window.location.href = `${base}/api/auth/oauth/${provider}${qs}`;
   };
 
   const handleRegister = async (e: FormEvent) => {
@@ -180,14 +184,18 @@ export default function Register() {
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
-              {password.length > 0 && password.length < 8 && (
-                <p style={{ fontSize: 11, color: "var(--red)", marginTop: 4, display: "flex", alignItems: "center", gap: 4 }}>
-                  ⚠ {8 - password.length} {lang === "ar" ? "حرف كمان مطلوب" : t("chars_needed")}
-                </p>
-              )}
-              {password.length >= 8 && (
-                <p style={{ fontSize: 11, color: "var(--accent)", marginTop: 4 }}>✓ {t("password_good")}</p>
-              )}
+              <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 3 }}>
+                {[
+                  { ok: password.length >= 8, label: lang === "ar" ? "٨ أحرف على الأقل" : "At least 8 characters" },
+                  { ok: /[A-Z]/.test(password), label: lang === "ar" ? "حرف كبير واحد على الأقل" : "At least one uppercase letter" },
+                  { ok: /[0-9]/.test(password), label: lang === "ar" ? "رقم واحد على الأقل" : "At least one number" },
+                  { ok: /[^A-Za-z0-9]/.test(password), label: lang === "ar" ? "رمز خاص واحد على الأقل" : "At least one special character" },
+                ].map((rule) => (
+                  <p key={rule.label} style={{ fontSize: 11, color: !password ? "var(--text-muted)" : rule.ok ? "var(--accent)" : "var(--red)", display: "flex", alignItems: "center", gap: 4 }}>
+                    {!password ? "○" : rule.ok ? "✓" : "✗"} {rule.label}
+                  </p>
+                ))}
+              </div>
             </div>
             {/* Security Question */}
             <div>

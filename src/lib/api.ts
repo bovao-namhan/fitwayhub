@@ -38,7 +38,8 @@ export function getApiBase(): string {
   } catch {
     // localStorage may throw in some contexts
   }
-  return "";
+  // Default backend URL for native builds (no Vite proxy available)
+  return "https://peter-adel.taila6a2b4.ts.net";
 }
 
 /** Persist a new API base URL. Pass empty string to clear (use relative). */

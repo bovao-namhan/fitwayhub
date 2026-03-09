@@ -5,6 +5,7 @@ import { randomUUID, createHash } from 'crypto';
 import { resolve4, resolve6, resolveMx } from 'dns/promises';
 import { UserModel } from '../models/User';
 import { get, run, query } from '../config/database';
+import { sendWelcomeMessages } from '../notificationService';
 
 const DISPOSABLE_OR_FAKE_DOMAINS = new Set([
   'example.com',
@@ -90,17 +91,17 @@ async function enforceOneSessionPerIp(userId: number, ip: string, token: string)
   return true;
 }
 
-function issueOauthState(provider: 'google' | 'facebook') {
-  return jwt.sign({ provider, nonce: randomUUID() }, getJwtSecret(), { expiresIn: '10m' });
+function issueOauthState(provider: 'google' | 'facebook', mobile: boolean = false) {
+  return jwt.sign({ provider, nonce: randomUUID(), mobile }, getJwtSecret(), { expiresIn: '10m' });
 }
 
-function verifyOauthState(state: string | undefined, provider: 'google' | 'facebook') {
-  if (!state) return false;
+function verifyOauthState(state: string | undefined, provider: 'google' | 'facebook'): { valid: boolean; mobile: boolean } {
+  if (!state) return { valid: false, mobile: false };
   try {
     const decoded = jwt.verify(state, getJwtSecret()) as any;
-    return decoded?.provider === provider;
+    return { valid: decoded?.provider === provider, mobile: !!decoded?.mobile };
   } catch {
-    return false;
+    return { valid: false, mobile: false };
   }
 }
 
@@ -126,13 +127,18 @@ async function createOrGetSocialUser(params: { email: string; name?: string; ava
   await run('UPDATE users SET points = ? WHERE id = ?', [pointsGift, user.id]);
   await run('INSERT INTO point_transactions (user_id, points, reason, reference_type) VALUES (?,?,?,?)', [user.id, pointsGift, `Welcome gift - ${params.provider} signup`, 'registration']);
 
+  // Fire-and-forget: send welcome messages for new social user
+  const userName = params.name || email.split('@')[0];
+  sendWelcomeMessages(user.id, 'user', userName, email).catch(e => console.error('Welcome messages error:', e));
+
   return user;
 }
 
-async function finalizeSocialLogin(res: Response, req: Request, data: { email: string; name?: string; avatar?: string; provider: 'google' | 'facebook' }) {
+async function finalizeSocialLogin(res: Response, req: Request, data: { email: string; name?: string; avatar?: string; provider: 'google' | 'facebook' }, mobile: boolean = false) {
   const user = await createOrGetSocialUser(data);
   const token = issueLoginToken(user);
-  const base = getAppBaseUrl(req);
+  // On mobile Capacitor, redirect back to the local WebView origin
+  const base = mobile ? 'https://localhost' : getAppBaseUrl(req);
   return res.redirect(`${base}/auth/social-callback?token=${encodeURIComponent(token)}`);
 }
 
@@ -181,6 +187,9 @@ export const register = async (req: Request, res: Response) => {
     await enforceOneSessionPerIp(user.id, ip, token);
     const fullUser = await get('SELECT id, name, email, role, avatar, is_premium, coach_membership_active, membership_paid, points, steps, step_goal, height, weight, gender, created_at FROM users WHERE id = ?', [user.id]);
     res.status(201).json({ message: 'User registered successfully', token, user: fullUser });
+
+    // Fire-and-forget: send welcome messages (push, email, in-app)
+    sendWelcomeMessages(user.id, userRole as 'user' | 'coach', name || email.split('@')[0], email).catch(e => console.error('Welcome messages error:', e));
   } catch (error) {
     console.error('Registration error:', error);
     res.status(500).json({ message: 'Server error during registration' });
@@ -296,7 +305,8 @@ export const oauthGoogleStart = async (req: Request, res: Response) => {
     return res.redirect(`${getAppBaseUrl(req)}/auth/login?error=${encodeURIComponent('Google OAuth is not configured')}`);
   }
 
-  const state = issueOauthState('google');
+  const isMobile = req.query.platform === 'mobile';
+  const state = issueOauthState('google', isMobile);
   const params = new URLSearchParams({
     client_id: clientId,
     redirect_uri: redirectUri,
@@ -312,18 +322,20 @@ export const oauthGoogleCallback = async (req: Request, res: Response) => {
   try {
     const code = String(req.query.code || '');
     const state = String(req.query.state || '');
-    if (!verifyOauthState(state, 'google')) {
-      return res.redirect(`${getAppBaseUrl(req)}/auth/login?error=${encodeURIComponent('Invalid OAuth state')}`);
+    const { valid, mobile } = verifyOauthState(state, 'google');
+    const errorBase = mobile ? 'https://localhost' : getAppBaseUrl(req);
+    if (!valid) {
+      return res.redirect(`${errorBase}/auth/login?error=${encodeURIComponent('Invalid OAuth state')}`);
     }
     if (!code) {
-      return res.redirect(`${getAppBaseUrl(req)}/auth/login?error=${encodeURIComponent('Missing Google OAuth code')}`);
+      return res.redirect(`${errorBase}/auth/login?error=${encodeURIComponent('Missing Google OAuth code')}`);
     }
 
     const clientId = process.env.GOOGLE_CLIENT_ID;
     const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
     const redirectUri = process.env.GOOGLE_REDIRECT_URI;
     if (!clientId || !clientSecret || !redirectUri) {
-      return res.redirect(`${getAppBaseUrl(req)}/auth/login?error=${encodeURIComponent('Google OAuth not configured')}`);
+      return res.redirect(`${errorBase}/auth/login?error=${encodeURIComponent('Google OAuth not configured')}`);
     }
 
     const tokenResp = await fetch('https://oauth2.googleapis.com/token', {
@@ -340,7 +352,7 @@ export const oauthGoogleCallback = async (req: Request, res: Response) => {
 
     const tokenData: any = await tokenResp.json();
     if (!tokenResp.ok || !tokenData.access_token) {
-      return res.redirect(`${getAppBaseUrl(req)}/auth/login?error=${encodeURIComponent('Google token exchange failed')}`);
+      return res.redirect(`${errorBase}/auth/login?error=${encodeURIComponent('Google token exchange failed')}`);
     }
 
     const profileResp = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
@@ -350,7 +362,7 @@ export const oauthGoogleCallback = async (req: Request, res: Response) => {
 
     const email = normalizeEmail(profile?.email);
     if (!email) {
-      return res.redirect(`${getAppBaseUrl(req)}/auth/login?error=${encodeURIComponent('Google account has no email')}`);
+      return res.redirect(`${errorBase}/auth/login?error=${encodeURIComponent('Google account has no email')}`);
     }
 
     return finalizeSocialLogin(res, req, {
@@ -358,7 +370,7 @@ export const oauthGoogleCallback = async (req: Request, res: Response) => {
       email,
       name: profile?.name,
       avatar: profile?.picture,
-    });
+    }, mobile);
   } catch (error) {
     console.error('Google OAuth callback error:', error);
     return res.redirect(`${getAppBaseUrl(req)}/auth/login?error=${encodeURIComponent('Google login failed')}`);
@@ -372,7 +384,8 @@ export const oauthFacebookStart = async (req: Request, res: Response) => {
     return res.redirect(`${getAppBaseUrl(req)}/auth/login?error=${encodeURIComponent('Facebook OAuth is not configured')}`);
   }
 
-  const state = issueOauthState('facebook');
+  const isMobile = req.query.platform === 'mobile';
+  const state = issueOauthState('facebook', isMobile);
   const params = new URLSearchParams({
     client_id: clientId,
     redirect_uri: redirectUri,
@@ -387,18 +400,20 @@ export const oauthFacebookCallback = async (req: Request, res: Response) => {
   try {
     const code = String(req.query.code || '');
     const state = String(req.query.state || '');
-    if (!verifyOauthState(state, 'facebook')) {
-      return res.redirect(`${getAppBaseUrl(req)}/auth/login?error=${encodeURIComponent('Invalid OAuth state')}`);
+    const { valid, mobile } = verifyOauthState(state, 'facebook');
+    const errorBase = mobile ? 'https://localhost' : getAppBaseUrl(req);
+    if (!valid) {
+      return res.redirect(`${errorBase}/auth/login?error=${encodeURIComponent('Invalid OAuth state')}`);
     }
     if (!code) {
-      return res.redirect(`${getAppBaseUrl(req)}/auth/login?error=${encodeURIComponent('Missing Facebook OAuth code')}`);
+      return res.redirect(`${errorBase}/auth/login?error=${encodeURIComponent('Missing Facebook OAuth code')}`);
     }
 
     const appId = process.env.FACEBOOK_APP_ID;
     const appSecret = process.env.FACEBOOK_APP_SECRET;
     const redirectUri = process.env.FACEBOOK_REDIRECT_URI;
     if (!appId || !appSecret || !redirectUri) {
-      return res.redirect(`${getAppBaseUrl(req)}/auth/login?error=${encodeURIComponent('Facebook OAuth not configured')}`);
+      return res.redirect(`${errorBase}/auth/login?error=${encodeURIComponent('Facebook OAuth not configured')}`);
     }
 
     const tokenParams = new URLSearchParams({
@@ -410,7 +425,7 @@ export const oauthFacebookCallback = async (req: Request, res: Response) => {
     const tokenResp = await fetch(`https://graph.facebook.com/v20.0/oauth/access_token?${tokenParams.toString()}`);
     const tokenData: any = await tokenResp.json();
     if (!tokenResp.ok || !tokenData.access_token) {
-      return res.redirect(`${getAppBaseUrl(req)}/auth/login?error=${encodeURIComponent('Facebook token exchange failed')}`);
+      return res.redirect(`${errorBase}/auth/login?error=${encodeURIComponent('Facebook token exchange failed')}`);
     }
 
     const profileParams = new URLSearchParams({
@@ -422,7 +437,7 @@ export const oauthFacebookCallback = async (req: Request, res: Response) => {
 
     const email = normalizeEmail(profile?.email);
     if (!email) {
-      return res.redirect(`${getAppBaseUrl(req)}/auth/login?error=${encodeURIComponent('Facebook account has no email')}`);
+      return res.redirect(`${errorBase}/auth/login?error=${encodeURIComponent('Facebook account has no email')}`);
     }
 
     return finalizeSocialLogin(res, req, {
@@ -430,7 +445,7 @@ export const oauthFacebookCallback = async (req: Request, res: Response) => {
       email,
       name: profile?.name,
       avatar: profile?.picture?.data?.url,
-    });
+    }, mobile);
   } catch (error) {
     console.error('Facebook OAuth callback error:', error);
     return res.redirect(`${getAppBaseUrl(req)}/auth/login?error=${encodeURIComponent('Facebook login failed')}`);

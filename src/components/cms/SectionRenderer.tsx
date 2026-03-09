@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import DOMPurify from "dompurify";
-import { ArrowRight, CheckCircle2, Target, Eye, Shield, Globe, Users, BookOpen, Heart, Dumbbell, Brain, BarChart, Zap, Star, Award, Activity, HelpCircle, ChevronDown, ChevronUp, Mail, MessageCircle, Phone, Send, Smartphone, Calendar, User } from "lucide-react";
+import { ArrowRight, CheckCircle2, Target, Eye, Shield, Globe, Users, BookOpen, Heart, Dumbbell, Brain, BarChart, Zap, Star, Award, Activity, HelpCircle, ChevronDown, ChevronUp, Mail, MessageCircle, Phone, Send, Smartphone, Calendar, User, Linkedin, Twitter, Instagram } from "lucide-react";
 import { useState, useEffect, type CSSProperties } from "react";
 import { CalorieCalculator } from "@/components/website/CalorieCalculator";
 import { useI18n } from "@/context/I18nContext";
@@ -540,6 +540,151 @@ export function LatestBlogsSection({ c, lang }: { c?: any; lang: RenderLang }) {
   );
 }
 
+// ── Section: Team ─────────────────────────────────────────────────────────────
+function TeamSection({ c, lang }: { c: any; lang: RenderLang }) {
+  const sectionLabel = pickText(c, "sectionLabel", lang);
+  const heading = pickText(c, "heading", lang);
+  const subheading = pickText(c, "subheading", lang);
+  const members: { name: string; role: string; bio: string; imageUrl?: string; linkedin?: string; twitter?: string; instagram?: string }[] = c.members || [];
+  const SOCIAL_ICONS: Record<string, any> = { linkedin: Linkedin, twitter: Twitter, instagram: Instagram };
+  return (
+    <section style={{ maxWidth: 1100, margin: "0 auto", padding: "80px 24px" }}>
+      <div style={{ textAlign: "center", marginBottom: 56 }}>
+        {sectionLabel && <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--accent)", marginBottom: 12 }}>{sectionLabel}</p>}
+        {heading && <h2 style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: "clamp(26px, 4vw, 42px)", fontWeight: 700, color: "var(--text-primary)" }}>{heading}</h2>}
+        {subheading && <p style={{ fontSize: 15, color: "var(--text-secondary)", marginTop: 12, maxWidth: 600, margin: "12px auto 0", lineHeight: 1.7 }}>{subheading}</p>}
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: 24 }}>
+        {members.map((m, i) => {
+          const name = lang === "ar" ? ((m as any).name_ar || m.name) : m.name;
+          const role = lang === "ar" ? ((m as any).role_ar || m.role) : m.role;
+          const bio = lang === "ar" ? ((m as any).bio_ar || m.bio) : m.bio;
+          return (
+            <div key={i} style={{ textAlign: "center", padding: 28, backgroundColor: "var(--bg-card)", borderRadius: 20, border: "1px solid var(--border)", transition: "box-shadow 0.2s, transform 0.2s" }}
+              onMouseOver={e => { e.currentTarget.style.boxShadow = "0 8px 28px rgba(200,255,0,0.1)"; e.currentTarget.style.transform = "translateY(-4px)"; }}
+              onMouseOut={e => { e.currentTarget.style.boxShadow = "none"; e.currentTarget.style.transform = "translateY(0)"; }}>
+              <div style={{ width: 96, height: 96, borderRadius: "50%", margin: "0 auto 16px", overflow: "hidden", border: "3px solid var(--accent)", backgroundColor: "var(--bg-surface)" }}>
+                {m.imageUrl ? (
+                  <img src={m.imageUrl} alt={name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                ) : (
+                  <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <User size={36} color="var(--text-muted)" />
+                  </div>
+                )}
+              </div>
+              <h3 style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 17, fontWeight: 700, color: "var(--text-primary)", marginBottom: 4 }}>{name}</h3>
+              <p style={{ fontSize: 13, fontWeight: 600, color: "var(--accent)", marginBottom: 10 }}>{role}</p>
+              {bio && <p style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.65 }}>{bio}</p>}
+              <div style={{ display: "flex", justifyContent: "center", gap: 10, marginTop: 14 }}>
+                {(["linkedin", "twitter", "instagram"] as const).map(s => {
+                  const url = (m as any)[s];
+                  if (!url) return null;
+                  const Icon = SOCIAL_ICONS[s];
+                  return <a key={s} href={url} target="_blank" rel="noopener noreferrer" style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: "var(--bg-surface)", border: "1px solid var(--border)", display: "flex", alignItems: "center", justifyContent: "center" }}><Icon size={14} color="var(--text-secondary)" /></a>;
+                })}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
+// ── Section: Carousel ─────────────────────────────────────────────────────────
+function CarouselSection({ c, lang }: { c: any; lang: RenderLang }) {
+  const sectionLabel = pickText(c, "sectionLabel", lang);
+  const heading = pickText(c, "heading", lang);
+  const items: { title: string; desc: string; imageUrl: string }[] = c.items || [];
+  const [active, setActive] = useState(0);
+
+  useEffect(() => {
+    if (items.length <= 1) return;
+    const timer = setInterval(() => setActive(prev => (prev + 1) % items.length), 4000);
+    return () => clearInterval(timer);
+  }, [items.length]);
+
+  if (items.length === 0) return null;
+  const item = items[active];
+  const title = lang === "ar" ? ((item as any).title_ar || item.title) : item.title;
+  const desc = lang === "ar" ? ((item as any).desc_ar || item.desc) : item.desc;
+
+  return (
+    <section style={{ maxWidth: 1100, margin: "0 auto", padding: "80px 24px" }}>
+      <div style={{ textAlign: "center", marginBottom: 48 }}>
+        {sectionLabel && <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--accent)", marginBottom: 12 }}>{sectionLabel}</p>}
+        {heading && <h2 style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: "clamp(26px, 4vw, 42px)", fontWeight: 700, color: "var(--text-primary)" }}>{heading}</h2>}
+      </div>
+      <div style={{ position: "relative", borderRadius: 20, overflow: "hidden", aspectRatio: "16/7", backgroundColor: "var(--bg-surface)", border: "1px solid var(--border)" }}>
+        {items.map((it, i) => (
+          <div key={i} style={{ position: "absolute", inset: 0, opacity: i === active ? 1 : 0, transition: "opacity 0.8s ease-in-out" }}>
+            {it.imageUrl && <img src={it.imageUrl} alt={it.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />}
+            <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.1) 60%)" }} />
+            <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, padding: "32px 40px" }}>
+              <h3 style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: "clamp(18px, 3vw, 28px)", fontWeight: 700, color: "#fff", marginBottom: 8 }}>
+                {lang === "ar" ? ((it as any).title_ar || it.title) : it.title}
+              </h3>
+              <p style={{ fontSize: 14, color: "rgba(255,255,255,0.85)", maxWidth: 600, lineHeight: 1.6 }}>
+                {lang === "ar" ? ((it as any).desc_ar || it.desc) : it.desc}
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+      {/* Dots */}
+      {items.length > 1 && (
+        <div style={{ display: "flex", justifyContent: "center", gap: 8, marginTop: 20 }}>
+          {items.map((_, i) => (
+            <button key={i} onClick={() => setActive(i)} style={{ width: i === active ? 28 : 10, height: 10, borderRadius: 5, border: "none", cursor: "pointer", backgroundColor: i === active ? "var(--accent)" : "var(--border)", transition: "all 0.3s" }} />
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+// ── Section: FAQ (standalone) ─────────────────────────────────────────────────
+function FaqSection({ c, lang }: { c: any; lang: RenderLang }) {
+  const sectionLabel = pickText(c, "sectionLabel", lang);
+  const heading = pickText(c, "heading", lang);
+  const subheading = pickText(c, "subheading", lang);
+  const faqs: { q: string; a: string }[] = c.faqs || [];
+  const [openIdx, setOpenIdx] = useState<number | null>(null);
+
+  return (
+    <section style={{ maxWidth: 800, margin: "0 auto", padding: "80px 24px" }}>
+      <div style={{ textAlign: "center", marginBottom: 48 }}>
+        {sectionLabel && <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--accent)", marginBottom: 12 }}>{sectionLabel}</p>}
+        {heading && <h2 style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: "clamp(24px, 3.5vw, 38px)", fontWeight: 700, color: "var(--text-primary)" }}>{heading}</h2>}
+        {subheading && <p style={{ fontSize: 15, color: "var(--text-secondary)", marginTop: 12, lineHeight: 1.7 }}>{subheading}</p>}
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        {faqs.map((faq, i) => {
+          const isOpen = openIdx === i;
+          const q = lang === "ar" ? localizeWebsiteText((faq as any).q_ar || faq.q || "", lang) : faq.q;
+          const a = lang === "ar" ? localizeWebsiteText((faq as any).a_ar || faq.a || "", lang) : faq.a;
+          return (
+            <div key={i} style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 14, overflow: "hidden", transition: "box-shadow 0.2s" }}
+              onMouseOver={e => { e.currentTarget.style.boxShadow = "0 2px 12px rgba(200,255,0,0.06)"; }}
+              onMouseOut={e => { e.currentTarget.style.boxShadow = "none"; }}>
+              <button onClick={() => setOpenIdx(isOpen ? null : i)} style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "18px 22px", background: "none", border: "none", cursor: "pointer", textAlign: "start", color: "var(--text-primary)", fontSize: 15, fontWeight: 600, fontFamily: "'Outfit', sans-serif", gap: 12 }}>
+                <span style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <HelpCircle size={18} color={isOpen ? "var(--accent)" : "var(--text-muted)"} style={{ flexShrink: 0 }} />
+                  {q}
+                </span>
+                {isOpen ? <ChevronUp size={18} color="var(--accent)" style={{ flexShrink: 0 }} /> : <ChevronDown size={18} color="var(--text-muted)" style={{ flexShrink: 0 }} />}
+              </button>
+              <div style={{ maxHeight: isOpen ? 300 : 0, overflow: "hidden", transition: "max-height 0.35s ease" }}>
+                <div style={{ padding: "0 22px 20px 52px", fontSize: 14, color: "var(--text-secondary)", lineHeight: 1.7 }}>{a}</div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
+
 // ── Main Renderer ─────────────────────────────────────────────────────────────
 export interface CmsSection {
   id: number;
@@ -563,6 +708,9 @@ export default function SectionRenderer({ section }: { section: CmsSection }) {
     case "calculator":    return <CalcSection c={c} lang={lang} />;
     case "html":          return <HtmlSection c={c} lang={lang} />;
     case "latest_blogs":  return <LatestBlogsSection c={c} lang={lang} />;
+    case "team":          return <TeamSection c={c} lang={lang} />;
+    case "carousel":      return <CarouselSection c={c} lang={lang} />;
+    case "faq":           return <FaqSection c={c} lang={lang} />;
     default:              return null;
   }
 }

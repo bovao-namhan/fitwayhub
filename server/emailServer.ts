@@ -124,6 +124,30 @@ export async function sendMail(opts: {
   return info;
 }
 
+/** Send a system email directly via SMTP without requiring an email account.
+ *  Uses the configured SMTP settings and from_name/from_email. */
+export async function sendSystemEmail(opts: { to: string; subject: string; text?: string; html?: string }) {
+  const settings = await getSmtpSettings();
+  if (!settings || !settings.smtp_host || !settings.enabled) return false;
+
+  try {
+    const transporter = createTransporter(settings);
+    const fromAddr = settings.from_email || settings.smtp_user;
+    const fromName = settings.from_name || 'FitWay Hub';
+    await transporter.sendMail({
+      from: `${fromName} <${fromAddr}>`,
+      to: opts.to,
+      subject: opts.subject,
+      text: opts.text,
+      html: opts.html,
+    });
+    return true;
+  } catch (err) {
+    console.error('System email send error:', err);
+    return false;
+  }
+}
+
 /** Start the local SMTP receive server (for inbound emails when DNS is configured) */
 export function startSmtpServer(port = 2525) {
   if (smtpInstance) return;

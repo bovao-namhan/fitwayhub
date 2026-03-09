@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import { useI18n } from "@/context/I18nContext";
+import { getApiBase } from "@/lib/api";
 import { Eye, EyeOff, Mail, Lock, Activity, ArrowLeft } from "lucide-react";
 
 export default function Login() {
@@ -29,8 +30,11 @@ export default function Login() {
   }, [searchParams]);
 
   const startSocialLogin = (provider: "google") => {
-    const base = (import.meta.env.VITE_API_BASE as string) || "";
-    window.location.href = `${base}/api/auth/oauth/${provider}`;
+    const base = getApiBase();
+    const cap = (window as any).Capacitor;
+    const isNative = typeof cap?.isNativePlatform === 'function' && cap.isNativePlatform();
+    const qs = isNative ? '?platform=mobile' : '';
+    window.location.href = `${base}/api/auth/oauth/${provider}${qs}`;
   };
 
   const handleLogin = async (e: FormEvent) => {

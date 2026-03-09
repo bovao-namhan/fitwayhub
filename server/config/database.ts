@@ -469,8 +469,170 @@ async function seedDefaultAccounts() {
     }
     console.log('✅ Default website sections seeded');
   }
+
+  // ── Seed additional homepage sections (team, carousel, blogs, faq, contact) ──
+  const hasTeam = await get("SELECT id FROM website_sections WHERE page='home' AND type='team' LIMIT 1");
+  if (!hasTeam) {
+    // Push CTA to sort_order 99 so new sections appear before it
+    await run("UPDATE website_sections SET sort_order = 99 WHERE page='home' AND type='cta'");
+    const newHomeSections = [
+      { page: 'home', type: 'team', label: 'Who We Are', sort_order: 5, content: JSON.stringify({
+        sectionLabel: 'WHO WE ARE',
+        heading: 'Meet the Team Behind FitWay',
+        subheading: 'Passionate professionals committed to transforming the fitness industry in Egypt and beyond.',
+        members: [
+          { name: 'Peter Adel', role: 'Founder & CEO', bio: 'Visionary entrepreneur building Egypt\'s #1 digital fitness ecosystem.', imageUrl: '' },
+          { name: 'Sara Mostafa', role: 'Head of Training', bio: 'Certified personal trainer with 8+ years of experience in group and individual coaching.', imageUrl: '' },
+          { name: 'Ahmed Hassan', role: 'Lead Developer', bio: 'Full-stack engineer passionate about building tech that empowers healthier lives.', imageUrl: '' },
+          { name: 'Nour El-Din', role: 'Nutrition Specialist', bio: 'Sports nutritionist helping members fuel their workouts and reach peak performance.', imageUrl: '' },
+        ]
+      })},
+      { page: 'home', type: 'carousel', label: 'Solutions Carousel', sort_order: 6, content: JSON.stringify({
+        sectionLabel: 'WHAT WE OFFER',
+        heading: 'Comprehensive Solutions for Your Fitness Business',
+        items: [
+          { title: 'Personal Training Plans', desc: 'Customized workout programs designed by certified trainers — for gym, home, and bodyweight training.', imageUrl: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=2070&auto=format&fit=crop' },
+          { title: 'AI-Powered Analytics', desc: 'Smart dashboards that track steps, calories, and performance trends with actionable insights.', imageUrl: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=2070&auto=format&fit=crop' },
+          { title: 'Expert Coaching Network', desc: 'Connect with certified coaches for 1-on-1 sessions, group classes, and ongoing mentorship.', imageUrl: 'https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?q=80&w=2070&auto=format&fit=crop' },
+          { title: 'Community & Challenges', desc: 'Join thriving fitness communities, compete in challenges, and stay accountable with peers.', imageUrl: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?q=80&w=2070&auto=format&fit=crop' },
+          { title: 'Nutrition & Meal Planning', desc: 'Balanced meal plans and macro tracking tools to complement your training and maximize results.', imageUrl: 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?q=80&w=2070&auto=format&fit=crop' },
+        ]
+      })},
+      { page: 'home', type: 'latest_blogs', label: 'No Pain No Shawerma', sort_order: 7, content: JSON.stringify({
+        sectionLabel: 'DUDE, No Pain No Shawerma!!',
+        heading: 'Your Go-To Resource for Fitness Trends and Tips',
+      })},
+      { page: 'home', type: 'faq', label: 'FAQ Section', sort_order: 8, content: JSON.stringify({
+        sectionLabel: 'FREQUENTLY ASKED QUESTIONS',
+        heading: "Everything you need to know about using FitWay's platform and services",
+        faqs: [
+          { q: 'What is Fitway Hub?', a: 'Fitway Hub is Egypt\'s leading digital fitness platform offering personalized training plans, AI analytics, expert coaching, and a supportive community — all in one app.' },
+          { q: 'Is the app free to use?', a: 'Yes! You can sign up for free and access basic features. Premium plans unlock advanced coaching, analytics, and exclusive workout programs.' },
+          { q: 'Is the app available in Arabic?', a: 'Absolutely! Fitway Hub is fully bilingual — you can switch between Arabic and English at any time.' },
+          { q: 'Do I need gym equipment?', a: 'Not necessarily. We offer programs for gym, home (with equipment), and home (bodyweight only) — choose what fits your lifestyle.' },
+          { q: 'Are the trainers certified?', a: 'Yes, all our coaches and trainers are certified professionals with verified credentials. No AI bots, only real human support.' },
+          { q: 'Can I cancel my subscription anytime?', a: 'Yes, you can cancel your subscription at any time from your account settings — no hidden fees or hassle.' },
+          { q: 'How does the coaching feature work?', a: 'Browse certified coaches, book sessions, chat directly, and receive personalized guidance. Coaches set their own availability and pricing.' },
+          { q: 'What kind of analytics does the app provide?', a: 'Track daily steps, calories burned, workout frequency, streaks, and long-term progress trends with beautiful visual dashboards.' },
+        ]
+      })},
+      { page: 'home', type: 'contact_info', label: 'Get In Touch', sort_order: 9, content: JSON.stringify({
+        formTitle: 'GET IN TOUCH WITH FITWAY HUB',
+        phone: '+20 123 456 7890',
+        email: 'support@fitwayhub.com',
+        chatHours: '9am – 5pm EST',
+        faqs: [],
+        nameLabel: 'Name', emailLabel: 'Email', subjectLabel: 'Subject',
+        messageLabel: 'Message', sendBtnText: 'Send Message',
+        quickContactTitle: 'Quick Contact',
+        subjectOptions: ['General Inquiry', 'Support', 'Partnership', 'Feedback'],
+      })},
+    ];
+    for (const s of newHomeSections) {
+      await run('INSERT INTO website_sections (page, type, label, content, sort_order) VALUES (?,?,?,?,?)', [s.page, s.type, s.label, s.content, s.sort_order]);
+    }
+    console.log('✅ Additional homepage sections seeded (team, carousel, blogs, faq, contact)');
+  }
+
   } catch (err) {
     console.error('Seed error:', err);
+  }
+}
+
+// ── Seed push notification templates ──────────────────────────────────────────
+async function seedPushTemplates() {
+  const templates = [
+    { slug: 'user_welcome', title: 'Welcome to Fitway Hub 🎉', body: 'Hi {{first_name}} — your starter plan is ready. Tap to set goals and claim your free Day 1 workout.', category: 'new_user', trigger_type: 'registration_immediate' },
+    { slug: 'user_profile_complete', title: 'Complete your profile', body: 'Complete your profile in 2 minutes to unlock a personalized plan and faster results. Tap to finish.', category: 'new_user', trigger_type: 'profile_incomplete_24h' },
+    { slug: 'user_first_workout', title: 'Ready for Workout #1? 💪', body: 'Your first workout is queued. Open the app, follow the 15-min routine, and earn your starter badge.', category: 'new_user', trigger_type: 'after_profile_completion' },
+    { slug: 'user_motivation', title: "Let's Move! 🔥", body: 'Just 10 minutes today can make a difference. Open Fitway Hub and start your session.', category: 'new_user', trigger_type: 'midday_nudge' },
+    { slug: 'user_coach_suggestion', title: 'Need a Coach?', body: 'Connect with expert coaches on Fitway Hub and get guidance for faster results.', category: 'new_user', trigger_type: 'day_3' },
+    { slug: 'user_welcome_gift', title: 'Claim your welcome gift 🎁', body: 'New here? Tap to claim a free 7-day premium trial and access pro workouts and coach tips.', category: 'new_user', trigger_type: 'within_48h' },
+    { slug: 'coach_welcome', title: 'Welcome Coach! 🎉', body: 'Your coaching journey starts now. Complete your profile to start receiving clients.', category: 'new_coach', trigger_type: 'registration_immediate' },
+    { slug: 'coach_verify', title: 'Verify Your Credentials', body: 'Upload your certifications to get verified and increase your visibility to users.', category: 'new_coach', trigger_type: 'day_1' },
+    { slug: 'coach_profile_complete', title: 'Finish Your Coach Profile', body: 'Add your specialties, bio, and pricing to start attracting your first clients.', category: 'new_coach', trigger_type: 'profile_incomplete_24h' },
+    { slug: 'coach_first_client', title: 'Your First Client Awaits', body: 'Publish your profile and start receiving coaching requests today.', category: 'new_coach', trigger_type: 'day_2' },
+    { slug: 'coach_engagement', title: 'Stay Active on Fitway Hub', body: 'Respond to client requests quickly to grow your coaching reputation.', category: 'new_coach', trigger_type: 'weekly' },
+    { slug: 'quick_session', title: '10 minutes = big progress', body: 'Short on time? Try a 10-minute quick session now and keep your streak alive. Tap to start.', category: 'engagement', trigger_type: 'midday_nudge' },
+    { slug: 'streak_milestone', title: "You're on a roll 🔥", body: "{{first_name}}, {{streak_days}}-day streak! Keep it going — complete today's session and unlock bonus points.", category: 'streak', trigger_type: 'streak_milestone' },
+    { slug: 'missed_day', title: 'Missed a day? Bounce back!', body: "Missed your last workout — start a gentle 8-min session to get back on track. We've got you.", category: 'inactivity', trigger_type: 'inactive_1_day' },
+    { slug: 'starter_plan', title: 'New 7-day starter plan', body: 'We built a 7-day plan just for you. Tap to preview Day 1 and save it to your schedule.', category: 'engagement', trigger_type: 'less_than_3_workouts' },
+    { slug: 'challenge_invite', title: 'Challenge: 5 Workouts, 2 Weeks', body: 'Join the 2-week challenge — complete 5 workouts to earn a badge and 300 points. Join now!', category: 'engagement', trigger_type: 'challenge_invite' },
+    { slug: 'coach_match', title: 'Coach match for you', body: 'We found coaches who match your goals. Tap to view profiles and book a discounted intro session.', category: 'engagement', trigger_type: 'coach_request' },
+    { slug: 'session_reminder', title: 'Booked a session? Confirm it', body: 'Reminder: You have a coaching session with {{coach_name}} tomorrow. Review details or reschedule now.', category: 'engagement', trigger_type: 'booking_reminder_24h' },
+    { slug: 'quick_cardio', title: 'Try this quick cardio blast', body: '12 minutes, no equipment. Tap to start a high-energy routine and burn calories fast.', category: 'engagement', trigger_type: 'cardio_users' },
+    { slug: 'fat_burn_program', title: 'New Program: Fat Burn 4-Week', body: 'A new 4-week fat-burn program is live. Preview week 1 and enroll to get a tailored meal plan.', category: 'promo', trigger_type: 'fat_loss_interest' },
+    { slug: 'weekly_summary', title: 'Your weekly summary is ready', body: 'See your week: workouts, calories, and progress. Tap to view insights and suggested next steps.', category: 'engagement', trigger_type: 'weekly_digest' },
+    { slug: 'double_points', title: 'Earn double points today ✨', body: 'Today only: complete any workout and earn 2x points toward rewards. Open app to claim.', category: 'promo', trigger_type: 'promo_event' },
+    { slug: 'badge_unlocked', title: 'New badge unlocked 🏅', body: 'Congrats — you unlocked Consistency. Open your profile to view badges and next goals.', category: 'engagement', trigger_type: 'badge_earned' },
+    { slug: 'low_activity', title: 'Low activity — small wins', body: "Not much this week. Try our 7-minute reset to restart momentum — we'll celebrate with you.", category: 'inactivity', trigger_type: 'inactive_7_days' },
+    { slug: 'nutrition_tip', title: 'Nutrition tip for today', body: 'Quick tip: add 20g protein to your next meal to support recovery. Tap for recipe ideas.', category: 'engagement', trigger_type: 'training_plan_users' },
+    { slug: 'invite_friends', title: 'Invite friends — get rewards', body: 'Invite a friend. When they join and complete 3 workouts you both get 1 week premium free. Share now.', category: 'promo', trigger_type: 'growth_campaign' },
+    { slug: 'workout_reminder', title: 'Workout ready in 3…2…1 🚀', body: 'Your scheduled workout starts in 10 minutes. Warm up now and show up strong.', category: 'engagement', trigger_type: 'scheduled_workout_10m' },
+    { slug: 'coach_weekly_tip', title: 'Weekly coach tip from {{coach_name}}', body: '{{coach_name}} recommends one mobility drill to reduce soreness. Open to watch the 60s demo.', category: 'coach_tip', trigger_type: 'assigned_coach_weekly' },
+    { slug: 'monthly_progress', title: 'Glance: progress vs last month', body: 'You improved endurance by 12% vs last month. Keep pushing — new plan suggestions inside.', category: 'engagement', trigger_type: 'monthly_progress' },
+    { slug: 'trial_expiring', title: 'Your trial ends soon ⚠️', body: 'Your free trial ends in 3 days. Tap to subscribe and keep pro workouts and coach messages.', category: 'promo', trigger_type: 'trial_expiring_3d' },
+    { slug: 'we_miss_you', title: 'We miss you, {{first_name}}', body: "It's been a while. Come back and complete any 10-min session to get 150 points.", category: 'inactivity', trigger_type: 'inactive_14_days' },
+    { slug: 'hydration_check', title: 'Hydration check 💧', body: 'Quick nudge: drink water after your workout to speed recovery. Tap for a hydration plan.', category: 'engagement', trigger_type: 'post_workout' },
+    { slug: 'seasonal_goal', title: 'Seasonal goal: Summer Ready', body: '8-week Summer Ready plan — tailored workouts + meals. Enroll now and save 20%.', category: 'promo', trigger_type: 'seasonal_campaign' },
+    { slug: 'coach_respond', title: 'Respond to client request', body: 'You have a new client message — reply within 24h to increase booking conversion.', category: 'coach_tip', trigger_type: 'coach_new_message' },
+    { slug: 'coach_boost', title: 'Coach tip: boost conversions', body: 'Update your coach bio and add a 60s intro video — profiles with video get 3x more bookings. Edit now.', category: 'coach_tip', trigger_type: 'coach_no_video' },
+  ];
+  for (const t of templates) {
+    await pool.execute(
+      `INSERT IGNORE INTO push_templates (slug, title, body, category, trigger_type) VALUES (?, ?, ?, ?, ?)`,
+      [t.slug, t.title, t.body, t.category, t.trigger_type]
+    );
+  }
+}
+
+// ── Seed welcome messages ─────────────────────────────────────────────────────
+async function seedWelcomeMessages() {
+  const messages = [
+    {
+      target: 'user', channel: 'email',
+      subject: "Welcome to Fitway Hub — Let's reach your first win!",
+      title: 'Welcome to Fitway Hub',
+      body: "Hi {{first_name}},\nWelcome to Fitway Hub! We're excited you're here. 🎉\n\nWhat to do next:\n\n✅ Complete your profile (fitness level & goals).\n✅ Take the 2-minute fitness assessment.\n✅ Pick a starter program or connect with a coach.\n\nNeed help? Reply to this email or visit the Help Center.\n\nWelcome aboard — one small habit at a time.\n— The Fitway Hub Team",
+      html_body: '<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:24px;background:#0A0A0B;color:#E5E5E5;border-radius:12px"><h1 style="color:#D4FF00;font-size:24px">Welcome to Fitway Hub! 🎉</h1><p>Hi {{first_name}},</p><p>We\'re excited you\'re here. Your fitness journey starts now!</p><h3 style="color:#D4FF00">What to do next:</h3><ul><li>✅ Complete your profile (fitness level &amp; goals)</li><li>✅ Take the 2-minute fitness assessment</li><li>✅ Pick a starter program or connect with a coach</li></ul><p>Need help? Reply to this email or visit the Help Center.</p><div style="text-align:center;margin:24px 0"><a href="{{app_url}}/app/onboarding" style="background:#D4FF00;color:#0A0A0B;padding:12px 32px;border-radius:8px;text-decoration:none;font-weight:700;display:inline-block">Get Started →</a></div><p style="color:#888;font-size:12px">Welcome aboard — one small habit at a time.<br>— The Fitway Hub Team</p></div>',
+    },
+    {
+      target: 'user', channel: 'push',
+      subject: '', title: 'Welcome to Fitway Hub 🎉',
+      body: 'Your fitness journey starts now, {{first_name}}. Set your goals and unlock your first workout today.',
+      html_body: null,
+    },
+    {
+      target: 'user', channel: 'in_app',
+      subject: '', title: 'Welcome, {{first_name}}! Ready for Day 1?',
+      body: 'Set your goal now and get a personalized 7-day plan.',
+      html_body: null,
+    },
+    {
+      target: 'coach', channel: 'email',
+      subject: 'Welcome to Fitway Hub Coach — Start building your client base',
+      title: 'Welcome to Fitway Hub Coach',
+      body: "Hi {{first_name}},\nWelcome to the Fitway Hub coach community — we're glad to have you!\n\nQuick setup checklist:\n\n✅ Complete your coach profile (bio, specialties, rates).\n✅ Upload credentials/certifications for verification.\n✅ Set your availability and coaching offerings.\n✅ Create your first program or coaching package.\n\nPro tips:\n• Add a short intro video (60s) — profiles with video convert better.\n• Offer a discounted trial session to get your first clients.\n\nWhen you're ready, publish your profile to go live and start receiving bookings.\n\nThanks for joining — let's help people get stronger together.\n— Fitway Hub Support",
+      html_body: '<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:24px;background:#0A0A0B;color:#E5E5E5;border-radius:12px"><h1 style="color:#D4FF00;font-size:24px">Welcome Coach! 🎉</h1><p>Hi {{first_name}},</p><p>Welcome to the Fitway Hub coach community — we\'re glad to have you!</p><h3 style="color:#D4FF00">Quick setup checklist:</h3><ul><li>✅ Complete your coach profile (bio, specialties, rates)</li><li>✅ Upload credentials/certifications for verification</li><li>✅ Set your availability and coaching offerings</li><li>✅ Create your first program or coaching package</li></ul><h3 style="color:#D4FF00">Pro tips:</h3><ul><li>Add a short intro video (60s) — profiles with video convert better</li><li>Offer a discounted trial session to get your first clients</li></ul><div style="text-align:center;margin:24px 0"><a href="{{app_url}}/coach/profile" style="background:#D4FF00;color:#0A0A0B;padding:12px 32px;border-radius:8px;text-decoration:none;font-weight:700;display:inline-block">Complete Your Profile →</a></div><p style="color:#888;font-size:12px">Thanks for joining — let\'s help people get stronger together.<br>— Fitway Hub Support</p></div>',
+    },
+    {
+      target: 'coach', channel: 'push',
+      subject: '', title: 'Welcome Coach! 🎉',
+      body: 'Hi {{first_name}} — welcome to Fitway Hub Coach! ⚡ Complete your profile and verify credentials to start accepting clients.',
+      html_body: null,
+    },
+    {
+      target: 'coach', channel: 'in_app',
+      subject: '', title: 'Welcome, {{first_name}}!',
+      body: 'Upload photo & bio, add specialties & rates, upload certifications, set availability, and publish your profile to start receiving clients.',
+      html_body: null,
+    },
+  ];
+  for (const m of messages) {
+    await pool.execute(
+      `INSERT IGNORE INTO welcome_messages (target, channel, subject, title, body, html_body) VALUES (?, ?, ?, ?, ?, ?)`,
+      [m.target, m.channel, m.subject, m.title, m.body, m.html_body]
+    );
   }
 }
 
@@ -877,6 +1039,70 @@ export async function initDatabase() {
   } catch {}
 
   await seedDefaultAccounts();
+
+  // ── Push notifications & welcome messages ───────────────────
+  try {
+    await pool.execute(`CREATE TABLE IF NOT EXISTS push_tokens (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      user_id INT NOT NULL,
+      token TEXT NOT NULL,
+      platform ENUM('android','ios','web') NOT NULL DEFAULT 'android',
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+      UNIQUE KEY unique_user_token (user_id, platform)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
+  } catch {}
+
+  try {
+    await pool.execute(`CREATE TABLE IF NOT EXISTS push_templates (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      slug VARCHAR(100) NOT NULL UNIQUE,
+      title VARCHAR(255) NOT NULL,
+      body TEXT NOT NULL,
+      category ENUM('new_user','new_coach','engagement','streak','inactivity','promo','coach_tip','system') NOT NULL DEFAULT 'engagement',
+      trigger_type VARCHAR(100) NOT NULL DEFAULT 'manual',
+      enabled TINYINT(1) NOT NULL DEFAULT 1,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
+  } catch {}
+
+  try {
+    await pool.execute(`CREATE TABLE IF NOT EXISTS push_log (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      user_id INT,
+      template_id INT,
+      title VARCHAR(255) NOT NULL,
+      body TEXT NOT NULL,
+      status ENUM('sent','failed') NOT NULL DEFAULT 'sent',
+      error_message TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
+      FOREIGN KEY (template_id) REFERENCES push_templates(id) ON DELETE SET NULL
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
+  } catch {}
+
+  try {
+    await pool.execute(`CREATE TABLE IF NOT EXISTS welcome_messages (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      target ENUM('user','coach') NOT NULL,
+      channel ENUM('email','push','in_app') NOT NULL,
+      subject VARCHAR(255) NOT NULL DEFAULT '',
+      title VARCHAR(255) NOT NULL DEFAULT '',
+      body LONGTEXT NOT NULL,
+      html_body LONGTEXT,
+      enabled TINYINT(1) NOT NULL DEFAULT 1,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      UNIQUE KEY unique_target_channel (target, channel)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4`);
+  } catch {}
+
+  // Seed default push templates
+  try { await seedPushTemplates(); } catch {}
+  // Seed default welcome messages
+  try { await seedWelcomeMessages(); } catch {}
 }
 
 export default pool;

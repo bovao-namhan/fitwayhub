@@ -159,9 +159,9 @@ export default function Onboarding() {
                   <label style={{ fontSize: 11, fontWeight: 600, color: "var(--text-secondary)", textTransform: "uppercase", letterSpacing: "0.06em", display: "block", marginBottom: 8 }}>{t("gender")}</label>
                   <div style={{ display: "flex", gap: 8 }}>
                     {["male", "female"].map((g) => (
-                      <label key={g} style={{ flex: 1, position: "relative" }}>
-                        <input type="radio" value={g} {...register("gender")} style={{ position: "absolute", opacity: 0 }} />
-                        <div style={{ padding: "10px", borderRadius: 10, border: "1px solid var(--border)", backgroundColor: "var(--bg-card)", cursor: "pointer", textAlign: "center", fontSize: 13, fontWeight: 500, textTransform: "capitalize" }}>{t(g)}</div>
+                      <label key={g} style={{ flex: 1, position: "relative", cursor: "pointer" }}>
+                        <input type="radio" value={g} {...register("gender")} style={{ position: "absolute", opacity: 0, width: 0, height: 0, pointerEvents: "none" }} />
+                        <div style={{ padding: "10px", borderRadius: 10, border: "1px solid var(--border)", backgroundColor: "var(--bg-card)", cursor: "pointer", textAlign: "center", fontSize: 13, fontWeight: 500, textTransform: "capitalize", WebkitTapHighlightColor: "transparent", userSelect: "none" }}>{t(g)}</div>
                       </label>
                     ))}
                   </div>
