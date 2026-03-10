@@ -1,5 +1,6 @@
 import { getApiBase } from "@/lib/api";
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { initPushNotifications, unregisterPushNotifications } from "@/lib/pushNotifications";
 
 export type UserRole = "admin" | "coach" | "user" | "moderator";
 
@@ -162,6 +163,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener("storage", onStorage);
   }, []);
 
+  // Register native push token whenever auth token becomes available.
+  useEffect(() => {
+    if (!token) return;
+    initPushNotifications(token).catch((err) => {
+      console.warn("Push initialization skipped:", err);
+    });
+  }, [token]);
+
   const login = async (email: string, password: string, rememberMe: boolean = false) => {
     ensureSingleAccount(email);
 
@@ -225,6 +234,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = () => {
     const t = localStorage.getItem("token");
     if (t) {
+      unregisterPushNotifications(t).catch(() => {});
       fetch(getApiBase() + '/api/auth/logout', { method: 'POST', headers: { Authorization: `Bearer ${t}` } }).catch(() => {});
     }
     setUser(null);

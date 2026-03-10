@@ -68,7 +68,7 @@ async function sendFcmPush(fcmToken: string, title: string, body: string): Promi
   const serverKey = process.env.FCM_SERVER_KEY;
   const projectId = process.env.FCM_PROJECT_ID;
 
-  if (serverKey && !projectId) {
+  if (serverKey) {
     // Legacy FCM API
     try {
       const resp = await fetch('https://fcm.googleapis.com/fcm/send', {
