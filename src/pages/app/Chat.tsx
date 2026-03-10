@@ -80,6 +80,7 @@ export default function Chat() {
   const [searchQuery, setSearchQuery] = useState("");
   const [sending, setSending] = useState(false);
   const [subscriptionError, setSubscriptionError] = useState("");
+  const [error, setError] = useState("");
   const [onlineUserIds, setOnlineUserIds] = useState<number[]>([]);
   const onlineSetRef = useRef<Set<number>>(new Set());
   const messagesEndRef = useRef<HTMLDivElement>(null);

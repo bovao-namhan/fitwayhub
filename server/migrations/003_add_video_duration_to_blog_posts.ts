@@ -1,19 +1,14 @@
-import db from '../config/database';
-import { run } from '../config/database';
+import { query, run } from '../config/database';
 
 export async function migrate() {
   try {
     // Check if column already exists
-    const result = await new Promise<any[]>((resolve, reject) => {
-      db.all(
-        `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS 
-         WHERE TABLE_NAME = 'blog_posts' AND COLUMN_NAME = 'video_duration'`,
-        (err: any, rows: any[]) => {
-          if (err) reject(err);
-          else resolve(rows || []);
-        }
-      );
-    });
+    const result = await query<any>(
+      `SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
+       WHERE TABLE_SCHEMA = DATABASE()
+         AND TABLE_NAME = 'blog_posts'
+         AND COLUMN_NAME = 'video_duration'`
+    );
 
     if (result.length === 0) {
       // Column doesn't exist, add it
