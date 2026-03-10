@@ -575,6 +575,44 @@ router.get('/ping', (_req: any, res: Response) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// ── Coach Profiles Generator ────────────────────────────────────────────────
+router.post('/generate-coach-profiles', authenticateToken, adminOnly, async (_req: any, res: Response) => {
+  try {
+    const count = 5;
+    const firstNames = ['Karim', 'Omar', 'Hassan', 'Mina', 'Yousef', 'Nadine', 'Rania', 'Mariam', 'Salma', 'Lina'];
+    const lastNames = ['Mostafa', 'Hamed', 'Samir', 'Nabil', 'Farouk', 'Ibrahim', 'Mahmoud', 'Adel', 'Tarek', 'Kamel'];
+    const created: string[] = [];
+    const hashed = await bcrypt.hash('CoachPass123!', 10);
+    const baseTs = Date.now();
+
+    for (let i = 0; i < count; i++) {
+      const fn = firstNames[Math.floor(Math.random() * firstNames.length)];
+      const ln = lastNames[Math.floor(Math.random() * lastNames.length)];
+      const suffix = `${baseTs}${i}`;
+      const name = `${fn} ${ln}`;
+      const email = `${fn.toLowerCase()}.${ln.toLowerCase()}.${suffix}@fitwayhub.coach`;
+      const avatar = `https://api.dicebear.com/7.x/avataaars/svg?seed=${fn}${ln}${suffix}`;
+      const steps = 9000 + Math.floor(Math.random() * 7000);
+      const points = 800 + Math.floor(Math.random() * 2200);
+
+      try {
+        await run(
+          `INSERT INTO users (email, password, name, role, avatar, is_premium, membership_paid, coach_membership_active, points, steps, step_goal)
+           VALUES (?, ?, ?, 'coach', ?, 0, 1, 1, ?, ?, 12000)`,
+          [email, hashed, name, avatar, points, steps]
+        );
+        created.push(name);
+      } catch {
+        // Skip duplicates and continue.
+      }
+    }
+
+    res.json({ message: `Created ${created.length} coach profiles`, coaches: created });
+  } catch (err: any) {
+    res.status(500).json({ message: 'Failed to generate coach profiles', error: err?.message || 'Unknown error' });
+  }
+});
+
 // ── Fake Accounts Generator ──────────────────────────────────────────────────
 router.post('/generate-fake-accounts', authenticateToken, adminOnly, async (req: any, res: Response) => {
   try {

@@ -48,6 +48,7 @@ export default function AdminDashboard() {
   const [ads, setAds] = useState<CoachAd[]>([]);
   const [videos, setVideos] = useState<TrainingVideo[]>([]);
   const [coaches, setCoaches] = useState<AdminUser[]>([]);
+  const [addingCoaches, setAddingCoaches] = useState(false);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
@@ -318,6 +319,24 @@ export default function AdminDashboard() {
     await api(`/api/admin/users/${userId}/premium`, { method: "PATCH", body: JSON.stringify({ is_premium: isPremium }) });
     setUsers(u => u.map(x => x.id === userId ? { ...x, is_premium: isPremium } : x));
     showMsg(`✅ Premium ${isPremium ? "granted" : "revoked"}`);
+  };
+
+  const addCoachProfiles = async () => {
+    setAddingCoaches(true);
+    try {
+      const res = await api("/api/admin/generate-coach-profiles", { method: "POST", body: JSON.stringify({ count: 5 }) });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        showMsg(`❌ ${data?.message || "Failed to add coaches"}`);
+        return;
+      }
+      await fetchAll();
+      showMsg(`✅ ${data?.message || "5 coaches added"}`);
+    } catch {
+      showMsg("❌ Failed to add coaches");
+    } finally {
+      setAddingCoaches(false);
+    }
   };
 
   const deleteUser = async (userId: number) => {
@@ -670,7 +689,30 @@ export default function AdminDashboard() {
       {/* COACHES */}
       {tab === "coaches" && (
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-          <p style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 16, fontWeight: 700 }}>{t("manage_coaches")}</p>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
+            <p style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 16, fontWeight: 700 }}>{t("manage_coaches")}</p>
+            <button
+              onClick={addCoachProfiles}
+              disabled={addingCoaches}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 6,
+                padding: "8px 14px",
+                borderRadius: 9,
+                background: "var(--cyan)",
+                border: "none",
+                color: "#072226",
+                fontSize: 12,
+                fontWeight: 700,
+                cursor: addingCoaches ? "not-allowed" : "pointer",
+                opacity: addingCoaches ? 0.7 : 1,
+                fontFamily: "'Chakra Petch', sans-serif"
+              }}
+            >
+              <Plus size={14} /> {addingCoaches ? "Adding..." : "Add 5 Coaches"}
+            </button>
+          </div>
           <p style={{ fontSize: 13, color: "var(--text-muted)" }}>To add a coach, go to Users tab and change a user's role to "Coach".</p>
           {coaches.length === 0 ? (
             <div style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 16, padding: 40, textAlign: "center", color: "var(--text-muted)", fontSize: 14 }}>
