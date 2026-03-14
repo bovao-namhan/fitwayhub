@@ -58,6 +58,7 @@ export default function Coaching() {
   const [showFilters, setShowFilters] = useState(false);
   const [followedCoaches, setFollowedCoaches] = useState<Set<number>>(new Set());
   const [subscribedCoaches, setSubscribedCoaches] = useState<Record<number, any>>({});
+  const [hasAssignedPlan, setHasAssignedPlan] = useState(false);
   const [subscribeCoach, setSubscribeCoach] = useState<Coach | null>(null);
   const [subCycle, setSubCycle] = useState<"monthly" | "yearly">("monthly");
   const [subMsg, setSubMsg] = useState("");
@@ -120,6 +121,15 @@ export default function Coaching() {
       })
       .catch(() => {})
       .finally(() => setLoading(false));
+
+    fetch(getApiBase() + "/api/workouts/my-plan", { headers: { Authorization: `Bearer ${token}` } })
+      .then(r => r.ok ? r.json() : null)
+      .then((d) => {
+        const hasWorkout = !!d?.workout;
+        const hasNutrition = !!d?.nutrition;
+        setHasAssignedPlan(hasWorkout || hasNutrition);
+      })
+      .catch(() => setHasAssignedPlan(false));
   }, [token]);
 
   const sendGift = async () => {
@@ -395,8 +405,8 @@ export default function Coaching() {
                       Subscribe
                     </button>
                   ) : (
-                    <button onClick={() => { if (!c.available) return; setBookingCoach(c); setBookingDate(""); setBookingTime(""); setBookingNote(""); setBookingMsg(""); }} disabled={!c.available} style={{ flex: isMobile ? "1 1 48%" : 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "9px", borderRadius: 9, backgroundColor: "var(--bg-surface)", border: "1px solid var(--border)", color: c.available ? "var(--text-primary)" : "var(--text-muted)", fontSize: 13, fontWeight: 600, cursor: c.available ? "pointer" : "not-allowed", opacity: c.available ? 1 : 0.6 }}>
-                      <Calendar size={14} /> Book
+                    <button onClick={() => navigate("/app/workouts")} style={{ flex: isMobile ? "1 1 48%" : 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "9px", borderRadius: 9, backgroundColor: hasAssignedPlan ? "var(--accent-dim)" : "rgba(255,179,64,0.08)", border: `1px solid ${hasAssignedPlan ? "rgba(200,255,0,0.25)" : "rgba(255,179,64,0.25)"}`, color: hasAssignedPlan ? "var(--accent)" : "var(--amber)", fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
+                      <Calendar size={14} /> {hasAssignedPlan ? "View My Plan" : "Awaiting Coach Plan"}
                     </button>
                   )
                 ) : (

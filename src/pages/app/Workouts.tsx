@@ -346,7 +346,7 @@ export default function Workouts() {
               <Dumbbell size={48} color="var(--text-muted)" style={{ marginBottom: 16 }} />
               <h2 style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 18, fontWeight: 700, marginBottom: 8 }}>No Plan Assigned Yet</h2>
               <p style={{ fontSize: 14, color: "var(--text-secondary)", maxWidth: 360, margin: "0 auto", lineHeight: 1.6 }}>
-                Your coach hasn't assigned a plan yet. Book a coaching session to get your personalized workout and nutrition plan.
+                Your coach hasn't assigned a plan yet. Subscribe to a coach and wait for your personalized workout and nutrition plan.
               </p>
               <Link to="/app/coaching" style={{ display: "inline-flex", alignItems: "center", gap: 6, marginTop: 20, padding: "10px 22px", borderRadius: 9, backgroundColor: "var(--accent)", color: "#0A0A0B", fontFamily: "'Chakra Petch', sans-serif", fontWeight: 700, fontSize: 13, textDecoration: "none" }}>
                 Find a Coach
