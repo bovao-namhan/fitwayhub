@@ -1,5 +1,5 @@
 import { getApiBase } from "@/lib/api";
-import { Calendar, MessageSquare, Star, Lock, X, Search, SlidersHorizontal, Camera, UserPlus, UserCheck, Gift, Eye } from "lucide-react";
+import { Calendar, MessageSquare, Star, Lock, X, Search, SlidersHorizontal, Camera, UserPlus, UserCheck, Gift } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
 import { useState, useMemo, useEffect } from "react";
@@ -346,7 +346,13 @@ export default function Coaching() {
                 <div style={{ flex: 1 }}>
                   <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
                     <div>
-                      <h3 style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 15, fontWeight: 700 }}>{c.name}</h3>
+                      <h3
+                        onClick={() => { setViewProfileCoach(c); fetchReviews(c.id); }}
+                        style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 15, fontWeight: 700, cursor: "pointer" }}
+                        title="View Profile"
+                      >
+                        {c.name}
+                      </h3>
                       <p style={{ fontSize: 12, color: "var(--accent)", marginTop: 2 }}>{c.specialty || "General Fitness"}</p>
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: 3, fontSize: 13, color: "var(--amber)", fontWeight: 700 }}>
@@ -422,9 +428,6 @@ export default function Coaching() {
                     <Gift size={14} />
                   </button>
                 )}
-                <button onClick={() => { setViewProfileCoach(c); fetchReviews(c.id); }} style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "9px 12px", borderRadius: 9, backgroundColor: "rgba(59,130,246,0.06)", border: "1px solid rgba(59,130,246,0.2)", color: "var(--blue)", cursor: "pointer", flex: isMobile ? "1 1 calc(50% - 4px)" : "0 0 auto" }} title="View Profile">
-                  <Eye size={14} />
-                </button>
               </div>
             </div>
           ))}

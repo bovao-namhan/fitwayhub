@@ -1,382 +1,446 @@
-# 🏋️ FitWay Hub
+# FitWay Hub - Software Requirements Specification (SRS)
 
-A full-stack fitness platform with real-time coaching, video meetings, AI-powered analytics, community features, and a native mobile app — built with React 19, Express.js, MySQL, Socket.IO, and Capacitor.
+Version: 1.0  
+Date: 2026-03-14  
+System: FitWay Hub (Web + API + Android Wrapper)
 
----
+## 1. Purpose
+This document defines the complete Software Requirements Specification (SRS) for FitWay Hub, a full-stack fitness platform that includes:
+- User fitness tracking and coaching
+- Coach operations and athlete management
+- Admin moderation and system operations
+- Community, messaging, blog, ads, and payment workflows
+- AI-assisted summaries and insights
 
-## Tech Stack
+This SRS is intended for product owners, developers, QA, DevOps, and future maintainers.
 
-| Layer | Technology |
-|-------|-----------|
-| Frontend | React 19, React Router 7, Tailwind CSS 4, Recharts, Lucide Icons |
-| Backend | Express.js, MySQL2, Socket.IO, JWT, bcryptjs, Nodemailer |
-| AI | Google Gemini 2.5 Flash |
-| Push Notifications | Firebase Cloud Messaging (FCM Legacy + v1) |
-| Email | Built-in SMTP server (port 2525), Nodemailer outbound |
-| Maps | Leaflet + OpenStreetMap |
-| Video Calls | WebRTC + Socket.IO signaling |
-| Video Processing | ffprobe / MediaInfo (duration extraction) |
-| Mobile | Capacitor 8 (Android), standalone Gradle project |
-| Validation | Zod, React Hook Form |
-| File Uploads | Multer |
+## 2. Product Scope
+FitWay Hub provides a role-based platform where:
+- Users track activity, consume workout content, subscribe to coaches, and receive plans
+- Coaches manage subscriptions, athletes, plans, ads, earnings, and profile settings
+- Admins control users/content/payments/branding/configuration and monitor platform operations
 
----
+The platform includes:
+- Web frontend (React + Vite)
+- Node/Express backend (REST + Socket real-time)
+- MySQL relational database
+- Android app wrapper (Capacitor)
 
-## Quick Start
+## 3. Definitions and Roles
+- User: Regular athlete/end user of the app
+- Coach: Professional trainer managing athlete subscriptions and plans
+- Admin: Platform operator with moderation/configuration privileges
+- Moderator: Elevated user role for moderation tasks (where applicable)
+- Subscription: Paid relationship between a user and coach
+- Booking: Coaching service request/session flow
+- Plan: Coach-authored workout and/or nutrition program for user
 
+## 4. System Overview
+### 4.1 Architecture
+- Frontend: React 19, React Router, TypeScript
+- Backend: Express.js + TypeScript
+- Database: MySQL 8
+- Real-time: Socket.IO
+- Mobile wrapper: Capacitor Android
+- File uploads: Multer + image optimization
+
+### 4.2 Main Components
+- Auth and sessions
+- User app modules (dashboard, steps, workouts, analytics, coaching, community, chat, blogs)
+- Coach modules (dashboard, athletes, profile/settings, subscriptions, ads, chat, blogs)
+- Admin modules (users, payments, subscriptions, withdrawals, videos, ads, CMS, notifications, email)
+- Payment and subscription processing
+- Push/email notification pipelines
+
+## 5. Stakeholders
+- End Users
+- Coaches
+- Admin Operations Team
+- Support Team
+- Engineering Team
+- QA Team
+
+## 6. Functional Requirements
+
+## 6.1 Authentication and Authorization
+### FR-AUTH-001
+System shall support registration and login with email/password.
+
+### FR-AUTH-002
+System shall hash passwords and issue JWT-based access tokens.
+
+### FR-AUTH-003
+System shall support role-based route protection for User, Coach, Admin, and Moderator.
+
+### FR-AUTH-004
+System shall support social auth callbacks (Google/Facebook) where configured.
+
+### FR-AUTH-005
+System shall support password reset and account recovery flows.
+
+## 6.2 User Onboarding and Profile
+### FR-USER-001
+System shall capture onboarding data (goals, metrics, activity level, medical info).
+
+### FR-USER-002
+System shall persist user profile and allow updates.
+
+### FR-USER-003
+System shall support trial/premium indicators and entitlement-aware access.
+
+## 6.3 Steps and Activity Tracking
+### FR-STEPS-001
+System shall support daily step tracking and historical stats.
+
+### FR-STEPS-002
+System shall support manual and device-assisted activity inputs.
+
+### FR-STEPS-003
+System shall compute progress against daily step goals.
+
+### FR-STEPS-004
+System shall maintain weekly/monthly summaries and related analytics.
+
+## 6.4 Workouts and Training Content
+### FR-WORKOUT-001
+System shall provide searchable/filterable workout videos.
+
+### FR-WORKOUT-002
+System shall support premium content locking based on entitlement.
+
+### FR-WORKOUT-003
+System shall support short-form videos (shorties).
+
+### FR-WORKOUT-004
+System shall support playlists and playlist video retrieval.
+
+### FR-WORKOUT-005
+System shall support user-specific assigned plans (workout and nutrition).
+
+### FR-WORKOUT-006
+System shall show a dedicated My Plan section and display assigned plan details.
+
+## 6.5 Coaching Marketplace and Subscriptions
+### FR-COACH-001
+System shall list coaches with filter/sort by specialty, location, plan type, price, rating, and availability.
+
+### FR-COACH-002
+System shall show coach cards with profile details and social actions.
+
+### FR-COACH-003
+System shall support paid coach subscriptions (monthly/yearly), including request status tracking.
+
+### FR-COACH-004
+System shall support subscription lifecycle statuses:
+- pending_admin
+- pending_coach
+- active
+- rejected_admin
+- rejected_by_coach
+- refunded states
+
+### FR-COACH-005
+System shall expose user-facing subscription status per coach and prevent duplicate pending requests.
+
+### FR-COACH-006
+System shall display live subscription countdown (time remaining until expires_at) for active subscriptions.
+
+### FR-COACH-007
+Subscribed users shall not be prompted to book as the primary next action; instead, the UI shall guide users to coach-assigned plans.
+
+### FR-COACH-008
+When subscribed, coach card primary action shall be plan-focused:
+- View My Plan if plan exists
+- Awaiting Coach Plan if no plan assigned yet
+
+### FR-COACH-009
+System shall support coach reviews and ratings from users.
+
+### FR-COACH-010
+System shall support user gifts to coaches with eligibility checks.
+
+## 6.6 Coaching Requests and Planning
+### FR-PLAN-001
+Coach shall be able to manage athlete list and profile summaries.
+
+### FR-PLAN-002
+Coach shall be able to create/update workout plans for athletes.
+
+### FR-PLAN-003
+Coach shall be able to create/update nutrition plans for athletes.
+
+### FR-PLAN-004
+Coach shall be able to set athlete step goals.
+
+### FR-PLAN-005
+Coach shall be able to view and process pending subscription requests:
+- Accept (activates subscription and credits coach)
+- Decline (marks refunded and notifies user)
+
+### FR-PLAN-006
+Coach settings/profile shall include a Subscriptions section with:
+- Pending requests list
+- Accept/Decline actions
+- Active subscribers list with expiry date
+
+## 6.7 Community and Social
+### FR-COMM-001
+System shall support creating community posts with text/media/hashtags.
+
+### FR-COMM-002
+System shall support likes and comments.
+
+### FR-COMM-003
+System shall support trending tags and tag filtering.
+
+### FR-COMM-004
+System shall support community challenges (create/join/progress).
+
+### FR-COMM-005
+System shall support coach follow/unfollow and follow status checks.
+
+### FR-COMM-006
+System shall support coach public profile presentation from community including:
+- profile image and name
+- follow button
+- followers/statistics
+- posts
+- videos
+- shorties
+- photos
+
+## 6.8 Chat and Real-Time Messaging
+### FR-CHAT-001
+System shall support one-to-one messaging between users/coaches.
+
+### FR-CHAT-002
+System shall support challenge/group chat contexts.
+
+### FR-CHAT-003
+System shall provide real-time message delivery and presence updates.
+
+### FR-CHAT-004
+System shall support file/media attachments in chat.
+
+## 6.9 Ads System
+### FR-ADS-001
+Coach shall be able to create/edit/delete ad drafts and submit payment proof.
+
+### FR-ADS-002
+Admin shall approve/reject ads and ad payments.
+
+### FR-ADS-003
+System shall schedule ad boost windows using boost_start/boost_end.
+
+### FR-ADS-004
+System shall auto-expire ads when boost_end is reached.
+
+### FR-ADS-005
+Coach ads page shall display live countdown for active boosts (days/hours/minutes).
+
+### FR-ADS-006
+System shall track ad impressions and clicks.
+
+### FR-ADS-007
+System shall render sponsored ads in dashboard/community placements.
+
+## 6.10 Blog and CMS
+### FR-BLOG-001
+System shall support multilingual blog content (English/Arabic), publish/draft states, and media.
+
+### FR-BLOG-002
+System shall support linked language versions and per-language slug handling.
+
+### FR-CMS-001
+Admin shall manage website sections using CMS.
+
+### FR-CMS-002
+CMS shall support section types including:
+- hero
+- stats
+- features
+- text_image
+- cards
+- cta
+- contact_info
+- calculator
+- html
+- latest_blogs
+- team
+- carousel
+- faq
+
+### FR-CMS-003
+CMS admin editor shall provide edit UI for all supported section types.
+
+## 6.11 Payments, Revenue, and Withdrawals
+### FR-PAY-001
+System shall support payment initiation methods required by configured channels (PayPal, e-wallet, etc.).
+
+### FR-PAY-002
+System shall support admin proof review and approve/reject operations.
+
+### FR-PAY-003
+System shall persist payment/subscription records with statuses and timestamps.
+
+### FR-PAY-004
+System shall credit coach earnings on accepted subscriptions according to configured cut.
+
+### FR-PAY-005
+Coach shall view credit balance, transaction history, and withdrawal history.
+
+### FR-PAY-006
+Coach shall submit withdrawal requests with configured payout details.
+
+### FR-PAY-007
+Admin shall process withdrawal requests.
+
+## 6.12 Notifications and Email
+### FR-NOTIF-001
+System shall support push notifications and token registration.
+
+### FR-NOTIF-002
+System shall support in-app notification creation for important status changes.
+
+### FR-NOTIF-003
+System shall support admin-managed notification templates and blast operations.
+
+### FR-EMAIL-001
+System shall support SMTP sending and admin email tooling.
+
+## 6.13 Admin Operations
+### FR-ADMIN-001
+Admin shall manage users (read/update/delete, role updates, premium toggles).
+
+### FR-ADMIN-002
+Admin shall manage videos including premium flags and coach assignment.
+
+### FR-ADMIN-003
+Admin shall manage ads and subscriptions.
+
+### FR-ADMIN-004
+Admin shall manage CMS website content and translations.
+
+### FR-ADMIN-005
+Admin shall manage payment settings and platform configuration.
+
+## 7. Data Requirements
+Core persisted entities include (non-exhaustive):
+- users
+- coach_profiles
+- coach_subscriptions
+- coaching_bookings
+- workout_plans
+- nutrition_plans
+- workout_videos
+- playlists and playlist_videos
+- posts, post_comments, post_likes
+- coach_reviews
+- coach_follows
+- coach_ads
+- ad_payments
+- payments
+- withdrawals
+- notifications
+- app_settings
+- website_sections
+- blogs
+- messages
+
+Data fields and constraints are implemented in database initialization/migration logic.
+
+## 8. External Interface Requirements
+
+## 8.1 UI Requirements
+- Responsive web UI for desktop/tablet/mobile
+- Role-based navigation and route protection
+- Arabic and English localization support
+- Dark/light theme support
+
+## 8.2 API Requirements
+- RESTful endpoints under `/api/*`
+- Authenticated routes require bearer token
+- Status/validation errors returned in JSON with message
+
+## 8.3 File Interface Requirements
+- Upload endpoints for images/videos/proofs/attachments
+- Static serving of uploaded assets through server path mapping
+
+## 8.4 Mobile Interface Requirements
+- Capacitor Android wrapper support
+- API base URL configuration for device runtime
+
+## 9. Non-Functional Requirements
+
+## 9.1 Security
+- Password hashing
+- JWT auth
+- Role-based route guards
+- Input validation and upload checks
+- Sensitive admin routes protected by role checks
+
+## 9.2 Reliability and Integrity
+- Database-backed persistence for critical workflows
+- Status-driven subscription/payment transitions
+- Auto-expiry checks for time-bounded entities (ads/subscriptions)
+
+## 9.3 Performance
+- Paginated/limited list endpoints where needed
+- Efficient filtering/sorting in UI and API
+- Real-time features optimized via Socket events
+
+## 9.4 Usability
+- Clear status badges for pending/active/rejected flows
+- Direct CTAs aligned with business flow (subscription -> plan assignment)
+- Human-readable countdowns for time-bound subscriptions/ads
+
+## 9.5 Maintainability
+- Modular route files and page modules
+- TypeScript typing across app and API
+- Configurable platform settings through admin panel
+
+## 10. Business Rules
+- Only active coach subscriptions grant subscribed state.
+- Pending subscription requests block duplicate request creation.
+- Coach must explicitly accept pending_coach requests before subscription becomes active.
+- Active subscriptions have expires_at and are time-bound.
+- Subscription is not equivalent to booking; subscription enables coach plan workflow.
+- Coach earnings are credited only on accepted/active payment flow.
+
+## 11. Assumptions and Constraints
+- MySQL service is available and configured.
+- Required environment variables are correctly set for auth/payment/notifications.
+- Payment providers may run in sandbox or production modes based on settings.
+- Some features depend on role-specific data setup (coach profiles, pricing, plan creation).
+
+## 12. Acceptance Criteria Summary
+The system is accepted when:
+1. User can subscribe to coach and view accurate status progression.
+2. Subscribed coach action is plan-focused, not booking-focused.
+3. Coach can process subscription requests in settings and see active subscribers.
+4. User sees subscription countdown and expiry details.
+5. Coach ads display live countdown and auto-expire correctly.
+6. Community coach profile includes posts/videos/shorties/photos with follow stats.
+7. Admin can assign videos to coaches and manage critical workflows.
+8. CMS supports all section types with working editors.
+
+## 13. Run and Build
 ```bash
-# 1. Install dependencies
 npm install
-
-# 2. Start MySQL (if not running)
-sudo service mysql start
-
-# 3. Start dev server (API on :3000)
 npm run dev
-
-# 4. Start frontend (Vite on :5173)
 npx vite
 ```
 
-Set `VITE_API_BASE` in `.env` to your backend URL. For Capacitor/Android builds it defaults to `https://peter-adel.taila6a2b4.ts.net`.
+Additional scripts:
+- `npm run build`
+- `npm run lint`
+- `npm run seed`
+- `npm run build:android`
+- `npm run cap:run`
 
-
-## Default Accounts
-
-| Role | Email | Password | URL |
-|------|-------|----------|-----|
-| 👑 Admin | peteradmin@example.com | peterishere | /admin/dashboard |
-| 🏅 Coach | petercoach@example.com | peterishere | /coach/dashboard |
-| 👤 User | test@example.com | password123 | /app/dashboard |
-
----
-
-## Features
-
-### 🔐 Authentication & Security
-- **Email/Password** registration and login with bcrypt hashing and JWT tokens (30-day expiry)
-- **Google & Facebook OAuth** — social login with automatic account creation
-- **Email domain validation** — DNS MX/A/AAAA record checks block disposable/fake emails
-- **Role-based access control** — Admin, Coach, Moderator, User roles with protected routes
-- **Remember Me** — persistent token-based auto-login
-- **Forgot/Reset Password** — self-service password recovery flow
-- **Cross-tab sync** — auth state synchronizes across browser tabs via `StorageEvent`
-- **7-day free trial** — new signups get premium trial with countdown
-- **Coach membership gate** — coaches require active paid membership to log in
-
-### 📋 Onboarding
-- **4-step guided wizard** with progress bar and per-step Zod validation
-- Goal selection (lose weight, maintain, gain weight, build muscle)
-- Body metrics (gender, DOB, height, weight)
-- Activity level and medical history
-- Personalized targets (target weight, weekly goal, daily steps)
-- Data persists to server on completion
-
-### 📊 User Dashboard
-- **Stat cards** — steps, calories, water intake, active minutes at a glance
-- **Step goal progress** — visual progress bar with editable goal (coach-settable)
-- **Today's plan** — workout exercises by day-of-week and nutrition/meal plan
-- **Quick tools** — one-tap access to BMI, Macros, Steps, Water calculators
-- **Ad carousel** — auto-rotating sponsored banners from coaches
-- **Featured coaches** — promoted coach spotlight cards
-- **AI step analysis** — Gemini-powered daily performance rating and motivational insights
-
-### 🚶 Steps & Activity Tracking
-- **Live GPS tracking** — real-time route on OpenStreetMap with glowing polyline and pulsing marker
-- **Accelerometer steps** — device motion-based step counting with peak detection
-- **Kalman filter** — GPS signal smoothing for accurate distance measurement
-- **Manual entry** — walking/running modes with automatic distance↔steps conversion using user height/weight
-- **SVG progress ring** — animated circular step goal indicator
-- **Weekly/monthly stats** — historical daily breakdowns
-- **Offline storage & sync** — steps saved to localStorage when offline, synced via `/offline-steps` on reconnect
-- **Calorie burn calculation** — MET-based formula (different for walking vs running)
-- **Distance units** — user-selectable km, m, or cm
-- **Goal completion rewards** — +2 points on reaching daily step goal
-
-### 💪 Workouts
-- **Video library** — browsable exercise catalog with search and category filters (HIIT, Strength, Cardio, Yoga, Mobility)
-- **Premium content lock** — gated videos for paying users with lock overlay
-- **Video player modal** — YouTube embed, Vimeo embed, and direct playback
-- **Watch rewards** — +2 points after 30 seconds of video engagement
-- **My Plan** — coach-assigned personal workout + nutrition plan with macro breakdown
-
-### 📈 Analytics (Premium)
-- **Weekly steps chart** — Recharts bar chart with day-by-day data
-- **Calories trend** — area chart of calorie burn over time
-- **Metric cards** — avg daily steps, total sessions, calories burned, consistency %
-- **Recent sessions** — list with type, duration, calories
-- **AI insights** — Gemini-generated trend analysis of fitness data
-- Premium-gated with redirect to pricing for free users
-
-### 👥 Community & Social
-- **Social feed** — user-generated text + media posts with image/video upload
-- **Hashtags** — `#tag` support with trending tags sidebar and tag filtering
-- **Likes & comments** — post engagement with threaded comments
-- **Sponsored ads** — interspersed ad posts every 4th position in feed
-- **Fitness challenges** — create/join community challenges with dates, progress bars, active/upcoming/ended status
-- **Coach follow system** — follow/unfollow coaches from their profiles
-- **Post moderation** — admin can delete/hide content; admin stats bar
-
-### 💬 Chat & Messaging
-- **Direct messaging** — 1:1 conversations between users and coaches
-- **Real-time delivery** — instant messages via Socket.IO
-- **Online presence** — green dots for online users with 3-second polling fallback
-- **Media/file sharing** — upload images and files within conversations
-- **Group/challenge chat** — multi-user chat rooms tied to community challenges
-- **Contact list** — searchable directory with role badges and status colors
-
-### 🏅 Coaching System
-- **Coach marketplace** — searchable directory with filters: specialty, location, plan type, price range, rating, experience, availability
-- **Coach profiles** — ratings, reviews, pricing, specialties, follower count
-- **Subscription booking** — monthly/yearly plans (complete, workout-only, nutrition-only)
-- **Multi-stage approval** — `pending_admin` → `pending_coach` → `active` (or `rejected`)
-- **Body photo uploads** — "now" and "dream body" images during booking
-- **Reviews & ratings** — star rating + text review displayed on coach profiles
-- **Gift sending** — send points/gifts to coaches
-
-### 📹 Meetings & Video Calls
-- **Meeting scheduling** — create meetings with title, participant, date/time
-- **WebRTC video calls** — peer-to-peer with full offer/answer/ICE exchange
-- **Audio/video controls** — mute mic, disable camera toggles
-- **Screen sharing** — share desktop/window via `getDisplayMedia`
-- **In-call chat** — real-time text messaging alongside video
-- **File sharing** — upload and share files via drag-and-drop during calls
-- **Collaborative notes** — auto-saving meeting notes synced between participants via Socket.IO
-- **Call timer** — running duration display during active calls
-- **PiP local video** — draggable picture-in-picture self-view overlay
-- **Meeting management** — status filters (all/scheduled/active/ended), reschedule, delete
-
-### 🤖 AI Features
-- **Step analysis** — Google Gemini 2.5 Flash generates performance rating, health advice, motivational message, and tomorrow's goal
-- **Analytics insights** — AI-generated contextual trend summaries
-- **Daily summary persistence** — AI output stored per user per day in `DailySummary` model
-
-### � Push Notifications & Welcome Messages
-- **FCM integration** — Firebase Cloud Messaging with dual support: Legacy API (server key) and HTTP v1 (service account JWT)
-- **35+ notification templates** — categorized: new_user, new_coach, engagement, streak, inactivity, promo, coach_tip, system
-- **Template tokens** — `{{first_name}}`, `{{streak_days}}`, `{{coach_name}}`, `{{app_url}}` with dynamic replacement
-- **Welcome messages** — automatic email + push + in-app notification for new user and coach registration
-- **Segment blasting** — send push to all users, coaches only, premium users, or inactive (7d+) users
-- **Push log** — full audit trail of all sent notifications with status tracking
-- **Admin notification UI** — manage templates, welcome messages, send pushes, and view logs from `/admin/notifications`
-- **Device token management** — register/remove FCM tokens per user per platform (Android/iOS/Web)
-
-### 📧 Email Server
-- **Built-in SMTP server** — smtp4dev-style server on port 2525 for receiving and testing emails
-- **SMTP sending** — Nodemailer integration for outbound emails via configured SMTP settings
-- **Email accounts** — create multiple sender accounts with custom display names
-- **System email fallback** — `sendSystemEmail()` works without email accounts using SMTP settings directly
-- **Admin email UI** — compose, send, and manage emails from `/admin/email`
-
-### 🛡️ Admin Panel
-- **Overview dashboard** — platform-wide aggregate KPI stats
-- **User management** — full CRUD: create, edit, delete users; change roles; toggle premium; adjust points; view medical history
-- **Coach management** — coach-specific admin controls
-- **Payment tracking** — proof image verification, approve/reject transactions
-- **Video management** — upload/manage workout videos with categories, premium flag, thumbnails, configurable upload limit
-- **Blog management** — create/edit/delete blog posts with multilingual support, version linking
-- **Ad moderation** — approve/reject coach-submitted ads with admin notes
-- **Gift system** — send points, premium access, badges, coupons to any user
-- **Community moderation** — announcements, pin/hide/delete posts
-- **App configuration** — platform-wide key-value settings including max video upload size
-- **Website CMS** — section-based page editor for Home, About, Contact with 13 section types and sort ordering
-- **Notification management** — push templates, welcome messages, segment blasting, push log viewer
-- **Email server** — compose/send emails, manage SMTP settings and accounts
-- **Payment settings** — PayPal credentials, e-wallet phone number, coach cut (90%)
-- **Server configuration** — server URL setting with connectivity test button
-- **Subscription management** — view, approve, reject coaching subscriptions
-- **Withdrawal handling** — process coach payout requests
-- **Admin chat** — direct communication channel with users/coaches
-
-### 🏅 Coach Panel
-- **Dashboard** — athletes count, pending requests, sessions/week, revenue, avg rating, completion %, weekly sessions chart
-- **Athlete management** — view subscribed athletes with search, detail tabs (overview, workout, nutrition)
-- **Workout plan builder** — exercise name, sets, reps, rest time, day assignment per athlete
-- **Nutrition plan builder** — plan title, macro targets (cal/protein/carbs/fat), meals with time/calories/foods
-- **Step goal setting** — set per-athlete daily step goals
-- **Coaching requests** — accept/reject incoming subscription requests
-- **Ad creation** — self-service ads (community feed or home banner) with media upload, duration pricing (4 EGP/min)
-- **Profile management** — edit bio, specialties, pricing, availability
-
-### 💳 Payment System
-- **Premium plans** — Free tier vs Premium (50 EGP/month or 450 EGP/year, 25% annual savings)
-- **E-wallet payments** — transfer to configured phone number with proof image upload
-- **PayPal integration** — sandbox API with token auth, order creation/capture
-- **Payment proof verification** — admin review/approve/reject with image preview
-- **Coach revenue split** — 90% to coach, 10% platform fee
-- **Coach withdrawals** — request and process coach earnings payout
-- **Result pages** — success, cancel, and error post-payment screens
-
-### 🧰 Fitness Calculators
-- **BMI Calculator** — height + weight input with color-coded result categories
-- **Calorie Calculator** — daily calorie needs estimator
-- **Hydration Calculator** — daily water intake based on weight + activity level
-- **Macro Calculator** — macronutrient breakdown with 200+ food database
-
-### 🎮 Points & Gamification
-- **Signup bonus** — configurable welcome points (default 200) on registration
-- **Video rewards** — +2 points after 30 seconds of watching
-- **Step goal rewards** — +2 points on daily step goal completion
-- **Transaction history** — full points ledger on profile
-- **Points display** — visible on profile, dashboard, and admin user management
-
-### 🌍 Internationalization (i18n)
-- **Bilingual** — English and Arabic with 200+ translation keys
-- **Language selection** — user-selectable in profile settings
-- **RTL support** — full right-to-left layout for Arabic
-- **Per-language branding** — different logos configurable per language
-
-### 🌓 Theme System
-- **Dark/Light mode** — one-click toggle available in all layouts
-- **Persistence** — theme saved to localStorage across sessions
-- **System preference** — reads `prefers-color-scheme` media query as default
-- **Map tile switching** — theme-aware dark/light OpenStreetMap tiles
-
-### 🎨 Branding / White-Label
-- **Dynamic branding** — app name, tagline, logos fetched from backend settings
-- **CSS variable theming** — primary, secondary, background colors injected at runtime
-- **Font customization** — separate fonts for English, Arabic, and headings
-- **Social links** — configurable social media URLs
-- **Splash screen** — branded loading screen while config loads
-- **LocalStorage cache** — offline branding fallback
-
-### 📱 Mobile & Responsive
-- **Fully responsive** — all pages adapt to mobile/tablet with isMobile breakpoints at 768px
-- **Mobile navigation** — floating bottom nav bar on app pages
-- **Collapsible sidebar** — hamburger menu on tablet and mobile
-- **Android app** — Capacitor 8 native wrapper (`com.peetrix.fitwayhub`) with standalone Gradle project
-- **Native GPS** — Capacitor geolocation plugin for activity tracking
-- **Native splash screen** — Capacitor splash screen plugin
-
-### ⚡ Real-Time (Socket.IO)
-- **Online presence** — live user status with multi-device support
-- **WebRTC signaling** — offer/answer/ICE candidate relay for video calls
-- **Chat delivery** — instant message push
-- **Meeting rooms** — scoped join/leave events
-- **Typing indicators** — "user is typing…" broadcast
-- **Notes sync** — collaborative meeting notes
-- **File notifications** — real-time alerts on file shares
-
-### � Blog System
-- **Multilingual content** — create separate English and Arabic blog post versions
-- **Per-language slugs** — same slug allowed in different languages via composite unique constraint
-- **Version linking** — link Arabic ↔ English versions via `related_blog_id` foreign key
-- **Draft & publish** — status-based visibility (draft/published)
-- **Featured media** — header image + embedded video with auto-detected duration
-- **Author attribution** — post author name, role, avatar auto-included
-- **Public browsing** — filter posts by language in `/api/blogs/public`
-- **Admin management** — create, edit, delete, view all posts from coach/admin panel
-- **Auto-slug generation** — sanitized URL-friendly slugs from post title
-
-### 📁 File Upload System
-- **Image uploads** — Multer with image MIME filter, 5MB limit
-- **Video uploads** — Multer with configurable size limit (40MB default, admin-settable)
-- **Upload progress** — XMLHttpRequest-based progress tracking with percentage display
-- **Video duration detection** — client-side via HTML5 Video API, server-side fallback via ffprobe/mediainfo
-- **File validation** — validateVideoSize middleware checks file size against app_settings
-- **Static serving** — Express static middleware on `/uploads`
-- **Use cases** — avatars, post media, chat attachments, medical files, body photos, ad media, payment proofs, video thumbnails, meeting files, blog headers/videos
-
----
-
-## Social Login Setup
-
-To enable Google/Facebook login, add to `.env`:
-
-```bash
-APP_BASE_URL=http://localhost:3000
-
-GOOGLE_CLIENT_ID=...
-GOOGLE_CLIENT_SECRET=...
-GOOGLE_REDIRECT_URI=http://localhost:3000/api/auth/oauth/google/callback
-
-FACEBOOK_APP_ID=...
-FACEBOOK_APP_SECRET=...
-FACEBOOK_REDIRECT_URI=http://localhost:3000/api/auth/oauth/facebook/callback
-```
-
-Provider console callback URLs must exactly match the redirect URIs above.
-
----
-
-## Database
-
-- **Engine**: MySQL 8
-- **Auto-created**: tables and default accounts seeded on first run
-
-To re-seed:
-```bash
-npm run seed
-npm run dev
-```
-
----
-
-## Scripts
-
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Start API server (port 3000) |
-| `npx vite` | Start Vite frontend (port 5173) |
-| `npm run build` | Production build |
-| `npm run seed` | Seed database |
-| `npm run lint` | TypeScript type check |
-| `npm run build:android` | Build + sync Android |
-| `npm run cap:run` | Run on Android device |
-
----
-
-## Project Structure
-
-```
-├── server.ts                # Express + Socket.IO entry point
-├── run-server.ts            # Server launcher with MySQL retry
-├── server/
-│   ├── config/database.ts   # MySQL connection, table init & seeding
-│   ├── controllers/         # Route handlers (auth, AI, chat, coaching, blogs, etc.)
-│   ├── emailServer.ts       # Built-in SMTP server & email sending
-│   ├── notificationService.ts # FCM push, welcome messages, in-app notifications
-│   ├── middleware/          # Auth, error handling, file uploads, video size validation
-│   ├── models/              # DailySummary, User
-│   ├── utils/videoMetadata.ts # Video duration extraction via ffprobe/mediainfo
-│   ├── migrations/          # Database migrations (bilingual blogs, video duration)
-│   └── routes/              # 20 route modules including blogRoutes
-├── src/
-│   ├── App.tsx              # React router with all routes
-│   ├── context/             # AuthContext, BrandingContext, I18nContext, ThemeContext
-│   ├── layouts/             # App, Admin, Coach, Website layouts
-│   ├── components/          # Reusable UI (calculators, map, CMS renderer, sidebar, blog editor)
-│   ├── pages/
-│   │   ├── app/             # User pages (Dashboard, Steps, Workouts, Blogs, etc.)
-│   │   ├── coach/           # Coach pages (Dashboard, Athletes, Ads, Blogs, etc.)
-│   │   ├── admin/           # Admin pages (Dashboard, WebsiteCMS, EmailServer, Notifications)
-│   │   ├── auth/            # Login, Register, SocialCallback
-│   │   └── website/         # Public CMS pages
-│   └── lib/                 # API helpers, utilities, step calculations, blogs
-├── FitWayHub-Android/       # Standalone Android Gradle project (AGP 8.5.2, SDK 34)
-└── uploads/                 # User-uploaded files
-```
-
----
-
-## Recent Updates (v2.1)
-
-### ✨ Multilingual Blog System
-- **Bilingual content support** — create separate English and Arabic versions of each blog post
-- **Intelligent slug management** — same slug allowed across languages via composite unique constraint `(slug, language)`
-- **Version linking** — link Arabic ↔ English versions automatically via `related_blog_id` foreign key
-- **Smart UI** — language toggle buttons (🇬🇧 English / 🇸🇦 عربية) and related blog dropdown in editor
-- **Database migrations** — all 11 backward-compatibility migrations included for existing installations
-
-### ⚡ Enhanced Video Upload System
-- **Upload progress tracking** — real-time percentage display during file upload via XMLHttpRequest
-- **Smart duration detection** — client-side detection via HTML5 Video API with automatic server-side fallback (ffprobe/mediainfo)
-- **Admin-configurable limits** — `max_video_upload_size_mb` setting (40MB default, admin-adjustable)
-- **Size validation middleware** — validateVideoSize middleware with user-friendly error messages
-- **Long file support** — handles multi-hour video uploads reliably
-
-### 🎤 Voice Recording Improvements
-- **Enhanced debugging** — detailed console logging for MediaRecorder lifecycle
-- **Better error messages** — user-friendly notifications for permission issues
-- **Lower sensitivity threshold** — 100 byte minimum (vs 500 bytes) allows shorter voice notes
-- **Graceful fallbacks** — improved error handling in voice send flow
+## 14. Revision Notes
+- Added coach settings subscriptions section (pending + active)
+- Added coach profile media endpoints (videos, shorties, photos)
+- Added live countdown for subscriptions and ads
+- Corrected subscription UX from booking action to plan action
+- Added full CMS editor coverage for all supported section types
