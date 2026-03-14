@@ -1045,6 +1045,9 @@ export async function initDatabase() {
   try { await pool.execute("ALTER TABLE workout_videos ADD COLUMN width INT DEFAULT 0"); } catch {}
   try { await pool.execute("ALTER TABLE workout_videos ADD COLUMN height INT DEFAULT 0"); } catch {}
 
+    // ── Coach ownership on workout_videos ────────────────────────
+    try { await pool.execute("ALTER TABLE workout_videos ADD COLUMN coach_id INT DEFAULT NULL"); } catch {}
+
   // ── Active sessions for IP-based single-account enforcement ─
   try {
     await pool.execute(`CREATE TABLE IF NOT EXISTS active_sessions (

@@ -12,7 +12,7 @@ interface AdminUser { id: number; name: string; email: string; role: string; is_
 interface Gift { id: number; user_id: number; user_name: string; title: string; description: string; type: string; value: number; created_at: string; }
 interface CoachAd { id: number; coach_id: number; coach_name: string; coach_email: string; coach_avatar: string; title: string; description: string; specialty: string; status: "active" | "pending" | "rejected" | "expired"; cta: string; highlight: string; impressions: number; clicks: number; created_at: string; admin_note?: string; paid_amount: number; paid_minutes: number; payment_status?: string; payment_proof?: string; payment_phone?: string; ad_type?: string; media_type?: string; objective?: string; image_url?: string; video_url?: string; duration_hours?: number; duration_days?: number; boost_start?: string; boost_end?: string; }
 interface Payment { id: number; user_id: number; user_name: string; user_email: string; amount: number; plan: string; type: string; card_last4?: string; payment_method?: string; proof_url?: string; status: string; created_at: string; }
-interface TrainingVideo { id: number; title: string; description: string; url: string; duration: string; duration_seconds: number; category: string; is_premium: boolean; thumbnail: string; created_at: string; }
+interface TrainingVideo { id: number; title: string; description: string; url: string; duration: string; duration_seconds: number; category: string; is_premium: boolean; thumbnail: string; created_at: string; coach_id?: number | null; }
 interface AdPayment { amount: number; duration_minutes: number; payment_status: string; payment_proof?: string; paid_amount: number; paid_minutes: number; }
 
 type Tab = "overview" | "users" | "coaches" | "payments" | "videos" | "ads" | "gifts" | "community" | "website" | "settings" | "subscriptions" | "withdrawals" | "chat";
@@ -61,7 +61,7 @@ export default function AdminDashboard() {
   const [userEditSaving, setUserEditSaving] = useState(false);
   const [medicalUploading, setMedicalUploading] = useState(false);
   const [giftForm, setGiftForm] = useState({ user_id: 0, title: "", description: "", type: "points", value: 100 });
-  const [videoForm, setVideoForm] = useState({ title: "", description: "", duration: "", category: "HIIT", is_premium: false, is_short: false });
+  const [videoForm, setVideoForm] = useState({ title: "", description: "", duration: "", category: "HIIT", is_premium: false, is_short: false, coach_id: "" });
   const [userEditForm, setUserEditForm] = useState<any>({
     id: "",
     name: "",
@@ -449,6 +449,7 @@ export default function AdminDashboard() {
       formData.append("category", videoForm.category);
       formData.append("is_premium", videoForm.is_premium ? "1" : "0");
       formData.append("is_short", videoForm.is_short ? "1" : "0");
+      if (videoForm.coach_id) formData.append("coach_id", videoForm.coach_id);
       formData.append("video", videoFile);
       if (thumbnailFile) formData.append("thumbnail", thumbnailFile);
       const res = await fetch(getApiBase() + "/api/admin/videos", {
@@ -460,7 +461,7 @@ export default function AdminDashboard() {
       if (res.ok && data.video) {
         setVideos(v => [data.video, ...v]);
         setShowVideoModal(false);
-        setVideoForm({ title: "", description: "", duration: "", category: "HIIT", is_premium: false, is_short: false });
+        setVideoForm({ title: "", description: "", duration: "", category: "HIIT", is_premium: false, is_short: false, coach_id: "" });
         setVideoFile(null); setThumbnailFile(null);
         showMsg("🎬 Video uploaded!");
       } else { showMsg("❌ " + (data.message || "Failed to upload video")); }
@@ -473,6 +474,16 @@ export default function AdminDashboard() {
     await api(`/api/admin/videos/${videoId}`, { method: "DELETE" });
     setVideos(v => v.filter(x => x.id !== videoId));
     showMsg("🗑️ Video deleted");
+  };
+
+  const assignVideoCoach = async (videoId: number, coachId: string) => {
+    try {
+      await api(`/api/admin/videos/${videoId}`, { method: "PATCH", body: JSON.stringify({ coach_id: coachId ? Number(coachId) : null }) });
+      setVideos(vs => vs.map(v => v.id === videoId ? { ...v, coach_id: coachId ? Number(coachId) : null } : v));
+      showMsg("✅ Coach linked to video");
+    } catch {
+      showMsg("❌ Failed to update coach link");
+    }
   };
 
   const updateAdStatus = async (id: number, status: CoachAd["status"]) => {
@@ -518,7 +529,7 @@ export default function AdminDashboard() {
         </div>
       </div>
 
-      <div style={{ overflowX: "auto", paddingBottom: 4 }} className="lg:hidden">
+      <div style={{ overflowX: "auto", paddingBottom: 4 }}>
         <div style={{ display: "flex", gap: 4, backgroundColor: "var(--bg-surface)", borderRadius: 12, padding: 4, border: "1px solid var(--border)", width: "max-content", minWidth: "100%" }}>
           {tabDef.map(t => (
             <button key={t.id} onClick={() => setTab(t.id)} style={{ padding: "7px 14px", borderRadius: 9, border: "none", cursor: "pointer", background: tab === t.id ? "var(--bg-card)" : "none", color: tab === t.id ? "var(--text-primary)" : "var(--text-muted)", fontSize: 12, fontWeight: tab === t.id ? 600 : 400, fontFamily: "'Chakra Petch', sans-serif", boxShadow: tab === t.id ? "0 1px 4px var(--shadow)" : "none", whiteSpace: "nowrap", transition: "all 0.15s" }}>{t.label}{t.id === "ads" && ads.filter(a => a.status === "pending").length > 0 ? ` (${ads.filter(a => a.status === "pending").length})` : ""}</button>
@@ -905,6 +916,13 @@ export default function AdminDashboard() {
                     <span style={{ fontSize: 10, padding: "2px 7px", borderRadius: 5, background: "var(--bg-surface)", color: "var(--text-muted)", border: "1px solid var(--border)", whiteSpace: "nowrap", marginInlineStart: 8 }}>{v.category}</span>
                   </div>
                   <p style={{ fontSize: 12, color: "var(--text-secondary)", lineHeight: 1.5, marginBottom: 12 }}>{v.description}</p>
+                  <div style={{ marginBottom: 10 }}>
+                    <label style={{ fontSize: 10, color: "var(--text-muted)", display: "block", marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.06em" }}>Coach</label>
+                    <select className="input-base" value={v.coach_id ?? ""} onChange={e => assignVideoCoach(v.id, e.target.value)} style={{ fontSize: 12, padding: "7px 10px" }}>
+                      <option value="">No coach (general)</option>
+                      {coaches.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    </select>
+                  </div>
                   <div style={{ display: "flex", gap: 8 }}>
                     <button onClick={async () => { await api(`/api/admin/videos/${v.id}`, { method: "PATCH", body: JSON.stringify({ ...v, is_premium: !v.is_premium }) }); setVideos(vs => vs.map(x => x.id === v.id ? { ...x, is_premium: !x.is_premium } : x)); }} style={{ flex: 1, padding: "7px", borderRadius: 8, background: v.is_premium ? "var(--accent-dim)" : "var(--bg-surface)", border: `1px solid ${v.is_premium ? "var(--accent)" : "var(--border)"}`, color: v.is_premium ? "var(--accent)" : "var(--text-muted)", cursor: "pointer", fontSize: 11, fontWeight: 600, display: "flex", alignItems: "center", justifyContent: "center", gap: 4 }}>
                       {v.is_premium ? <><Lock size={11} /> Premium</> : <><Unlock size={11} /> Free</>}
@@ -1873,6 +1891,13 @@ export default function AdminDashboard() {
                     {["HIIT", "Strength", "Yoga", "Cardio", "Nutrition", "General"].map(c => <option key={c}>{c}</option>)}
                   </select>
                 </div>
+              </div>
+              <div>
+                <label style={{ fontSize: 11, color: "var(--text-muted)", display: "block", marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.07em" }}>Assign Coach (optional)</label>
+                <select className="input-base" value={videoForm.coach_id} onChange={e => setVideoForm(f => ({ ...f, coach_id: e.target.value }))}>
+                  <option value="">No coach (general)</option>
+                  {coaches.map(c => <option key={c.id} value={String(c.id)}>{c.name}</option>)}
+                </select>
               </div>
               <div style={{ display: "flex", gap: 20 }}>
                 <label style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 14, cursor: "pointer" }}>

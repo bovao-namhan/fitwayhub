@@ -1,6 +1,6 @@
 import { getApiBase } from "@/lib/api";
 import { useState, useEffect, useRef, type CSSProperties, type ChangeEvent } from "react";
-import { Plus, Trash2, Eye, EyeOff, ChevronUp, ChevronDown, Edit3, Save, X, Upload, Image, Globe, Layout, Type, AlignLeft, Grid, Layers, ExternalLink, Languages, Search } from "lucide-react";
+import { Plus, Trash2, Eye, EyeOff, ChevronUp, ChevronDown, Edit3, Save, X, Upload, Image, Globe, Layout, Type, AlignLeft, Grid, Layers, ExternalLink, Languages, Search, Users, HelpCircle } from "lucide-react";
 import { useI18n } from "@/context/I18nContext";
 
 interface Section {
@@ -33,6 +33,34 @@ const SECTION_TYPES: { type: string; label: string; icon: any; defaultContent: a
     defaultContent: { phone: "+1 234 567 8900", email: "hello@example.com", chatHours: "9am – 5pm", faqs: [{ q: "Question here?", a: "Answer here." }] } },
   { type: "calculator", label: "Calorie Calculator", icon: Grid,
     defaultContent: { sectionLabel: "Free Tool", heading: "Calorie Calculator" } },
+  { type: "latest_blogs", label: "Latest Blogs", icon: Type,
+    defaultContent: { sectionLabel: "FROM OUR BLOG", heading: "Latest Articles" } },
+  { type: "team", label: "Team Section", icon: Users,
+    defaultContent: {
+      sectionLabel: "WHO WE ARE",
+      heading: "Meet the Team",
+      subheading: "The people behind the brand.",
+      members: [
+        { name: "Member Name", role: "Role", bio: "Short bio", imageUrl: "", linkedin: "", twitter: "", instagram: "" },
+      ],
+    } },
+  { type: "carousel", label: "Image Carousel", icon: Image,
+    defaultContent: {
+      sectionLabel: "WHAT WE OFFER",
+      heading: "Our Solutions",
+      items: [
+        { title: "Slide Title", desc: "Slide description", imageUrl: "" },
+      ],
+    } },
+  { type: "faq", label: "FAQ Section", icon: HelpCircle,
+    defaultContent: {
+      sectionLabel: "FREQUENTLY ASKED QUESTIONS",
+      heading: "Everything you need to know",
+      subheading: "Answers to common questions",
+      faqs: [
+        { q: "Question here?", a: "Answer here." },
+      ],
+    } },
   { type: "html", label: "Custom HTML", icon: Type,
     defaultContent: { html: "<div><h2>Custom HTML Section</h2><p>Edit this in the admin panel.</p></div>" } },
 ];
@@ -579,6 +607,153 @@ export default function WebsiteCMS({ token, showMsg }: Props) {
       </div>
     );
 
+    if (type === "latest_blogs") return (
+      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        {bilingualInput("sectionLabel", "Section Label")}
+        {bilingualInput("heading", "Heading")}
+        <p style={{ fontSize: 12, color: "var(--text-muted)" }}>{l("This section auto-loads latest blog posts from the public blog API.", "هذا القسم يحمل أحدث المقالات تلقائيًا من واجهة المدونة العامة.")}</p>
+      </div>
+    );
+
+    if (type === "team") return (
+      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        {bilingualInput("sectionLabel", "Section Label")}
+        {bilingualInput("heading", "Heading")}
+        {bilingualTextarea("subheading", "Subheading")}
+        <div>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+            <label style={labelS}>{t("cms_team_members")}</label>
+            <button
+              onClick={() => set("members", [...(c.members || []), { name: "New Member", role: "Role", bio: "Bio", imageUrl: "", linkedin: "", twitter: "", instagram: "" }])}
+              style={{ padding: "4px 10px", borderRadius: 6, backgroundColor: "var(--accent-dim)", border: "1px solid var(--accent)", color: "var(--accent)", cursor: "pointer", fontSize: 12 }}
+            >+ {t("cms_add_member")}</button>
+          </div>
+          {(c.members || []).map((member: any, i: number) => (
+            <div key={i} style={{ padding: 12, backgroundColor: "var(--bg-primary)", borderRadius: 10, border: "1px solid var(--border)", marginBottom: 10 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr auto", gap: 8, marginBottom: 8 }}>
+                <div>
+                  <label style={{ ...labelS, marginBottom: 4 }}>Name (EN)</label>
+                  <input style={iS} value={member.name || ""} onChange={e => { const members = [...(c.members || [])]; members[i] = { ...member, name: e.target.value }; set("members", members); }} />
+                </div>
+                <div>
+                  <label style={{ ...labelS, marginBottom: 4 }}>Name (AR)</label>
+                  <input style={iS} dir="rtl" value={member.name_ar || ""} onChange={e => { const members = [...(c.members || [])]; members[i] = { ...member, name_ar: e.target.value }; set("members", members); }} />
+                </div>
+                <div style={{ display: "flex", alignItems: "flex-end" }}>
+                  <button onClick={() => set("members", (c.members || []).filter((_: any, j: number) => j !== i))}
+                    style={{ padding: "9px", borderRadius: 8, background: "rgba(255,68,68,0.1)", border: "1px solid var(--red)", color: "var(--red)", cursor: "pointer" }}><Trash2 size={13} /></button>
+                </div>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 8 }}>
+                <div>
+                  <label style={{ ...labelS, marginBottom: 4 }}>Role (EN)</label>
+                  <input style={iS} value={member.role || ""} onChange={e => { const members = [...(c.members || [])]; members[i] = { ...member, role: e.target.value }; set("members", members); }} />
+                </div>
+                <div>
+                  <label style={{ ...labelS, marginBottom: 4 }}>Role (AR)</label>
+                  <input style={iS} dir="rtl" value={member.role_ar || ""} onChange={e => { const members = [...(c.members || [])]; members[i] = { ...member, role_ar: e.target.value }; set("members", members); }} />
+                </div>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 8 }}>
+                <div>
+                  <label style={{ ...labelS, marginBottom: 4 }}>Bio (EN)</label>
+                  <textarea style={{ ...taS, minHeight: 60 }} value={member.bio || ""} onChange={e => { const members = [...(c.members || [])]; members[i] = { ...member, bio: e.target.value }; set("members", members); }} />
+                </div>
+                <div>
+                  <label style={{ ...labelS, marginBottom: 4 }}>Bio (AR)</label>
+                  <textarea style={{ ...taS, minHeight: 60 }} dir="rtl" value={member.bio_ar || ""} onChange={e => { const members = [...(c.members || [])]; members[i] = { ...member, bio_ar: e.target.value }; set("members", members); }} />
+                </div>
+              </div>
+              <div style={{ marginBottom: 8 }}>
+                <label style={{ ...labelS, marginBottom: 4 }}>{t("cms_member_image_url")}</label>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <input style={{ ...iS, flex: 1 }} value={member.imageUrl || ""} onChange={e => { const members = [...(c.members || [])]; members[i] = { ...member, imageUrl: e.target.value }; set("members", members); }} placeholder="https://..." />
+                  <button type="button" onClick={() => { setUploadingFor(`members.${i}.imageUrl`); fileInputRef.current?.click(); }}
+                    style={{ padding: "9px 12px", borderRadius: 8, backgroundColor: "var(--accent-dim)", border: "1px solid var(--accent)", color: "var(--accent)", cursor: "pointer" }}><Upload size={14} /></button>
+                </div>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8 }}>
+                <div><label style={{ ...labelS, marginBottom: 4 }}>LinkedIn</label><input style={iS} value={member.linkedin || ""} onChange={e => { const members = [...(c.members || [])]; members[i] = { ...member, linkedin: e.target.value }; set("members", members); }} /></div>
+                <div><label style={{ ...labelS, marginBottom: 4 }}>Twitter / X</label><input style={iS} value={member.twitter || ""} onChange={e => { const members = [...(c.members || [])]; members[i] = { ...member, twitter: e.target.value }; set("members", members); }} /></div>
+                <div><label style={{ ...labelS, marginBottom: 4 }}>Instagram</label><input style={iS} value={member.instagram || ""} onChange={e => { const members = [...(c.members || [])]; members[i] = { ...member, instagram: e.target.value }; set("members", members); }} /></div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+
+    if (type === "carousel") return (
+      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        {bilingualInput("sectionLabel", "Section Label")}
+        {bilingualInput("heading", "Heading")}
+        <div>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+            <label style={labelS}>{t("cms_carousel_items")}</label>
+            <button onClick={() => set("items", [...(c.items || []), { title: "New Slide", desc: "Description", imageUrl: "" }])}
+              style={{ padding: "4px 10px", borderRadius: 6, backgroundColor: "var(--accent-dim)", border: "1px solid var(--accent)", color: "var(--accent)", cursor: "pointer", fontSize: 12 }}>+ {t("cms_add_slide")}</button>
+          </div>
+          {(c.items || []).map((item: any, i: number) => (
+            <div key={i} style={{ padding: 12, backgroundColor: "var(--bg-primary)", borderRadius: 10, border: "1px solid var(--border)", marginBottom: 10 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr auto", gap: 8, marginBottom: 8 }}>
+                <div><label style={{ ...labelS, marginBottom: 4 }}>Title (EN)</label><input style={iS} value={item.title || ""} onChange={e => { const items = [...(c.items || [])]; items[i] = { ...item, title: e.target.value }; set("items", items); }} /></div>
+                <div><label style={{ ...labelS, marginBottom: 4 }}>Title (AR)</label><input style={iS} dir="rtl" value={item.title_ar || ""} onChange={e => { const items = [...(c.items || [])]; items[i] = { ...item, title_ar: e.target.value }; set("items", items); }} /></div>
+                <div style={{ display: "flex", alignItems: "flex-end" }}>
+                  <button onClick={() => set("items", (c.items || []).filter((_: any, j: number) => j !== i))}
+                    style={{ padding: "9px", borderRadius: 8, background: "rgba(255,68,68,0.1)", border: "1px solid var(--red)", color: "var(--red)", cursor: "pointer" }}><Trash2 size={13} /></button>
+                </div>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 8 }}>
+                <div><label style={{ ...labelS, marginBottom: 4 }}>Description (EN)</label><textarea style={{ ...taS, minHeight: 60 }} value={item.desc || ""} onChange={e => { const items = [...(c.items || [])]; items[i] = { ...item, desc: e.target.value }; set("items", items); }} /></div>
+                <div><label style={{ ...labelS, marginBottom: 4 }}>Description (AR)</label><textarea style={{ ...taS, minHeight: 60 }} dir="rtl" value={item.desc_ar || ""} onChange={e => { const items = [...(c.items || [])]; items[i] = { ...item, desc_ar: e.target.value }; set("items", items); }} /></div>
+              </div>
+              <div>
+                <label style={{ ...labelS, marginBottom: 4 }}>{t("cms_slide_image_url")}</label>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <input style={{ ...iS, flex: 1 }} value={item.imageUrl || ""} onChange={e => { const items = [...(c.items || [])]; items[i] = { ...item, imageUrl: e.target.value }; set("items", items); }} placeholder="https://..." />
+                  <button type="button" onClick={() => { setUploadingFor(`items.${i}.imageUrl`); fileInputRef.current?.click(); }}
+                    style={{ padding: "9px 12px", borderRadius: 8, backgroundColor: "var(--accent-dim)", border: "1px solid var(--accent)", color: "var(--accent)", cursor: "pointer" }}><Upload size={14} /></button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+
+    if (type === "faq") return (
+      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+        {bilingualInput("sectionLabel", "Section Label")}
+        {bilingualInput("heading", "Heading")}
+        {bilingualTextarea("subheading", "Subheading")}
+        <div>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+            <label style={labelS}>{t("cms_faq_items")}</label>
+            <button onClick={() => set("faqs", [...(c.faqs || []), { q: "New question?", a: "Answer here." }])}
+              style={{ padding: "4px 10px", borderRadius: 6, backgroundColor: "var(--accent-dim)", border: "1px solid var(--accent)", color: "var(--accent)", cursor: "pointer", fontSize: 12 }}>+ {t("cms_add_faq")}</button>
+          </div>
+          {(c.faqs || []).map((faq: any, i: number) => (
+            <div key={i} style={{ padding: 12, backgroundColor: "var(--bg-primary)", borderRadius: 10, border: "1px solid var(--border)", marginBottom: 8 }}>
+              <div style={{ display: "flex", gap: 8, marginBottom: 8, alignItems: "flex-start" }}>
+                <div style={{ flex: 1 }}>
+                  <label style={{ ...labelS, marginBottom: 4 }}>Question (EN)</label>
+                  <input style={iS} value={faq.q || ""} onChange={e => { const faqs = [...(c.faqs || [])]; faqs[i] = { ...faq, q: e.target.value }; set("faqs", faqs); }} />
+                  <label style={{ ...labelS, marginTop: 6, marginBottom: 4 }}>Question (AR)</label>
+                  <input style={iS} dir="rtl" value={faq.q_ar || ""} onChange={e => { const faqs = [...(c.faqs || [])]; faqs[i] = { ...faq, q_ar: e.target.value }; set("faqs", faqs); }} />
+                </div>
+                <button onClick={() => set("faqs", (c.faqs || []).filter((_: any, j: number) => j !== i))}
+                  style={{ marginTop: 20, padding: "9px", borderRadius: 8, background: "rgba(255,68,68,0.1)", border: "1px solid var(--red)", color: "var(--red)", cursor: "pointer" }}><Trash2 size={13} /></button>
+              </div>
+              <label style={{ ...labelS, marginBottom: 4 }}>Answer (EN)</label>
+              <textarea style={{ ...taS, minHeight: 60 }} value={faq.a || ""} onChange={e => { const faqs = [...(c.faqs || [])]; faqs[i] = { ...faq, a: e.target.value }; set("faqs", faqs); }} />
+              <label style={{ ...labelS, marginTop: 6, marginBottom: 4 }}>Answer (AR)</label>
+              <textarea style={{ ...taS, minHeight: 60 }} dir="rtl" value={faq.a_ar || ""} onChange={e => { const faqs = [...(c.faqs || [])]; faqs[i] = { ...faq, a_ar: e.target.value }; set("faqs", faqs); }} />
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+
     if (type === "html") return (
       <div>
         <label style={labelS}>Custom HTML (EN)</label>
@@ -602,6 +777,10 @@ export default function WebsiteCMS({ token, showMsg }: Props) {
     cta: t("cms_type_cta"),
     contact_info: t("cms_type_contact_info"),
     calculator: t("cms_type_calculator"),
+    latest_blogs: t("cms_type_latest_blogs"),
+    team: t("cms_type_team"),
+    carousel: t("cms_type_carousel"),
+    faq: t("cms_type_faq"),
     html: t("cms_type_html"),
   } as Record<string, string>)[type] || type;
   const pageColor = { home: "var(--accent)", about: "var(--blue)", contact: "var(--cyan)" };
@@ -611,9 +790,10 @@ export default function WebsiteCMS({ token, showMsg }: Props) {
       {/* Hidden file input for image uploads */}
       <input ref={fileInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={e => {
         if (!uploadingFor) return;
-        // Handle nested path like "items.0.imageUrl"
-        if (uploadingFor.startsWith("items.")) {
+        // Handle nested path like "items.0.imageUrl" or "members.0.imageUrl"
+        if (uploadingFor.startsWith("items.") || uploadingFor.startsWith("members.")) {
           const parts = uploadingFor.split(".");
+          const listName = parts[0];
           const idx = parseInt(parts[1]);
           const field = parts[2];
           const file = e.target.files?.[0];
@@ -624,9 +804,9 @@ export default function WebsiteCMS({ token, showMsg }: Props) {
             .then(r => r.json())
             .then(d => {
               if (d.url) {
-                const items = [...editContent.items];
-                items[idx] = { ...items[idx], [field]: d.url };
-                setEditContent((prev: any) => ({ ...prev, items }));
+                const list = [...(editContent[listName] || [])];
+                list[idx] = { ...list[idx], [field]: d.url };
+                setEditContent((prev: any) => ({ ...prev, [listName]: list }));
                 showMsg(t("cms_image_uploaded"));
               }
             });

@@ -73,7 +73,11 @@ export default function Community() {
   const [coachProfile, setCoachProfile] = useState<any>(null);
   const [coachPosts, setCoachPosts] = useState<Post[]>([]);
   const [likeAnimating, setLikeAnimating] = useState<Set<number>>(new Set());
-  const fileInputRef = useRef<HTMLInputElement>(null);
+    const [coachVideos, setCoachVideos] = useState<any[]>([]);
+    const [coachShorties, setCoachShorties] = useState<any[]>([]);
+    const [coachPhotos, setCoachPhotos] = useState<any[]>([]);
+    const [profileTab, setProfileTab] = useState<"posts" | "videos" | "shorties" | "photos">("posts");
+    const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   /* ───── Data fetching ───── */
@@ -199,11 +203,22 @@ export default function Community() {
   const viewCoachProfile = async (userId: number, userName: string, userAvatar: string) => {
     setViewingCoachId(userId);
     setCoachProfile({ name: userName, avatar: userAvatar });
+      setProfileTab("posts");
+      setCoachPosts([]);
+      setCoachVideos([]);
+      setCoachShorties([]);
+      setCoachPhotos([]);
     try {
       const fsRes = await fetch(getApiBase() + `/api/coach/follow/${userId}/status`, { headers: { Authorization: `Bearer ${token}` } });
       if (fsRes.ok) { const fd = await fsRes.json(); if (fd.following) setFollowedCoaches(prev => new Set([...prev, userId])); }
       const pRes = await fetch(getApiBase() + `/api/coach/profile/${userId}/posts`, { headers: { Authorization: `Bearer ${token}` } });
       if (pRes.ok) { const pd = await pRes.json(); setCoachPosts(pd.posts || []); }
+        const vRes = await fetch(getApiBase() + `/api/coach/profile/${userId}/videos`, { headers: { Authorization: `Bearer ${token}` } });
+        if (vRes.ok) { const vd = await vRes.json(); setCoachVideos(vd.videos || []); }
+        const shRes = await fetch(getApiBase() + `/api/coach/profile/${userId}/shorties`, { headers: { Authorization: `Bearer ${token}` } });
+        if (shRes.ok) { const sd = await shRes.json(); setCoachShorties(sd.videos || []); }
+        const phRes = await fetch(getApiBase() + `/api/coach/profile/${userId}/photos`, { headers: { Authorization: `Bearer ${token}` } });
+        if (phRes.ok) { const phd = await phRes.json(); setCoachPhotos(phd.photos || []); }
       const sRes = await fetch(getApiBase() + `/api/coach/profile/${userId}/stats`, { headers: { Authorization: `Bearer ${token}` } });
       if (sRes.ok) { const sd = await sRes.json(); setCoachProfile((p: any) => ({ ...p, ...sd, name: userName, avatar: userAvatar })); }
     } catch {}
@@ -586,11 +601,11 @@ export default function Community() {
       {/* ════════════════ COACH PROFILE MODAL ════════════════ */}
       {viewingCoachId !== null && coachProfile && (
         <div style={{ position: "fixed", inset: 0, zIndex: 200, display: "flex", alignItems: "flex-end", justifyContent: "center", backgroundColor: "rgba(0,0,0,0.7)", backdropFilter: "blur(4px)" }}
-          onClick={(e) => { if (e.target === e.currentTarget) { setViewingCoachId(null); setCoachProfile(null); setCoachPosts([]); } }}>
+          onClick={(e) => { if (e.target === e.currentTarget) { setViewingCoachId(null); setCoachProfile(null); setCoachPosts([]); setCoachVideos([]); setCoachShorties([]); setCoachPhotos([]); } }}>
           <div style={{ width: "100%", maxWidth: 600, backgroundColor: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "24px 24px 0 0", padding: "24px", maxHeight: "85dvh", overflowY: "auto" }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
               <h3 style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 17, fontWeight: 700 }}>Coach Profile</h3>
-              <button onClick={() => { setViewingCoachId(null); setCoachProfile(null); setCoachPosts([]); }} style={{ width: 32, height: 32, borderRadius: 10, background: "var(--bg-surface)", border: "1px solid var(--border)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-muted)" }}>
+              <button onClick={() => { setViewingCoachId(null); setCoachProfile(null); setCoachPosts([]); setCoachVideos([]); setCoachShorties([]); setCoachPhotos([]); }} style={{ width: 32, height: 32, borderRadius: 10, background: "var(--bg-surface)", border: "1px solid var(--border)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-muted)" }}>
                 <X size={15} />
               </button>
             </div>
@@ -616,25 +631,102 @@ export default function Community() {
                 {followedCoaches.has(viewingCoachId) ? <><UserCheck size={14} /> Following</> : <><UserPlus size={14} /> Follow</>}
               </button>
             </div>
-            <p style={{ fontSize: 11, fontWeight: 700, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 14 }}>Posts</p>
-            {coachPosts.length === 0 ? (
-              <p style={{ fontSize: 13, color: "var(--text-muted)", textAlign: "center", padding: 32 }}>No posts yet</p>
-            ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                {coachPosts.map(post => (
-                  <div key={post.id} style={{ backgroundColor: "var(--bg-surface)", borderRadius: 14, overflow: "hidden", border: "1px solid var(--border)" }}>
-                    {post.media_url && <img src={post.media_url} alt="Post" style={{ width: "100%", maxHeight: 200, objectFit: "cover" }} />}
-                    <div style={{ padding: "12px 14px" }}>
-                      <p style={{ fontSize: 13, color: "var(--text-primary)", lineHeight: 1.6, marginBottom: 6 }}>{post.content}</p>
-                      {post.hashtags && <p style={{ fontSize: 11, color: "var(--accent)" }}>{post.hashtags}</p>}
-                      <div style={{ display: "flex", gap: 12, marginTop: 8, fontSize: 12, color: "var(--text-muted)" }}>
-                        <span>❤️ {post.likes}</span>
-                        <span>{timeAgo(post.created_at)}</span>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 14 }}>
+              {([
+                { key: "posts", label: "Posts" },
+                { key: "videos", label: "Videos" },
+                { key: "shorties", label: "Shorties" },
+                { key: "photos", label: "Photos" },
+              ] as const).map(tab => (
+                <button
+                  key={tab.key}
+                  onClick={() => setProfileTab(tab.key)}
+                  style={{
+                    padding: "6px 12px",
+                    borderRadius: 20,
+                    border: `1px solid ${profileTab === tab.key ? "var(--blue)" : "var(--border)"}`,
+                    backgroundColor: profileTab === tab.key ? "rgba(59,139,255,0.12)" : "var(--bg-surface)",
+                    color: profileTab === tab.key ? "var(--blue)" : "var(--text-muted)",
+                    fontSize: 12,
+                    fontWeight: 700,
+                    fontFamily: "'Chakra Petch', sans-serif",
+                    cursor: "pointer",
+                  }}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+
+            {profileTab === "posts" && (
+              coachPosts.length === 0 ? (
+                <p style={{ fontSize: 13, color: "var(--text-muted)", textAlign: "center", padding: 32 }}>No posts yet</p>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                  {coachPosts.map(post => (
+                    <div key={post.id} style={{ backgroundColor: "var(--bg-surface)", borderRadius: 14, overflow: "hidden", border: "1px solid var(--border)" }}>
+                      {post.media_url && <img src={post.media_url} alt="Post" style={{ width: "100%", maxHeight: 200, objectFit: "cover" }} />}
+                      <div style={{ padding: "12px 14px" }}>
+                        <p style={{ fontSize: 13, color: "var(--text-primary)", lineHeight: 1.6, marginBottom: 6 }}>{post.content}</p>
+                        {post.hashtags && <p style={{ fontSize: 11, color: "var(--accent)" }}>{post.hashtags}</p>}
+                        <div style={{ display: "flex", gap: 12, marginTop: 8, fontSize: 12, color: "var(--text-muted)" }}>
+                          <span>❤️ {post.likes}</span>
+                          <span>{timeAgo(post.created_at)}</span>
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )
+            )}
+
+            {profileTab === "videos" && (
+              coachVideos.length === 0 ? (
+                <p style={{ fontSize: 13, color: "var(--text-muted)", textAlign: "center", padding: 32 }}>No videos yet</p>
+              ) : (
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: 12 }}>
+                  {coachVideos.map(v => (
+                    <div key={v.id} style={{ backgroundColor: "var(--bg-surface)", borderRadius: 14, overflow: "hidden", border: "1px solid var(--border)" }}>
+                      <video src={v.url} controls poster={v.thumbnail || undefined} style={{ width: "100%", height: 140, objectFit: "cover", backgroundColor: "#000" }} />
+                      <div style={{ padding: "10px 12px" }}>
+                        <p style={{ fontSize: 13, fontWeight: 700, fontFamily: "'Chakra Petch', sans-serif" }}>{v.title}</p>
+                        {v.description && <p style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 4 }}>{v.description}</p>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )
+            )}
+
+            {profileTab === "shorties" && (
+              coachShorties.length === 0 ? (
+                <p style={{ fontSize: 13, color: "var(--text-muted)", textAlign: "center", padding: 32 }}>No shorties yet</p>
+              ) : (
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: 12 }}>
+                  {coachShorties.map(v => (
+                    <div key={v.id} style={{ backgroundColor: "var(--bg-surface)", borderRadius: 14, overflow: "hidden", border: "1px solid var(--border)" }}>
+                      <video src={v.url} controls poster={v.thumbnail || undefined} style={{ width: "100%", height: 220, objectFit: "cover", backgroundColor: "#000" }} />
+                      <div style={{ padding: "8px 10px" }}>
+                        <p style={{ fontSize: 12, fontWeight: 700, fontFamily: "'Chakra Petch', sans-serif" }}>{v.title}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )
+            )}
+
+            {profileTab === "photos" && (
+              coachPhotos.length === 0 ? (
+                <p style={{ fontSize: 13, color: "var(--text-muted)", textAlign: "center", padding: 32 }}>No photos yet</p>
+              ) : (
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))", gap: 8 }}>
+                  {coachPhotos.map((p: any) => (
+                    <div key={p.id} style={{ borderRadius: 10, overflow: "hidden", border: "1px solid var(--border)", backgroundColor: "var(--bg-surface)" }}>
+                      <img src={p.media_url} alt={p.content || "Photo"} style={{ width: "100%", height: 120, objectFit: "cover", display: "block" }} />
+                    </div>
+                  ))}
+                </div>
+              )
             )}
           </div>
         </div>

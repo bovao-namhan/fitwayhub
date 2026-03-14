@@ -69,12 +69,30 @@ export default function Coaching() {
   const [giftSending, setGiftSending] = useState(false);
   const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768);
   const [viewProfileCoach, setViewProfileCoach] = useState<Coach | null>(null);
+  const [nowMs, setNowMs] = useState(Date.now());
 
   useEffect(() => {
     const onResize = () => setIsMobile(window.innerWidth < 768);
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
   }, []);
+
+  useEffect(() => {
+    const timer = setInterval(() => setNowMs(Date.now()), 60_000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const formatSubscriptionRemaining = (expiresAt?: string) => {
+    if (!expiresAt) return null;
+    const diff = new Date(expiresAt).getTime() - nowMs;
+    if (diff <= 0) return "Expired";
+    const totalMinutes = Math.floor(diff / 60000);
+    const days = Math.floor(totalMinutes / (24 * 60));
+    const hours = Math.floor((totalMinutes % (24 * 60)) / 60);
+    const minutes = totalMinutes % 60;
+    if (days > 0) return `${days}d ${hours}h ${minutes}m left`;
+    return `${hours}h ${minutes}m left`;
+  };
 
   useEffect(() => {
     fetch(getApiBase() + "/api/coaching/coaches", { headers: { Authorization: `Bearer ${token}` } })
@@ -350,7 +368,7 @@ export default function Coaching() {
                 <div style={{ padding: "8px 12px", marginBottom: 10, borderRadius: 10, background: subscribedCoaches[c.id].latestStatus === "active" ? "rgba(200,255,0,0.06)" : subscribedCoaches[c.id].latestStatus === "pending_admin" || subscribedCoaches[c.id].latestStatus === "pending_coach" ? "rgba(255,179,64,0.08)" : "rgba(255,68,68,0.08)", border: `1px solid ${subscribedCoaches[c.id].latestStatus === "active" ? "rgba(200,255,0,0.2)" : subscribedCoaches[c.id].latestStatus === "pending_admin" || subscribedCoaches[c.id].latestStatus === "pending_coach" ? "rgba(255,179,64,0.25)" : "rgba(255,68,68,0.22)"}` }}>
                   <p style={{ fontSize: 11, fontWeight: 600, color: subscribedCoaches[c.id].latestStatus === "active" ? "var(--accent)" : subscribedCoaches[c.id].latestStatus === "pending_admin" || subscribedCoaches[c.id].latestStatus === "pending_coach" ? "var(--amber)" : "var(--red)" }}>
                     {subscribedCoaches[c.id].latestStatus === "active"
-                      ? `✓ Subscribed · Expires ${subscribedCoaches[c.id].subscription?.expires_at ? new Date(subscribedCoaches[c.id].subscription.expires_at).toLocaleDateString() : "-"}`
+                      ? `✓ Subscribed · Expires ${subscribedCoaches[c.id].subscription?.expires_at ? new Date(subscribedCoaches[c.id].subscription.expires_at).toLocaleDateString() : "-"}${formatSubscriptionRemaining(subscribedCoaches[c.id].subscription?.expires_at) ? ` · ${formatSubscriptionRemaining(subscribedCoaches[c.id].subscription?.expires_at)}` : ""}`
                       : subscribedCoaches[c.id].latestStatus === "pending_admin"
                         ? "⏳ Payment pending admin verification"
                         : subscribedCoaches[c.id].latestStatus === "pending_coach"

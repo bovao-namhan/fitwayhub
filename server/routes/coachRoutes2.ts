@@ -405,6 +405,42 @@ router.get('/profile/:coachId/stats', authenticateToken, async (req: any, res: R
   } catch { res.status(500).json({ message: 'Failed to fetch coach stats' }); }
 });
 
+// ── Coach profile: videos (non-shorts) ───────────────────────────────────────
+router.get('/profile/:coachId/videos', authenticateToken, async (req: any, res: Response) => {
+  try {
+    const videos = await query(
+      'SELECT id, title, description, url, thumbnail, duration, duration_seconds, category, is_premium FROM workout_videos WHERE coach_id = ? AND (is_short IS NULL OR is_short = 0) ORDER BY created_at DESC LIMIT 30',
+      [req.params.coachId]
+    );
+    res.json({ videos });
+  } catch { res.status(500).json({ message: 'Failed to fetch coach videos' }); }
+});
+
+// ── Coach profile: shorties ───────────────────────────────────────────────────
+router.get('/profile/:coachId/shorties', authenticateToken, async (req: any, res: Response) => {
+  try {
+    const videos = await query(
+      'SELECT id, title, description, url, thumbnail, duration, duration_seconds, width, height FROM workout_videos WHERE coach_id = ? AND is_short = 1 ORDER BY created_at DESC LIMIT 30',
+      [req.params.coachId]
+    );
+    res.json({ videos });
+  } catch { res.status(500).json({ message: 'Failed to fetch coach shorties' }); }
+});
+
+// ── Coach profile: photos (community posts with images) ───────────────────────
+router.get('/profile/:coachId/photos', authenticateToken, async (req: any, res: Response) => {
+  try {
+    const photos = await query(
+      `SELECT id, media_url, content, created_at FROM posts
+       WHERE user_id = ? AND media_url IS NOT NULL AND media_url != ''
+         AND (media_url NOT LIKE '%.mp4' AND media_url NOT LIKE '%.mov' AND media_url NOT LIKE '%.webm')
+       ORDER BY created_at DESC LIMIT 50`,
+      [req.params.coachId]
+    );
+    res.json({ photos });
+  } catch { res.status(500).json({ message: 'Failed to fetch coach photos' }); }
+});
+
 // ── Public ads: include community and home_banner types ───────────────────────
 router.get('/ads/public/home', authenticateToken, async (_req: any, res: Response) => {
   try {

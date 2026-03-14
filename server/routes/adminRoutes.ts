@@ -248,7 +248,9 @@ router.post('/videos', authenticateToken, adminOnly, uploadVideo.fields([
       'INSERT INTO workout_videos (title, description, url, duration, duration_seconds, category, is_premium, thumbnail, is_short) VALUES (?,?,?,?,?,?,?,?,?)',
       [title, description || '', videoUrl, duration || '', durationSeconds, category || 'General', is_premium === '1' || is_premium === true ? 1 : 0, thumbnailUrl || '', isShort]
     );
-    const video = await get('SELECT * FROM workout_videos WHERE id = ?', [insertId]);
+      const coachId = req.body.coach_id ? parseInt(req.body.coach_id) : null;
+      if (coachId) await run('UPDATE workout_videos SET coach_id = ? WHERE id = ?', [coachId, insertId]);
+      const video = await get('SELECT * FROM workout_videos WHERE id = ?', [insertId]);
     res.json({ video, message: 'Video uploaded successfully' });
   } catch (err) {
     console.error('Video upload error:', err);
@@ -279,6 +281,8 @@ router.patch('/videos/:id', authenticateToken, adminOnly, uploadVideo.fields([
       [title || existing.title, description ?? existing.description, videoUrl, duration || existing.duration,
        category || existing.category, is_premium === '1' || is_premium === true ? 1 : 0, thumbnailUrl, isShort, id]
     );
+    const coachIdPatch = req.body.coach_id !== undefined ? (req.body.coach_id ? parseInt(req.body.coach_id) : null) : undefined;
+    if (coachIdPatch !== undefined) await run('UPDATE workout_videos SET coach_id = ? WHERE id = ?', [coachIdPatch, id]);
     res.json({ message: 'Video updated' });
   } catch (err) {
     res.status(500).json({ message: 'Failed to update video' });

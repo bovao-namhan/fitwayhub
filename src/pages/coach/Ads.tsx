@@ -53,11 +53,27 @@ export default function CoachAds() {
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const proofInputRef = useRef<HTMLInputElement>(null);
+  const [nowMs, setNowMs] = useState(Date.now());
 
   const totalMinutes = (durationHours * 60) + (durationDays * 24 * 60);
   const totalCost = totalMinutes * RATE_PER_MIN;
 
   const showMsg = (m: string) => { setMessage(m); setTimeout(() => setMessage(""), 3500); };
+
+  // Live countdown ticker — updates every minute and auto-refreshes when any active ad expires
+  useEffect(() => {
+    const tick = () => {
+      const now = Date.now();
+      setNowMs(now);
+      setAds(prev => {
+        const anyExpired = prev.some(a => a.status === "active" && a.boost_end && new Date(a.boost_end).getTime() < now);
+        if (anyExpired) { fetchAds(); }
+        return prev;
+      });
+    };
+    const interval = setInterval(tick, 60_000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     fetchAds();
@@ -250,8 +266,8 @@ export default function CoachAds() {
           const adCtr = (ad.impressions || 0) > 0 ? ((ad.clicks / ad.impressions) * 100).toFixed(1) : "0";
           const boostEnd = ad.boost_end ? new Date(ad.boost_end) : null;
           const boostStart = ad.boost_start ? new Date(ad.boost_start) : null;
-          const isExpired = boostEnd && boostEnd < new Date();
-          const remainingMs = boostEnd && !isExpired ? boostEnd.getTime() - Date.now() : 0;
+          const isExpired = boostEnd && boostEnd.getTime() < nowMs;
+          const remainingMs = boostEnd && !isExpired ? boostEnd.getTime() - nowMs : 0;
           const remainingH = Math.floor(remainingMs / 3600000);
           const remainingD = Math.floor(remainingH / 24);
           const remH = remainingH % 24;
@@ -260,7 +276,7 @@ export default function CoachAds() {
           // Time & money tracking
           const totalPaidMinutes = Number(ad.paid_minutes) || 0;
           const totalPaidAmount = Number(ad.paid_amount) || 0;
-          const elapsedMs = boostStart && !isExpired && ad.status === "active" ? Date.now() - boostStart.getTime() : (boostStart && boostEnd ? boostEnd.getTime() - boostStart.getTime() : 0);
+          const elapsedMs = boostStart && !isExpired && ad.status === "active" ? nowMs - boostStart.getTime() : (boostStart && boostEnd ? boostEnd.getTime() - boostStart.getTime() : 0);
           const elapsedMin = Math.min(Math.floor(elapsedMs / 60000), totalPaidMinutes);
           const moneySpent = elapsedMin * RATE_PER_MIN;
           const remainingMin = Math.max(totalPaidMinutes - elapsedMin, 0);
@@ -317,7 +333,7 @@ export default function CoachAds() {
                       )}
                       {boostEnd && !isExpired && ad.status === "active" && (
                         <span style={{ fontSize: 11, padding: "3px 9px", borderRadius: 20, backgroundColor: "rgba(200,255,0,0.07)", color: "var(--accent)", border: "1px solid rgba(200,255,0,0.2)", fontWeight: 600 }}>
-                          ⏱ {remainingD > 0 ? `${remainingD}d ` : ""}{remH}h {t("remaining")}
+                          ⏱ {remainingD > 0 ? `${remainingD}d ` : ""}{remH > 0 ? `${remH}h ` : ""}{remMin}m {t("remaining")}
                         </span>
                       )}
                       {isExpired && (
