@@ -31,6 +31,9 @@ export default function CoachProfile() {
   const [withdrawAmount, setWithdrawAmount] = useState("");
   const [withdrawMsg, setWithdrawMsg] = useState("");
   const [showWithdraw, setShowWithdraw] = useState(false);
+  const [subscriptionRequests, setSubscriptionRequests] = useState<any[]>([]);
+  const [activeSubscriptions, setActiveSubscriptions] = useState<any[]>([]);
+  const [subsLoading, setSubsLoading] = useState(false);
 
   const api = (path: string, opts?: RequestInit) =>
     fetch(getApiBase() + path, { ...opts, headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}`, ...(opts?.headers || {}) } });
@@ -66,7 +69,71 @@ export default function CoachProfile() {
     api("/api/payments/my-withdrawals").then(r => { if (!r.ok) throw new Error(); return r.json(); }).then(d => {
       setWithdrawals(d.withdrawals || []);
     }).catch(() => {});
+
+    refreshSubscriptions();
   }, []);
+
+  const refreshSubscriptions = async () => {
+    setSubsLoading(true);
+    try {
+      const [reqRes, activeRes] = await Promise.all([
+        api("/api/payments/coach-subscription-requests"),
+        api("/api/payments/coach-active-subscriptions"),
+      ]);
+      if (reqRes.ok) {
+        const d = await reqRes.json();
+        setSubscriptionRequests(d.subscriptions || []);
+      }
+      if (activeRes.ok) {
+        const d = await activeRes.json();
+        setActiveSubscriptions(d.subscriptions || []);
+      }
+    } catch {
+      setSubscriptionRequests([]);
+      setActiveSubscriptions([]);
+    } finally {
+      setSubsLoading(false);
+    }
+  };
+
+  const handleAcceptSubscription = async (id: number) => {
+    try {
+      const r = await api(`/api/payments/coach-subscriptions/${id}/coach-accept`, { method: "PATCH" });
+      const d = await r.json().catch(() => ({}));
+      if (r.ok) {
+        setMessage(`✅ ${d.message || "Subscription accepted"}`);
+        setTimeout(() => setMessage(""), 3000);
+        refreshSubscriptions();
+        api("/api/payments/my-credit").then(r2 => r2.ok ? r2.json() : null).then(d2 => {
+          if (d2) {
+            setCredit(Number(d2.credit) || 0);
+            setCreditTransactions(d2.transactions || []);
+          }
+        }).catch(() => {});
+      } else {
+        setMessage(`❌ ${d.message || "Failed to accept subscription"}`);
+      }
+    } catch {
+      setMessage("❌ Failed to accept subscription");
+    }
+  };
+
+  const handleDeclineSubscription = async (id: number) => {
+    const reason = prompt("Decline reason (optional):") || "";
+    try {
+      const r = await api(`/api/payments/coach-subscriptions/${id}/coach-decline`, { method: "PATCH", body: JSON.stringify({ reason }) });
+      const d = await r.json().catch(() => ({}));
+      if (r.ok) {
+        setMessage(`✅ ${d.message || "Subscription declined"}`);
+        setTimeout(() => setMessage(""), 3000);
+        refreshSubscriptions();
+      } else {
+        setMessage(`❌ ${d.message || "Failed to decline subscription"}`);
+      }
+    } catch {
+      setMessage("❌ Failed to decline subscription");
+    }
+  };
 
   const saveProfile = async () => {
     setSaving(true);
@@ -163,6 +230,74 @@ export default function CoachProfile() {
             </div>
           ))}
         </div>
+      </div>
+
+      {/* Subscriptions */}
+      <div style={{ backgroundColor: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 16, padding: "20px 22px" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12, flexWrap: "wrap", gap: 8 }}>
+          <p style={{ fontFamily: "'Chakra Petch', sans-serif", fontSize: 15, fontWeight: 700 }}>Subscriptions</p>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <span style={{ fontSize: 11, padding: "3px 10px", borderRadius: 20, background: "rgba(255,179,64,0.12)", color: "var(--amber)", border: "1px solid rgba(255,179,64,0.25)", fontWeight: 600 }}>Pending: {subscriptionRequests.length}</span>
+            <span style={{ fontSize: 11, padding: "3px 10px", borderRadius: 20, background: "rgba(200,255,0,0.12)", color: "var(--accent)", border: "1px solid rgba(200,255,0,0.25)", fontWeight: 600 }}>Active: {activeSubscriptions.length}</span>
+          </div>
+        </div>
+
+        {subsLoading ? (
+          <p style={{ fontSize: 13, color: "var(--text-muted)", padding: "8px 0" }}>Loading subscriptions...</p>
+        ) : (
+          <>
+            {/* Pending requests */}
+            <div style={{ marginBottom: 14 }}>
+              <p style={{ fontSize: 11, fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>Pending Requests</p>
+              {subscriptionRequests.length === 0 ? (
+                <p style={{ fontSize: 12, color: "var(--text-muted)" }}>No pending subscription requests.</p>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {subscriptionRequests.map((s: any) => (
+                    <div key={s.id} style={{ backgroundColor: "var(--bg-surface)", border: "1px solid var(--border)", borderRadius: 10, padding: "10px 12px" }}>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                          <img src={s.user_avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${s.user_email}`} alt={s.user_name} style={{ width: 32, height: 32, borderRadius: "50%", backgroundColor: "var(--bg-card)" }} />
+                          <div>
+                            <p style={{ fontSize: 13, fontWeight: 600 }}>{s.user_name}</p>
+                            <p style={{ fontSize: 11, color: "var(--text-muted)" }}>{s.plan_cycle} · {s.plan_type} · {s.amount} {t('currency_egp')}</p>
+                          </div>
+                        </div>
+                        <div style={{ display: "flex", gap: 6 }}>
+                          <button onClick={() => handleAcceptSubscription(s.id)} style={{ padding: "6px 10px", borderRadius: 8, border: "1px solid rgba(200,255,0,0.3)", background: "rgba(200,255,0,0.12)", color: "var(--accent)", cursor: "pointer", fontSize: 12, fontWeight: 700 }}>Accept</button>
+                          <button onClick={() => handleDeclineSubscription(s.id)} style={{ padding: "6px 10px", borderRadius: 8, border: "1px solid rgba(255,68,68,0.3)", background: "rgba(255,68,68,0.1)", color: "var(--red)", cursor: "pointer", fontSize: 12, fontWeight: 700 }}>Decline</button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Active subscriptions */}
+            <div>
+              <p style={{ fontSize: 11, fontWeight: 600, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>Active Subscribers</p>
+              {activeSubscriptions.length === 0 ? (
+                <p style={{ fontSize: 12, color: "var(--text-muted)" }}>No active subscriptions yet.</p>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {activeSubscriptions.map((s: any) => (
+                    <div key={s.id} style={{ backgroundColor: "var(--bg-surface)", border: "1px solid var(--border)", borderRadius: 10, padding: "10px 12px", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                        <img src={s.user_avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${s.user_email}`} alt={s.user_name} style={{ width: 30, height: 30, borderRadius: "50%", backgroundColor: "var(--bg-card)" }} />
+                        <div>
+                          <p style={{ fontSize: 13, fontWeight: 600 }}>{s.user_name}</p>
+                          <p style={{ fontSize: 11, color: "var(--text-muted)" }}>{s.plan_cycle} · {s.plan_type}</p>
+                        </div>
+                      </div>
+                      <span style={{ fontSize: 11, color: "var(--accent)", fontWeight: 600 }}>Expires {s.expires_at ? new Date(s.expires_at).toLocaleDateString() : "-"}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </>
+        )}
       </div>
 
       {/* Credit & Earnings */}

@@ -646,6 +646,27 @@ router.get('/coach-subscription-requests', authenticateToken, async (req: any, r
   }
 });
 
+// Coach: list active subscriptions
+router.get('/coach-active-subscriptions', authenticateToken, async (req: any, res: Response) => {
+  if (req.user?.role !== 'coach' && req.user?.role !== 'admin') {
+    return res.status(403).json({ message: 'Coach access required' });
+  }
+
+  try {
+    const subs = await query(
+      `SELECT cs.*, u.name as user_name, u.email as user_email, u.avatar as user_avatar
+       FROM coach_subscriptions cs
+       LEFT JOIN users u ON cs.user_id = u.id
+       WHERE cs.coach_id = ? AND cs.status = 'active' AND (cs.expires_at IS NULL OR cs.expires_at > NOW())
+       ORDER BY cs.expires_at ASC, cs.created_at DESC`,
+      [req.user.id]
+    );
+    res.json({ subscriptions: subs });
+  } catch {
+    res.status(500).json({ message: 'Failed to fetch active subscriptions' });
+  }
+});
+
 // Coach: accept paid subscription request (credits coach)
 router.patch('/coach-subscriptions/:id/coach-accept', authenticateToken, async (req: any, res: Response) => {
   if (req.user?.role !== 'coach' && req.user?.role !== 'admin') {
