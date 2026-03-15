@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { authenticateToken } from '../middleware/auth';
 import { get, run, query } from '../config/database';
-import { uploadVideo, uploadFont, upload, optimizeImage, validateVideoSize } from '../middleware/upload';
+import { uploadVideo, uploadFont, upload, optimizeImage, validateVideoSize, uploadToR2 } from '../middleware/upload';
 import bcrypt from 'bcryptjs';
 
 const router = Router();
@@ -59,7 +59,7 @@ router.post('/users/:id/upload-medical', authenticateToken, adminOnly, upload.si
     if (!req.file) return res.status(400).json({ message: 'No file provided' });
     const userId = Number(req.params.id);
     if (!userId) return res.status(400).json({ message: 'Invalid user id' });
-    const fileUrl = `/uploads/${req.file.filename}`;
+    const fileUrl = await uploadToR2(req.file, 'medical');
     await run('UPDATE users SET medical_file_url = ?, updated_at = NOW() WHERE id = ?', [fileUrl, userId]);
     res.json({ message: 'Medical file uploaded', file_url: fileUrl });
   } catch {
@@ -240,8 +240,8 @@ router.post('/videos', authenticateToken, adminOnly, uploadVideo.fields([
 
     if (!videoFile) return res.status(400).json({ message: 'Video file is required' });
 
-    const videoUrl = `/uploads/${videoFile.filename}`;
-    const thumbnailUrl = thumbnailFile ? `/uploads/${thumbnailFile.filename}` : null;
+    const videoUrl = await uploadToR2(videoFile, 'videos');
+    const thumbnailUrl = thumbnailFile ? await uploadToR2(thumbnailFile, 'thumbnails') : null;
     const durationSeconds = videoFile.size > 0 ? Math.ceil(videoFile.size / (1024 * 1024)) : parseInt(duration || '0');
 
     const { insertId } = await run(
@@ -271,8 +271,8 @@ router.patch('/videos/:id', authenticateToken, adminOnly, uploadVideo.fields([
     const videoFile = files?.video?.[0];
     const thumbnailFile = files?.thumbnail?.[0];
 
-    const videoUrl = videoFile ? `/uploads/${videoFile.filename}` : existing.url;
-    const thumbnailUrl = thumbnailFile ? `/uploads/${thumbnailFile.filename}` : existing.thumbnail;
+    const videoUrl = videoFile ? await uploadToR2(videoFile, 'videos') : existing.url;
+    const thumbnailUrl = thumbnailFile ? await uploadToR2(thumbnailFile, 'thumbnails') : existing.thumbnail;
     const { title, description, duration, category, is_premium } = req.body;
     const isShort = req.body.is_short === '1' || req.body.is_short === true ? 1 : (req.body.is_short === '0' || req.body.is_short === false ? 0 : existing.is_short || 0);
 
@@ -842,7 +842,7 @@ router.get('/branding', async (_req: Request, res: Response) => {
 router.post('/upload-branding-image', authenticateToken, adminOnly, upload.single('image'), optimizeImage(), async (req: any, res: Response) => {
   try {
     if (!req.file) return res.status(400).json({ message: 'No image file provided' });
-    const imageUrl = `/uploads/${req.file.filename}`;
+    const imageUrl = await uploadToR2(req.file, 'branding');
     res.json({ url: imageUrl });
   } catch { res.status(500).json({ message: 'Image upload failed' }); }
 });
@@ -851,7 +851,7 @@ router.post('/upload-branding-image', authenticateToken, adminOnly, upload.singl
 router.post('/upload-font', authenticateToken, adminOnly, uploadFont.single('font'), async (req: any, res: Response) => {
   try {
     if (!req.file) return res.status(400).json({ message: 'No font file provided' });
-    const fontUrl = `/uploads/${req.file.filename}`;
+    const fontUrl = await uploadToR2(req.file, 'fonts');
     const fontName = req.body.font_name || req.file.originalname.replace(/\.[^.]+$/, '');
     res.json({ url: fontUrl, name: fontName });
   } catch { res.status(500).json({ message: 'Font upload failed' }); }

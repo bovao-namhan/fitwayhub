@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { authenticateToken } from '../middleware/auth';
 import { run, get, query } from '../config/database';
-import { upload, optimizeImage } from '../middleware/upload';
+import { upload, optimizeImage, uploadToR2 } from '../middleware/upload';
 import https from 'https';
 
 const router = Router();
@@ -302,7 +302,7 @@ router.post('/ewallet', authenticateToken, uploadPaymentProof, optimizeImage(), 
   const { plan, type, walletType, senderNumber, coachId } = req.body;
   if (!plan || !type || !walletType || !senderNumber) return res.status(400).json({ message: 'All fields required' });
   if (!req.file) return res.status(400).json({ message: 'Payment proof screenshot is required' });
-  const proofUrl = `/uploads/${req.file.filename}`;
+  const proofUrl = await uploadToR2(req.file, 'proofs');
   try {
     // Coach subscription payment flow (user pays for a specific coach)
     if (coachId) {
@@ -465,7 +465,7 @@ router.post('/booking/ewallet', authenticateToken, upload.single('proof'), optim
   if (!bookingId || !walletType || !senderNumber || !req.file) {
     return res.status(400).json({ message: 'All fields and proof screenshot required' });
   }
-  const proofUrl = `/uploads/${req.file.filename}`;
+  const proofUrl = await uploadToR2(req.file, 'proofs');
   try {
     await run('UPDATE coaching_bookings SET payment_status = ?, payment_proof = ?, payment_method = ? WHERE id = ? AND user_id = ?',
       ['proof_submitted', proofUrl, `ewallet_${walletType}`, bookingId, req.user.id]);
@@ -511,7 +511,7 @@ router.post('/coach-subscribe', authenticateToken, upload.single('proof'), optim
     const amount = planCycle === 'yearly' ? (coach.yearly_price || 0) : (coach.monthly_price || 0);
     if (amount <= 0) return res.status(400).json({ message: 'Coach has not set pricing for this plan' });
 
-    const proofUrl = `/uploads/${req.file.filename}`;
+    const proofUrl = await uploadToR2(req.file, 'proofs');
     const expiresAt = new Date();
     if (planCycle === 'yearly') {
       expiresAt.setFullYear(expiresAt.getFullYear() + 1);

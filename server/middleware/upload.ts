@@ -1,32 +1,41 @@
 import multer from 'multer';
 import path from 'path';
-import fs from 'fs';
-import { fileURLToPath } from 'url';
 import sharp from 'sharp';
 import { Request, Response, NextFunction } from 'express';
 import { query as dbQuery } from '../config/database';
+import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// ── Cloudflare R2 Client (S3-compatible) ─────────────────────────────────────
+const r2 = new S3Client({
+  region: 'auto',
+  endpoint: `https://${process.env.R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+  credentials: {
+    accessKeyId: process.env.R2_ACCESS_KEY_ID || '',
+    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY || '',
+  },
+});
 
-const uploadDir = path.join(__dirname, '../../uploads');
-
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
+/**
+ * Upload a buffered file to Cloudflare R2.
+ * @param file  The multer file with a populated `buffer` property.
+ * @param folder  Logical folder prefix inside the bucket (e.g. 'images', 'videos').
+ * @returns  The public URL of the uploaded object.
+ */
+export async function uploadToR2(file: Express.Multer.File, folder = 'uploads'): Promise<string> {
+  const ext = path.extname(file.originalname).replace(/[^a-zA-Z0-9.]/g, '').toLowerCase() || '.bin';
+  const safeFieldname = file.fieldname.replace(/[^a-zA-Z0-9_-]/g, '');
+  const key = `${folder}/${safeFieldname}-${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`;
+  await r2.send(new PutObjectCommand({
+    Bucket: process.env.R2_BUCKET_NAME!,
+    Key: key,
+    Body: file.buffer,
+    ContentType: file.mimetype,
+  }));
+  return `${process.env.R2_PUBLIC_URL}/${key}`;
 }
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    // Sanitize extension to prevent path traversal
-    const ext = path.extname(file.originalname).replace(/[^a-zA-Z0-9.]/g, '').toLowerCase();
-    const safeFieldname = file.fieldname.replace(/[^a-zA-Z0-9_-]/g, '');
-    cb(null, safeFieldname + '-' + uniqueSuffix + ext);
-  }
-});
+// ── All multer instances use memory storage ───────────────────────────────────
+const storage = multer.memoryStorage();
 
 const imageFilter = (req: any, file: any, cb: any) => {
   if (file.mimetype.startsWith('image/')) {
@@ -117,18 +126,18 @@ function optimizeImage(maxWidth = 1920, maxHeight = 1920, quality = 80) {
 
       for (const file of files) {
         if (!file.mimetype.startsWith('image/')) continue;
+        if (!file.buffer || file.buffer.length === 0) continue;
 
-        const filePath = file.path;
         const ext = path.extname(file.originalname).toLowerCase();
 
         // Skip SVGs and GIFs (animated) — sharp handles them poorly
         if (ext === '.svg' || ext === '.gif') continue;
 
-        const image = sharp(filePath);
+        const image = sharp(file.buffer);
         const metadata = await image.metadata();
         if (!metadata.width || !metadata.height) continue;
 
-        let pipeline = sharp(filePath).rotate(); // auto-rotate based on EXIF
+        let pipeline = sharp(file.buffer).rotate(); // auto-rotate based on EXIF
 
         // Only shrink — never upscale
         if (metadata.width > maxWidth || metadata.height > maxHeight) {
@@ -145,20 +154,14 @@ function optimizeImage(maxWidth = 1920, maxHeight = 1920, quality = 80) {
           outputBuffer = await pipeline.png({ quality, compressionLevel: 8 }).toBuffer();
         } else {
           outputBuffer = await pipeline.jpeg({ quality, mozjpeg: true }).toBuffer();
-          // Update filename extension to .jpg if it wasn't already
+          // Update originalname and mimetype when converting to JPEG
           if (ext !== '.jpg' && ext !== '.jpeg') {
-            const newPath = filePath.replace(/\.[^.]+$/, '.jpg');
-            await fs.promises.writeFile(newPath, outputBuffer);
-            await fs.promises.unlink(filePath);
-            file.path = newPath;
-            file.filename = path.basename(newPath);
+            file.originalname = file.originalname.replace(/\.[^.]+$/, '.jpg');
             file.mimetype = 'image/jpeg';
-            file.size = outputBuffer.length;
-            continue;
           }
         }
 
-        await fs.promises.writeFile(filePath, outputBuffer);
+        file.buffer = outputBuffer;
         file.size = outputBuffer.length;
       }
 
@@ -209,10 +212,6 @@ async function validateVideoSize(req: Request, res: Response, next: NextFunction
       // Only check video files
       if (!file.mimetype.startsWith('video/')) continue;
       if (file.size > maxSizeBytes) {
-        // Delete the oversized file
-        try {
-          await fs.promises.unlink(file.path);
-        } catch {}
         return res.status(413).json({
           message: `File too large. Maximum video size is ${maxSizeMb}MB, but file is ${(file.size / 1024 / 1024).toFixed(2)}MB`
         });

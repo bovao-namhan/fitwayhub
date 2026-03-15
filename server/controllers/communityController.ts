@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { query, get, run } from '../config/database';
+import { uploadToR2 } from '../middleware/upload';
 
 export const getPosts = async (req: Request, res: Response) => {
   try {
@@ -94,7 +95,7 @@ export const createPost = async (req: Request, res: Response) => {
     const userId = (req as any).user.id;
     const { content, hashtags } = req.body;
     const files = (req as any).files as Express.Multer.File[] | undefined;
-    const mediaUrl = files && files.length > 0 ? `/uploads/${files[0].filename}` : null;
+    const mediaUrl = files && files.length > 0 ? await uploadToR2(files[0], 'community') : null;
     if (!content && !mediaUrl) return res.status(400).json({ message: 'Content or media is required' });
     const { insertId } = await run('INSERT INTO posts (user_id, content, media_url, hashtags) VALUES (?, ?, ?, ?)', [userId, content, mediaUrl, hashtags]);
     const newPost = await get(`SELECT p.*, u.name as user_name, u.avatar as user_avatar, u.role as user_role FROM posts p JOIN users u ON p.user_id = u.id WHERE p.id = ?`, [insertId]);
@@ -126,7 +127,7 @@ export const createChallenge = async (req: Request, res: Response) => {
     const userId = (req as any).user.id;
     const { title, description, startDate, endDate } = req.body;
     const imgFiles = (req as any).files as Express.Multer.File[] | undefined;
-    const imageUrl = imgFiles && imgFiles.length > 0 ? `/uploads/${imgFiles[0].filename}` : null;
+    const imageUrl = imgFiles && imgFiles.length > 0 ? await uploadToR2(imgFiles[0], 'community') : null;
     if (!title) return res.status(400).json({ message: 'Title is required' });
     const { insertId } = await run('INSERT INTO challenges (creator_id, title, description, start_date, end_date, image_url) VALUES (?, ?, ?, ?, ?, ?)', [userId, title, description, startDate, endDate, imageUrl]);
     await run('INSERT INTO challenge_participants (challenge_id, user_id) VALUES (?, ?)', [insertId, userId]);

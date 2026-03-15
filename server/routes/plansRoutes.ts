@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { authenticateToken } from '../middleware/auth';
-import { uploadVideo } from '../middleware/upload';
+import { uploadVideo, uploadToR2 } from '../middleware/upload';
 import { get, query, run } from '../config/database';
 
 const router = Router();
@@ -27,7 +27,7 @@ router.post('/workouts', authenticateToken, uploadVideo.single('video'), async (
     if (!day_of_week || !workout_type) {
       return res.status(400).json({ message: 'Day and workout type are required' });
     }
-    const videoUrl = req.file ? `/uploads/${req.file.filename}` : null;
+    const videoUrl = req.file ? await uploadToR2(req.file, 'plans') : null;
     const result = await run(
       `INSERT INTO user_workout_plans (user_id, day_of_week, workout_type, video_url, time_minutes, notes)
        VALUES (?, ?, ?, ?, ?, ?)`,

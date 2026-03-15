@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { get, query, run } from '../config/database';
+import { uploadToR2 } from '../middleware/upload';
 
 const WRITER_ROLES = new Set(['coach', 'admin']);
 
@@ -32,9 +33,9 @@ function canWrite(role: string): boolean {
   return WRITER_ROLES.has(role);
 }
 
-function computeMediaPath(file?: Express.Multer.File): string | null {
-  if (!file?.filename) return null;
-  return `/uploads/${file.filename}`;
+async function computeMediaPath(file?: Express.Multer.File): Promise<string | null> {
+  if (!file?.buffer || file.buffer.length === 0) return null;
+  return uploadToR2(file, 'blogs');
 }
 
 export const getPublicBlogs = async (req: Request, res: Response) => {
@@ -168,12 +169,12 @@ export const createBlog = async (req: Request, res: Response) => {
     
     // Log file upload details for debugging
     console.log('📁 Blog create - files received:', {
-      headerImage: files?.headerImage?.[0]?.filename,
-      video: files?.video?.[0]?.filename
+      headerImage: files?.headerImage?.[0]?.originalname,
+      video: files?.video?.[0]?.originalname
     });
     
-    const headerImage = computeMediaPath(files?.headerImage?.[0]);
-    const video = computeMediaPath(files?.video?.[0]);
+    const headerImage = await computeMediaPath(files?.headerImage?.[0]);
+    const video = await computeMediaPath(files?.video?.[0]);
 
     const title = String(req.body.title || '').trim();
     const excerpt = String(req.body.excerpt || '').trim();
@@ -249,8 +250,8 @@ export const updateBlog = async (req: Request, res: Response) => {
     }
 
     const files = (req as any).files as { [fieldName: string]: Express.Multer.File[] } | undefined;
-    const headerImage = computeMediaPath(files?.headerImage?.[0]);
-    const video = computeMediaPath(files?.video?.[0]);
+    const headerImage = await computeMediaPath(files?.headerImage?.[0]);
+    const video = await computeMediaPath(files?.video?.[0]);
 
     const title = String(req.body.title ?? existing.title).trim();
     const excerpt = String(req.body.excerpt ?? existing.excerpt ?? '').trim();

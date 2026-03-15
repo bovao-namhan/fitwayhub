@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { authenticateToken, requireActiveCoachMembershipForDeals } from '../middleware/auth';
-import { upload, uploadVideo, optimizeImage, validateVideoSize } from '../middleware/upload';
+import { upload, uploadVideo, optimizeImage, validateVideoSize, uploadToR2 } from '../middleware/upload';
 import { get, run, query } from '../config/database';
 
 const router = Router();
@@ -47,8 +47,8 @@ router.post('/ads', authenticateToken, coachOrAdmin, requireActiveCoachMembershi
   if (!title || !description) return res.status(400).json({ message: 'Title and description required' });
   try {
     const files = req.files as { [f: string]: Express.Multer.File[] };
-    const imageUrl = files?.image?.[0] ? `/uploads/${files.image[0].filename}` : null;
-    const videoUrl = files?.video?.[0] ? `/uploads/${files.video[0].filename}` : null;
+    const imageUrl = files?.image?.[0] ? await uploadToR2(files.image[0], 'ads') : null;
+    const videoUrl = files?.video?.[0] ? await uploadToR2(files.video[0], 'ads') : null;
     const totalMinutes = (parseInt(duration_hours || '0') * 60) + (parseInt(duration_days || '0') * 24 * 60);
     const { insertId } = await run(
       'INSERT INTO coach_ads (coach_id, title, description, specialty, cta, highlight, image_url, video_url, payment_method, ad_type, media_type, objective, duration_hours, duration_days) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
@@ -67,8 +67,8 @@ router.put('/ads/:id', authenticateToken, coachOrAdmin, requireActiveCoachMember
     const existing = await get<any>('SELECT * FROM coach_ads WHERE id = ? AND coach_id = ?', [id, req.user.id]);
     if (!existing) return res.status(404).json({ message: 'Ad not found' });
     const files = req.files as { [f: string]: Express.Multer.File[] };
-    const imageUrl = files?.image?.[0] ? `/uploads/${files.image[0].filename}` : existing.image_url;
-    const videoUrl = files?.video?.[0] ? `/uploads/${files.video[0].filename}` : existing.video_url;
+    const imageUrl = files?.image?.[0] ? await uploadToR2(files.image[0], 'ads') : existing.image_url;
+    const videoUrl = files?.video?.[0] ? await uploadToR2(files.video[0], 'ads') : existing.video_url;
     await run(
       "UPDATE coach_ads SET title=?, description=?, specialty=?, cta=?, highlight=?, image_url=?, video_url=?, payment_method=?, ad_type=?, media_type=?, objective=?, duration_hours=?, duration_days=?, status='pending', updated_at=NOW() WHERE id=?",
       [title, description, specialty, cta, highlight, imageUrl, videoUrl, paymentMethod || 'ewallet', ad_type || existing.ad_type, media_type || existing.media_type, objective || existing.objective, parseInt(duration_hours || existing.duration_hours || '0'), parseInt(duration_days || existing.duration_days || '0'), id]

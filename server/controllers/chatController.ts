@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { query, get, run } from '../config/database';
+import { uploadToR2 } from '../middleware/upload';
 
 const PRESENCE_TTL_MS = 20_000;
 const presenceMap = new Map<number, number>();
@@ -120,7 +121,7 @@ export const sendMessage = async (req: Request, res: Response) => {
     markOnline(senderId);
     const senderRole = (req as any).user.role;
     const { receiverId, challengeId, content } = req.body;
-    const mediaUrl = req.file ? `/uploads/${req.file.filename}` : null;
+    const mediaUrl = req.file ? await uploadToR2(req.file, 'chat') : null;
     if ((!receiverId && !challengeId) || (!content && !mediaUrl)) return res.status(400).json({ message: 'Receiver ID or Challenge ID and content/media are required' });
 
     // Enforce direct-chat rules

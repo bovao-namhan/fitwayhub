@@ -55,11 +55,11 @@ router.patch('/step-goal', authenticateToken, async (req: any, res: any) => {
 });
 
 // ── Upload proof image ─────────────────────────────────────────────────────────
-import { upload, optimizeImage } from '../middleware/upload';
+import { upload, optimizeImage, uploadToR2 } from '../middleware/upload';
 router.post('/upload-proof', authenticateToken, upload.single('image'), optimizeImage(), async (req: any, res: any) => {
   try {
     if (!req.file) return res.status(400).json({ message: 'No file uploaded' });
-    res.json({ url: `/uploads/${req.file.filename}` });
+    res.json({ url: await uploadToR2(req.file, 'images') });
   } catch { res.status(500).json({ message: 'Upload failed' }); }
 });
 
@@ -83,7 +83,7 @@ router.get('/medical-history', authenticateToken, async (req: any, res: any) => 
 router.post('/medical-history', authenticateToken, upload.single('medical'), optimizeImage(), async (req: any, res: any) => {
   try {
     const { medical_history } = req.body;
-    const fileUrl = req.file ? `/uploads/${req.file.filename}` : null;
+    const fileUrl = req.file ? await uploadToR2(req.file, 'medical') : null;
     if (fileUrl) {
       await run('UPDATE users SET medical_history = ?, medical_file_url = ? WHERE id = ?', [medical_history || '', fileUrl, req.user.id]);
       res.json({ message: 'Saved', file_url: fileUrl });
