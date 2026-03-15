@@ -1,27 +1,75 @@
 import mysql from 'mysql2/promise';
+import dotenv from 'dotenv';
+
+const envResult = dotenv.config();
+if (envResult.error) {
+  dotenv.config({ path: 'env.txt' });
+}
 
 const DB_HOST = process.env.DB_HOST || 'localhost';
 const DB_PORT = parseInt(process.env.DB_PORT || '3306');
 const DB_USER = process.env.DB_USER || 'root';
 const DB_PASSWORD = process.env.DB_PASSWORD || process.env.DB_PASS || 'Peterishere1';
 const DB_NAME = process.env.DB_NAME || 'Mangolian';
-const DB_AUTO_CREATE = process.env.DB_AUTO_CREATE !== 'false';
+const DATABASE_URL = process.env.DATABASE_URL || process.env.MYSQL_URL || '';
+const DB_SSL = process.env.DB_SSL === 'true';
+const DB_SSL_REJECT_UNAUTHORIZED = process.env.DB_SSL_REJECT_UNAUTHORIZED !== 'false';
+const DB_AUTO_CREATE = process.env.DB_AUTO_CREATE
+  ? process.env.DB_AUTO_CREATE !== 'false'
+  : !DATABASE_URL;
+
+function getConnectionConfig(includeDatabase = true): mysql.PoolOptions {
+  const baseSsl = DB_SSL ? { rejectUnauthorized: DB_SSL_REJECT_UNAUTHORIZED } : undefined;
+
+  if (DATABASE_URL) {
+    const parsed = new URL(DATABASE_URL);
+    const pathname = parsed.pathname.replace(/^\//, '');
+    const dbFromUrl = pathname || DB_NAME;
+    const params = parsed.searchParams;
+
+    const sslMode = (params.get('ssl-mode') || params.get('sslmode') || '').toLowerCase();
+    const urlWantsSsl = ['required', 'verify_ca', 'verify_identity'].includes(sslMode);
+    const shouldUseSsl = DB_SSL || urlWantsSsl;
+    const sslConfig = shouldUseSsl ? { rejectUnauthorized: DB_SSL_REJECT_UNAUTHORIZED } : undefined;
+
+    return {
+      host: parsed.hostname || DB_HOST,
+      port: parsed.port ? parseInt(parsed.port, 10) : DB_PORT,
+      user: decodeURIComponent(parsed.username || DB_USER),
+      password: decodeURIComponent(parsed.password || DB_PASSWORD),
+      database: includeDatabase ? dbFromUrl : undefined,
+      ssl: sslConfig,
+      waitForConnections: true,
+      connectionLimit: includeDatabase ? 10 : 2,
+      charset: includeDatabase ? 'utf8mb4' : undefined,
+    };
+  }
+
+  return {
+    host: DB_HOST,
+    port: DB_PORT,
+    user: DB_USER,
+    password: DB_PASSWORD,
+    database: includeDatabase ? DB_NAME : undefined,
+    ssl: baseSsl,
+    waitForConnections: true,
+    connectionLimit: includeDatabase ? 10 : 2,
+    charset: includeDatabase ? 'utf8mb4' : undefined,
+  };
+}
+
+function getDatabaseName(): string {
+  if (!DATABASE_URL) return DB_NAME;
+  const parsed = new URL(DATABASE_URL);
+  return parsed.pathname.replace(/^\//, '') || DB_NAME;
+}
 
 function escapeDbIdentifier(name: string): string {
   return `\`${name.replace(/`/g, '``')}\``;
 }
 
 // ── Connection pool ───────────────────────────────────────────────────────────
-const pool = mysql.createPool({
-  host: DB_HOST,
-  port: DB_PORT,
-  user: DB_USER,
-  password: DB_PASSWORD,
-  database: DB_NAME,
-  waitForConnections: true,
-  connectionLimit: 10,
-  charset: 'utf8mb4',
-});
+const pool = mysql.createPool(getConnectionConfig(true));
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 export async function query<T = any>(sql: string, params?: any[]): Promise<T[]> {
@@ -649,16 +697,9 @@ export async function initDatabase() {
   const MAX_RETRIES = 5;
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
     try {
-      const rootPool = mysql.createPool({
-        host: DB_HOST,
-        port: DB_PORT,
-        user: DB_USER,
-        password: DB_PASSWORD,
-        waitForConnections: true,
-        connectionLimit: 2,
-      });
+      const rootPool = mysql.createPool(getConnectionConfig(false));
       if (DB_AUTO_CREATE) {
-        await rootPool.execute(`CREATE DATABASE IF NOT EXISTS ${escapeDbIdentifier(DB_NAME)} CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci`);
+        await rootPool.execute(`CREATE DATABASE IF NOT EXISTS ${escapeDbIdentifier(getDatabaseName())} CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci`);
       }
       await rootPool.end();
       break; // success
